@@ -27,6 +27,7 @@ val commonSettings = Seq(
     "com.softwaremill.macwire" %% "macros" % "2.3.0",
     "com.softwaremill.macwire" %% "util" % "2.3.0",
     "com.softwaremill.macwire" %% "proxy" % "2.3.0",
+    "org.slf4j" % "slf4j-simple" % "1.7.7",
   )
 )
 
@@ -56,4 +57,9 @@ lazy val core = project.in(file("moonlight-core")).
 
     publishTo := Some(Resolver.file("file", new File(Path.userHome.absolutePath+"/.m2/repository"))), // TODO: publish to external repo
     //credentials += Credentials(new File("credentials.properties"))
-  )
+  ).
+  settings(libraryDependencies ++= Seq(
+    "com.typesafe.akka" %% "akka-http-core" % "10.0.11",
+    "com.typesafe.akka" %% "akka-http" % "10.0.11",
+    "com.typesafe.akka" %% "akka-http-testkit" % "10.0.11"
+  ))
