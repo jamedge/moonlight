@@ -33,6 +33,6 @@ object ExceptionHandlerBuilder {
 
   private def logToConsole(e: Exception)(implicit logger: Logger): Unit = {
     logger.info(e.getMessage)
-    logger.info(e.getStackTrace.mkString("\n"))
+    logger.info(e.getStackTrace.mkString("\n\t"))
   }
 }
