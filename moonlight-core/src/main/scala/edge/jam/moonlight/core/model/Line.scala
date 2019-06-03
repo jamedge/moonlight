@@ -14,8 +14,8 @@ case class Line(
 ) extends Metadata
 
 case class IO(
-    inputs: Map[String, List[IOElement]],
-    outputs: Map[String, List[IOElement]])
+    inputs: List[IOElement],
+    outputs: List[IOElement])
 
 case class IOElement(
     name: String,
