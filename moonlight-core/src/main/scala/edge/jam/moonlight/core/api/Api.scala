@@ -10,7 +10,6 @@ import org.json4s.jackson.Serialization.read
 import edge.jam.moonlight.core.model._
 
 import scala.concurrent.ExecutionContext
-import scala.util.Try
 
 class Api(
     logger: Logger,
@@ -21,13 +20,17 @@ class Api(
   import akka.http.scaladsl.server.Directives._
 
   val route =
-    post {
-      path("addLine") {
-        entity(as[String]) { requestBody => addLine(requestBody) }
-      }
-    } ~
-    get {
-      path("status") { complete("OK") }
+    handleExceptions(ExceptionHandlerBuilder.build()(logger)) {
+      post {
+        path("addLine") {
+          entity(as[String]) { requestBody => addLine(requestBody) }
+        }
+      } ~
+        get {
+          path("status") {
+            complete("OK")
+          }
+        }
     }
   logger.info("Route initialized.")
 
@@ -42,13 +45,9 @@ class Api(
   }
 
   def addLine(requestJson: String): Route = {
-    val readLine = Try(read[Line](requestJson))
-
-    readLine.map { line =>
-      complete("Line added.")
-    }.recover {
-      case e: Exception => complete(s"Error during line unmarshaling from request json. Response message: ${e.getMessage}")
-    }.getOrElse(complete("Unknown failure."))
+    val line = read[Line](requestJson)
+    // TODO: add saving to db
+    complete("Line added.")
   }
 }
 
