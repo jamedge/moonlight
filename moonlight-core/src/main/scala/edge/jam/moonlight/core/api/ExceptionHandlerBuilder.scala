@@ -9,19 +9,12 @@ import org.slf4j.Logger
 
 object ExceptionHandlerBuilder {
   def build()(implicit logger: Logger) = ExceptionHandler {
-    case e: MappingException =>
+    case e @ (_: MappingException | _: JsonParseException) =>
       logToConsole(e)
       complete(
         HttpResponse(
           StatusCodes.BadRequest,
-          entity = s"Error during line unmarshaling from request json. Response message: ${e.getMessage}"))
-
-    case e: JsonParseException =>
-      logToConsole(e)
-      complete(
-        HttpResponse(
-          StatusCodes.BadRequest,
-          entity = s"Error during line unmarshaling from request json. Response message: ${e.getMessage}"))
+          entity = s"Error during line unmarshalling from request json.\nResponse message:\n${e.getMessage}"))
 
     case e: Exception =>
       logToConsole(e)
@@ -31,8 +24,8 @@ object ExceptionHandlerBuilder {
           entity = "Internal server error."))
   }
 
-  private def logToConsole(e: Exception)(implicit logger: Logger): Unit = {
-    logger.info(e.getMessage)
-    logger.info(e.getStackTrace.mkString("\n\t"))
+  private def logToConsole(e: Throwable)(implicit logger: Logger): Unit = {
+    logger.debug(e.getMessage)
+    logger.debug(e.getStackTrace.mkString("\n\t"))
   }
 }
