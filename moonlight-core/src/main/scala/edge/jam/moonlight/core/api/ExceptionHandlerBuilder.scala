@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.ExceptionHandler
 import com.fasterxml.jackson.core.JsonParseException
 import org.json4s.MappingException
+import org.neo4j.driver.v1.exceptions.ClientException
 import org.slf4j.Logger
 
 object ExceptionHandlerBuilder {
@@ -15,6 +16,13 @@ object ExceptionHandlerBuilder {
         HttpResponse(
           StatusCodes.BadRequest,
           entity = s"Error during line unmarshalling from request json.\nResponse message:\n${e.getMessage}"))
+
+    case e: ClientException =>
+      logToConsole(e)
+      complete(
+        HttpResponse(
+          StatusCodes.BadRequest,
+          entity = s"Error Getting data from graph db.\nResponse message:\n${e.getMessage}"))
 
     case e: Exception =>
       logToConsole(e)

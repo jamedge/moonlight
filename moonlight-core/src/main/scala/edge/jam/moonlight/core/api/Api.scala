@@ -9,11 +9,12 @@ import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
 import edge.jam.moonlight.core.model._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class Api(
     logger: Logger,
-    apiConfig: ApiConfig
+    apiConfig: ApiConfig,
+    lineService: LineService
 ) (implicit val executionContext: ExecutionContext, actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) {
   private implicit val formats = DefaultFormats
 
@@ -30,6 +31,13 @@ class Api(
           path("status") {
             complete("OK")
           }
+        } ~
+        get {
+          path("codeTest") {
+            complete {
+              getAllCodeMetadata().map(_.getOrElse("Error"))
+            }
+          }
         }
     }
   logger.info("Route initialized.")
@@ -42,6 +50,10 @@ class Api(
       apiConfig.server.port
     )
     logger.info("Server started.")
+  }
+
+  def getAllCodeMetadata(): Future[Option[String]] = {
+    lineService.getAllCodeMetadata()
   }
 
   def addLine(requestJson: String): Route = {
