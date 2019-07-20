@@ -11,7 +11,7 @@ val commonSettings = Seq(
 
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javaOptions ++= Seq("-Xms1024M", "-Xmx2200M"),
-
+  
   Test / fork := true,
   Test / javaOptions ++= Seq("-Dconfig.resource=application.test.conf"),
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oF"),
@@ -27,7 +27,7 @@ val commonSettings = Seq(
     "com.softwaremill.macwire" %% "macros" % "2.3.0",
     "com.softwaremill.macwire" %% "util" % "2.3.0",
     "com.softwaremill.macwire" %% "proxy" % "2.3.0",
-    "org.slf4j" % "slf4j-simple" % "1.7.7",
+    "org.slf4j" % "slf4j-log4j12" % "1.7.7",
     "com.trueaccord.scalapb" %% "scalapb-json4s" % "0.1.6",
   )
 )
