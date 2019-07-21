@@ -1,11 +1,11 @@
 package edge.jam.moonlight.core.model
 
+import edge.jam.moonlight.core.model.GraphElements.GraphElement
 import neotypes.Driver
 
 import scala.concurrent.{ExecutionContext, Future}
 import neotypes.implicits._
 import org.slf4j.Logger
-
 import edge.jam.moonlight.core.model.{Nodes => N, Relationships => R}
 
 class LineService(
@@ -24,10 +24,19 @@ class LineService(
 
   def addLine(line: Line): Future[Unit] = {
     neo4jDriver.writeSession { session =>
-      val lineNode = N.Line(line, "l")
-      c"".+(mergeQuery(lineNode))
-        .+(detailsQuery(lineNode, line.details.getOrElse(Map())))
-        .query[Unit].execute(session)
+      session.transact[Unit] { tx =>
+        val lineNode = N.Line(line, "l")
+        c""
+          .+(constructMergeQuery(QueryWrapper(lineNode, false)))
+          .+(line.details.map(ld => constructMergeQuery(
+            QueryWrapper(lineNode, true),
+            Some(QueryWrapper(R.HasDetails(), false)),
+            Some(QueryWrapper(N.Details(ld), false)))).getOrElse(""))
+          .query[Unit].execute(tx)
+        if (line.details.isEmpty) {
+          tx.execute[Unit]("MATCH (l:Line) -[lds:HAS_DETAILS]-> (ld:Details) DELETE lds, ld", Map())
+        } else tx.commit() // commit should be in the end of the transact block (and now is the end, so it's here) or just return Future()
+      }
     }
   }
 
@@ -36,14 +45,27 @@ class LineService(
     query
   }
 
-  def mergeQuery(node: GraphElements.GraphElement): String = {
-    val query = s"MERGE $node"
+  def constructMergeQuery(
+      node1: QueryWrapper,
+      relationship: Option[QueryWrapper] = None,
+      node2: Option[QueryWrapper] = None): String = {
+    val toMerge = relationship.map { r =>
+      node2.map { n2 =>
+        s"$node1 $r $n2"
+      }.getOrElse(s"$node1 $r")
+    }.getOrElse(node1.toString)
+    val query = s"MERGE $toMerge"
     logQueryCreation(query)
   }
 
-  def detailsQuery(parentNode: GraphElements.GraphElement, details: Map[String, String]): String = {
-    val query = s"MERGE ${parentNode.toVariable()} ${R.HasDetails()} ${N.Details(details)}"
-    logQueryCreation(query)
-  }
+}
 
+case class QueryWrapper(graphElement: GraphElement, alreadyExistsInQuery: Boolean) {
+  override def toString: String = {
+    if (alreadyExistsInQuery) {
+      graphElement.toVariable()
+    } else {
+      graphElement.toString()
+    }
+  }
 }
