@@ -1,6 +1,8 @@
 package edge.jam.moonlight.core.model
 
 import edge.jam.moonlight.core.model.GraphElements.{ElementClass, GraphElement}
+import neotypes.DeferredQueryBuilder
+import neotypes.implicits._
 
 object GraphElements {
   abstract class GraphElement(
@@ -8,19 +10,35 @@ object GraphElements {
       variable: String,
       fields: Map[String, String]
   ) {
-    override def toString(): String = {
-      val fieldsString = if (fields.isEmpty) "" else s" {${constructPairs(fields)}}"
-      s"${elementClass.elementType.openMark}$variable:${elementClass.name}$fieldsString${elementClass.elementType.endMark}"
+
+    def toObject(): DeferredQueryBuilder = {
+      val pairs = constructPairs(fields)
+      c"" +
+        s"${elementClass.elementType.openMark}$variable:${elementClass.name}" +
+        pairs +
+        s"${elementClass.elementType.endMark}"
     }
 
-    def toVariable(): String = {
-      s"${elementClass.elementType.openMark}$variable${elementClass.elementType.endMark}"
+    def toVariable(): DeferredQueryBuilder = {
+      c"" + s"${elementClass.elementType.openMark}$variable${elementClass.elementType.endMark}"
     }
 
-    def constructPairs(pairs: Map[String, String]): String = {
-      pairs.map { case (name, value) =>
-        s"""$name: "$value""""
-      }.mkString(", ")
+    def constructPairs(pairs: Map[String, String]): DeferredQueryBuilder = {
+      def fold(pairs: Map[String, String], query: DeferredQueryBuilder): DeferredQueryBuilder = {
+        if (pairs.isEmpty) {
+          c"{" + query + c"}"
+        } else {
+          val name = pairs.head._1
+          val value = pairs.head._2
+          val separator = if (pairs.tail.isEmpty) "" else ", "
+          fold(pairs.tail, query + s"$name:" + c"$value" + separator)
+        }
+      }
+      val allFields = fold(pairs, c"")
+      if (pairs.nonEmpty) {
+        allFields
+      } else
+        c""
     }
   }
 
