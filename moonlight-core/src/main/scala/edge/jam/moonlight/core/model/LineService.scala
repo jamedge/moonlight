@@ -27,15 +27,14 @@ class LineService(
       session.transact[Unit] { tx =>
         val lineNode = N.Line(line, "l")
         c""
-          .+(constructMergeQuery(QueryWrapper(lineNode, false)))
-          .+(line.details.map(ld => constructMergeQuery(
-            QueryWrapper(lineNode, true),
-            Some(QueryWrapper(R.HasDetails(), false)),
-            Some(QueryWrapper(N.Details(ld), false)))).getOrElse(c""))
+          .+(constructMergeOrUpdateQuery(QueryWrapper(lineNode)))
           .query[Unit].execute(tx)
-        if (line.details.isEmpty) {
-          tx.execute[Unit]("MATCH (l:Line) -[lds:HAS_DETAILS]-> (ld:Details) DELETE lds, ld", Map())
-        } else Future() //tx.commit() // commit should be in the end of the transact block (and now is the end, so it's here) or just return Future()
+        c""
+          .+(line.details.map(ld => constructMergeOrUpdateQuery(
+            QueryWrapper(lineNode),
+            Some(QueryWrapper(R.HasDetails())),
+            Some(QueryWrapper(N.Details(ld, s"ld"))))).getOrElse(c"MATCH (l:Line) -[lds:HAS_DETAILS]-> (ld:Details) DELETE lds, ld"))
+          .query[Unit].execute(tx)
       }
     }
   }
@@ -46,27 +45,50 @@ class LineService(
     query
   }
 
-  def constructMergeQuery( // TODO: fix merging as it creates new nodes if pattern is not found instead of updating the existing pattern by name to fit changes
-      node1: QueryWrapper, // TODO: so matching by name needs to be done first and then create if not exist or update if it does
+  def constructMergeOrUpdateQuery(
+      node1: QueryWrapper,
       relationship: Option[QueryWrapper] = None,
       node2: Option[QueryWrapper] = None): DeferredQueryBuilder = {
-    val toMerge = relationship.map { r =>
+    val query = relationship.flatMap { r =>
       node2.map { n2 =>
-        node1.c + " " + r.c + " " + n2.c
-      }.getOrElse(node1.c + " " + r.c)
-    }.getOrElse(node1.c)
-    val query = c"MERGE " + toMerge
+        c"MATCH" + node1.so +
+          c"MERGE" + node1.ve + r.o + n2.so +
+          c"ON MATCH SET" + n2.v + c"=" + n2.f +
+          c"ON CREATE SET" + n2.v + c"=" + n2.f
+      }
+    }.getOrElse(
+      c"MERGE" + node1.so +
+        c"ON MATCH SET" + node1.v + c"=" + node1.f +
+        c"ON CREATE SET" + node1.v + c"=" + node1.f
+    )
     logQueryCreation(query)
   }
-
 }
 
-case class QueryWrapper(graphElement: GraphElement, alreadyExistsInQuery: Boolean) {
+case class QueryWrapper(
+    graphElement: GraphElement,
+    alreadyExistsInQuery: Boolean = false) {
   def c: DeferredQueryBuilder = {
-    if (alreadyExistsInQuery) {
-      graphElement.toVariable()
-    } else {
-      graphElement.toObject()
-    }
+    if (alreadyExistsInQuery) ve else o
+  }
+
+  def ve: DeferredQueryBuilder = {
+    graphElement.toVariableEnclosed()
+  }
+
+  def v: DeferredQueryBuilder = {
+    graphElement.toVariable()
+  }
+
+  def o: DeferredQueryBuilder = {
+    graphElement.toObject()
+  }
+
+  def so: DeferredQueryBuilder = {
+    graphElement.toSearchObject()
+  }
+
+  def f: DeferredQueryBuilder = {
+    graphElement.fields()
   }
 }

@@ -58,10 +58,7 @@ class Api(
 
   def addLine(requestJson: String): Route = {
     val line = read[Line](requestJson)
-    // TODO: add saving to db
-
-    val result = lineService.addLine(line).map(r => "Line added.")
-
+    val result = lineService.addLine(line).map(r => "Line added/updated.")
     complete(result)
   }
 }
