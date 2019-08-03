@@ -89,7 +89,7 @@ object GraphElements {
     }
   }
 
-  def constructMergeOrUpdateQuery(
+  def constructCreateOrUpdateQuery(
       node1: GraphElement,
       relationship: Option[GraphElement] = None,
       node2: Option[GraphElement] = None): DeferredQueryBuilder = {
@@ -107,7 +107,7 @@ object GraphElements {
     )
   }
 
-  def constructDeleteNodeAndRelatedRelationshipQuery(
+  def constructDeleteQuery(
       matchNode: GraphElement,
       relationshipToDelete: GraphElement,
       nodeToDelete: GraphElement): DeferredQueryBuilder = {

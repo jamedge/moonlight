@@ -33,7 +33,7 @@ class LineService(
   private def constructLineQuery(line: Line): DeferredQuery[Unit] = {
     val lineNode = N.Line(line, "l")
     val query = c""
-      .+(GraphElements.constructMergeOrUpdateQuery(lineNode)).query[Unit]
+      .+(GraphElements.constructCreateOrUpdateQuery(lineNode)).query[Unit]
     logQueryCreation(query)
     query
   }
@@ -41,11 +41,11 @@ class LineService(
   private def constructLineDetailsQuery(line: Line): DeferredQuery[Unit] = {
     val lineNode = N.Line(line, "l")
     val query = c""
-      .+(line.details.map(ld => GraphElements.constructMergeOrUpdateQuery(
+      .+(line.details.map(ld => GraphElements.constructCreateOrUpdateQuery(
         lineNode,
         Some(R.HasDetails()),
         Some(N.Details(ld, "ld")))).getOrElse(
-        GraphElements.constructDeleteNodeAndRelatedRelationshipQuery(
+        GraphElements.constructDeleteQuery(
           lineNode,
           R.HasDetails(Map(), "ldr"),
           N.Details(Map(), "ld")))).query[Unit]
