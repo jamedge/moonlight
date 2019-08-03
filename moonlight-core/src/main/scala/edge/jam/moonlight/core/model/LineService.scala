@@ -1,7 +1,6 @@
 package edge.jam.moonlight.core.model
 
-import edge.jam.moonlight.core.model.GraphElements.GraphElement
-import neotypes.{DeferredQuery, DeferredQueryBuilder, Driver, Session, Transaction}
+import neotypes.{DeferredQuery, Driver}
 
 import scala.concurrent.{ExecutionContext, Future}
 import neotypes.implicits._
@@ -25,21 +24,21 @@ class LineService(
   def addLine(line: Line): Future[Unit] = {
     neo4jDriver.writeSession { implicit session =>
       session.transact[Unit] { implicit tx =>
-        constructLineQuery(line)
-        constructLineDetailsQuery(line)
+        constructLineQuery(line).execute(tx)
+        constructLineDetailsQuery(line).execute(tx)
       }
     }
   }
 
-  private def constructLineQuery(line: Line)(implicit tx: Transaction[Future], session: Session[Future]): Future[Unit] = {
+  private def constructLineQuery(line: Line): DeferredQuery[Unit] = {
     val lineNode = N.Line(line, "l")
     val query = c""
       .+(GraphElements.constructMergeOrUpdateQuery(lineNode)).query[Unit]
     logQueryCreation(query)
-    query.execute(tx)
+    query
   }
 
-  private def constructLineDetailsQuery(line: Line)(implicit tx: Transaction[Future], session: Session[Future]): Future[Unit] = {
+  private def constructLineDetailsQuery(line: Line): DeferredQuery[Unit] = {
     val lineNode = N.Line(line, "l")
     val query = c""
       .+(line.details.map(ld => GraphElements.constructMergeOrUpdateQuery(
@@ -51,7 +50,7 @@ class LineService(
           R.HasDetails(Map(), "ldr"),
           N.Details(Map(), "ld")))).query[Unit]
     logQueryCreation(query)
-    query.execute(tx)
+    query
   }
 
   private def logQueryCreation(query: DeferredQuery[Unit]): Unit = {
