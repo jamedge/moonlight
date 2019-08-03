@@ -89,6 +89,32 @@ object GraphElements {
     }
   }
 
+  def constructMergeOrUpdateQuery(
+      node1: GraphElement,
+      relationship: Option[GraphElement] = None,
+      node2: Option[GraphElement] = None): DeferredQueryBuilder = {
+    relationship.flatMap { r =>
+      node2.map { n2 =>
+        c"MATCH" + node1.toSearchObject() +
+          c"MERGE" + node1.toVariableEnclosed() + r.toObject() + n2.toSearchObject() +
+          c"ON MATCH SET" + n2.toVariable() + c"=" + n2.fields() +
+          c"ON CREATE SET" + n2.toVariable() + c"=" + n2.fields()
+      }
+    }.getOrElse(
+      c"MERGE" + node1.toSearchObject() +
+        c"ON MATCH SET" + node1.toVariable() + c"=" + node1.fields() +
+        c"ON CREATE SET" + node1.toVariable() + c"=" + node1.fields()
+    )
+  }
+
+  def constructDeleteNodeAndRelatedRelationshipQuery(
+      matchNode: GraphElement,
+      relationshipToDelete: GraphElement,
+      nodeToDelete: GraphElement): DeferredQueryBuilder = {
+    c"MATCH" + matchNode.toObject() + relationshipToDelete.toSearchObject() + nodeToDelete.toSearchObject() +
+      c"DELETE" + relationshipToDelete.toVariable() + "," + nodeToDelete.toVariable()
+  }
+
   sealed class ElementType(
       val openMark: String,
       val endMark: String)

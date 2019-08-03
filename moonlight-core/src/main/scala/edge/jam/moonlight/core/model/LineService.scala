@@ -1,7 +1,7 @@
 package edge.jam.moonlight.core.model
 
 import edge.jam.moonlight.core.model.GraphElements.GraphElement
-import neotypes.{DeferredQueryBuilder, Driver}
+import neotypes.{DeferredQuery, DeferredQueryBuilder, Driver, Session, Transaction}
 
 import scala.concurrent.{ExecutionContext, Future}
 import neotypes.implicits._
@@ -23,59 +23,38 @@ class LineService(
   }
 
   def addLine(line: Line): Future[Unit] = {
-    neo4jDriver.writeSession { session =>
-      session.transact[Unit] { tx =>
-        val lineNode = N.Line(line, "l")
-        c""
-          .+(constructMergeOrUpdateQuery(lineNode))
-          .query[Unit].execute(tx)
-        c""
-          .+(line.details.map(ld => constructMergeOrUpdateQuery(
-            lineNode,
-            Some(R.HasDetails()),
-            Some(N.Details(ld, "ld")))).getOrElse(
-              constructDeleteNodeAndRelatedRelationshipQuery(
-                lineNode,
-                R.HasDetails(Map(), "ldr"),
-                N.Details(Map(), "ld"))))
-          .query[Unit].execute(tx)
+    neo4jDriver.writeSession { implicit session =>
+      session.transact[Unit] { implicit tx =>
+        constructLineQuery(line)
+        constructLineDetailsQuery(line)
       }
     }
   }
 
-  def logQueryCreation(query: DeferredQueryBuilder): Unit = {
-    val toExecute = query.query[Unit]
-    logger.debug(s"Creating query: ${toExecute.query} with params ${toExecute.params.map(p => s"${p._1}: ${p._2.toString}")}")
-  }
-
-  def constructMergeOrUpdateQuery(
-      node1: GraphElement,
-      relationship: Option[GraphElement] = None,
-      node2: Option[GraphElement] = None): DeferredQueryBuilder = {
-    val query = relationship.flatMap { r =>
-      node2.map { n2 =>
-        c"MATCH" + node1.toSearchObject() +
-          c"MERGE" + node1.toVariableEnclosed() + r.toObject() + n2.toSearchObject() +
-          c"ON MATCH SET" + n2.toVariable() + c"=" + n2.fields() +
-          c"ON CREATE SET" + n2.toVariable() + c"=" + n2.fields()
-      }
-    }.getOrElse(
-      c"MERGE" + node1.toSearchObject() +
-        c"ON MATCH SET" + node1.toVariable() + c"=" + node1.fields() +
-        c"ON CREATE SET" + node1.toVariable() + c"=" + node1.fields()
-    )
+  private def constructLineQuery(line: Line)(implicit tx: Transaction[Future], session: Session[Future]): Future[Unit] = {
+    val lineNode = N.Line(line, "l")
+    val query = c""
+      .+(GraphElements.constructMergeOrUpdateQuery(lineNode)).query[Unit]
     logQueryCreation(query)
-    query
+    query.execute(tx)
   }
 
-  def constructDeleteNodeAndRelatedRelationshipQuery(
-      matchNode: GraphElement,
-      relationshipToDelete: GraphElement,
-      nodeToDelete: GraphElement): DeferredQueryBuilder = {
-    val query = c"MATCH" + matchNode.toObject() + relationshipToDelete.toSearchObject() + nodeToDelete.toSearchObject() +
-      c"DELETE" + relationshipToDelete.toVariable() + "," + nodeToDelete.toVariable()
+  private def constructLineDetailsQuery(line: Line)(implicit tx: Transaction[Future], session: Session[Future]): Future[Unit] = {
+    val lineNode = N.Line(line, "l")
+    val query = c""
+      .+(line.details.map(ld => GraphElements.constructMergeOrUpdateQuery(
+        lineNode,
+        Some(R.HasDetails()),
+        Some(N.Details(ld, "ld")))).getOrElse(
+        GraphElements.constructDeleteNodeAndRelatedRelationshipQuery(
+          lineNode,
+          R.HasDetails(Map(), "ldr"),
+          N.Details(Map(), "ld")))).query[Unit]
     logQueryCreation(query)
-    query
+    query.execute(tx)
   }
 
+  private def logQueryCreation(query: DeferredQuery[Unit]): Unit = {
+    logger.debug(s"Creating query: ${query.query} with params ${query.params.map(p => s"${p._1}: ${p._2.toString}")}")
+  }
 }
