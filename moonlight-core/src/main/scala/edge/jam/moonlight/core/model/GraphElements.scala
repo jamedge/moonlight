@@ -11,36 +11,58 @@ object GraphElements {
       fieldsPairs: Map[String, String]
   ) {
 
+    /**
+     * Gets full object definition of a graph element.
+     * It contains variable, type and all defined fields.
+     * e.g. (l:Line {name: "test", owner: "John Doe"})
+     */
     def toObject(): DeferredQueryBuilder = {
       constructObject(fields())
     }
 
+    /**
+     * Gets search object of a graph element. Used to find it by name.
+     * It contains variable, type and name parameter if defined.
+     * e.g. (l:Line {name: "test"}) or (l:Line) if name is not defined
+     */
     def toSearchObject(): DeferredQueryBuilder = {
       fieldsPairs.get("name").map { name =>
         constructObject(constructFields(Map("name" -> name)))
       }.getOrElse(constructObject(c""))
     }
 
+    /**
+     * Gets variable of a graph element.
+     * e.g. l
+     */
     def toVariable(): DeferredQueryBuilder = {
       c"" + variable
     }
 
+    /**
+     * Gets variable enclosed in and object type of a graph element.
+     * e.g. (l)
+     */
     def toVariableEnclosed(): DeferredQueryBuilder = {
       c"" + s"${elementClass.elementType.openMark}$variable${elementClass.elementType.endMark}"
     }
 
+    /**
+     * Gets fields a graph element.
+     * e.g. {name: "test", owner: "John Doe"}
+     */
     def fields(): DeferredQueryBuilder = {
       constructFields(fieldsPairs)
     }
 
-    def constructObject(pairs: DeferredQueryBuilder): DeferredQueryBuilder = {
+    private def constructObject(pairs: DeferredQueryBuilder): DeferredQueryBuilder = {
       c"" +
         s"${elementClass.elementType.openMark}$variable:${elementClass.name}" +
         pairs +
         s"${elementClass.elementType.endMark}"
     }
 
-    def constructFields(pairs: Map[String, String]): DeferredQueryBuilder = {
+    private def constructFields(pairs: Map[String, String]): DeferredQueryBuilder = {
       def fold(pairs: Map[String, String], query: DeferredQueryBuilder): DeferredQueryBuilder = {
         if (pairs.isEmpty) {
           c"{" + query + c"}"

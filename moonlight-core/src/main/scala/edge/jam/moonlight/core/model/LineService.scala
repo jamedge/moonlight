@@ -33,16 +33,19 @@ class LineService(
           .+(line.details.map(ld => constructMergeOrUpdateQuery(
             QueryWrapper(lineNode),
             Some(QueryWrapper(R.HasDetails())),
-            Some(QueryWrapper(N.Details(ld, s"ld"))))).getOrElse(c"MATCH (l:Line) -[lds:HAS_DETAILS]-> (ld:Details) DELETE lds, ld"))
+            Some(QueryWrapper(N.Details(ld, "ld"))))).getOrElse(
+              constructDeleteNodeAndRelatedRelationshipQuery(
+                QueryWrapper(lineNode),
+                QueryWrapper(R.HasDetails(Map(), "ldr")),
+                QueryWrapper(N.Details(Map(), "ld")))))
           .query[Unit].execute(tx)
       }
     }
   }
 
-  def logQueryCreation(query: DeferredQueryBuilder): DeferredQueryBuilder = {
+  def logQueryCreation(query: DeferredQueryBuilder): Unit = {
     val toExecute = query.query[Unit]
     logger.debug(s"Creating query: ${toExecute.query} with params ${toExecute.params.map(p => s"${p._1}: ${p._2.toString}")}")
-    query
   }
 
   def constructMergeOrUpdateQuery(
@@ -62,7 +65,19 @@ class LineService(
         c"ON CREATE SET" + node1.v + c"=" + node1.f
     )
     logQueryCreation(query)
+    query
   }
+
+  def constructDeleteNodeAndRelatedRelationshipQuery(
+      matchNode: QueryWrapper,
+      relationshipToDelete: QueryWrapper,
+      nodeToDelete: QueryWrapper): DeferredQueryBuilder = {
+    val query = c"MATCH" + matchNode.o + relationshipToDelete.so + nodeToDelete.so +
+      c"DELETE" + relationshipToDelete.v + "," + nodeToDelete.v
+    logQueryCreation(query)
+    query
+  }
+
 }
 
 case class QueryWrapper(
