@@ -27,17 +27,17 @@ class LineService(
       session.transact[Unit] { tx =>
         val lineNode = N.Line(line, "l")
         c""
-          .+(constructMergeOrUpdateQuery(QueryWrapper(lineNode)))
+          .+(constructMergeOrUpdateQuery(lineNode))
           .query[Unit].execute(tx)
         c""
           .+(line.details.map(ld => constructMergeOrUpdateQuery(
-            QueryWrapper(lineNode),
-            Some(QueryWrapper(R.HasDetails())),
-            Some(QueryWrapper(N.Details(ld, "ld"))))).getOrElse(
+            lineNode,
+            Some(R.HasDetails()),
+            Some(N.Details(ld, "ld")))).getOrElse(
               constructDeleteNodeAndRelatedRelationshipQuery(
-                QueryWrapper(lineNode),
-                QueryWrapper(R.HasDetails(Map(), "ldr")),
-                QueryWrapper(N.Details(Map(), "ld")))))
+                lineNode,
+                R.HasDetails(Map(), "ldr"),
+                N.Details(Map(), "ld"))))
           .query[Unit].execute(tx)
       }
     }
@@ -49,61 +49,33 @@ class LineService(
   }
 
   def constructMergeOrUpdateQuery(
-      node1: QueryWrapper,
-      relationship: Option[QueryWrapper] = None,
-      node2: Option[QueryWrapper] = None): DeferredQueryBuilder = {
+      node1: GraphElement,
+      relationship: Option[GraphElement] = None,
+      node2: Option[GraphElement] = None): DeferredQueryBuilder = {
     val query = relationship.flatMap { r =>
       node2.map { n2 =>
-        c"MATCH" + node1.so +
-          c"MERGE" + node1.ve + r.o + n2.so +
-          c"ON MATCH SET" + n2.v + c"=" + n2.f +
-          c"ON CREATE SET" + n2.v + c"=" + n2.f
+        c"MATCH" + node1.toSearchObject() +
+          c"MERGE" + node1.toVariableEnclosed() + r.toObject() + n2.toSearchObject() +
+          c"ON MATCH SET" + n2.toVariable() + c"=" + n2.fields() +
+          c"ON CREATE SET" + n2.toVariable() + c"=" + n2.fields()
       }
     }.getOrElse(
-      c"MERGE" + node1.so +
-        c"ON MATCH SET" + node1.v + c"=" + node1.f +
-        c"ON CREATE SET" + node1.v + c"=" + node1.f
+      c"MERGE" + node1.toSearchObject() +
+        c"ON MATCH SET" + node1.toVariable() + c"=" + node1.fields() +
+        c"ON CREATE SET" + node1.toVariable() + c"=" + node1.fields()
     )
     logQueryCreation(query)
     query
   }
 
   def constructDeleteNodeAndRelatedRelationshipQuery(
-      matchNode: QueryWrapper,
-      relationshipToDelete: QueryWrapper,
-      nodeToDelete: QueryWrapper): DeferredQueryBuilder = {
-    val query = c"MATCH" + matchNode.o + relationshipToDelete.so + nodeToDelete.so +
-      c"DELETE" + relationshipToDelete.v + "," + nodeToDelete.v
+      matchNode: GraphElement,
+      relationshipToDelete: GraphElement,
+      nodeToDelete: GraphElement): DeferredQueryBuilder = {
+    val query = c"MATCH" + matchNode.toObject() + relationshipToDelete.toSearchObject() + nodeToDelete.toSearchObject() +
+      c"DELETE" + relationshipToDelete.toVariable() + "," + nodeToDelete.toVariable()
     logQueryCreation(query)
     query
   }
 
-}
-
-case class QueryWrapper(
-    graphElement: GraphElement,
-    alreadyExistsInQuery: Boolean = false) {
-  def c: DeferredQueryBuilder = {
-    if (alreadyExistsInQuery) ve else o
-  }
-
-  def ve: DeferredQueryBuilder = {
-    graphElement.toVariableEnclosed()
-  }
-
-  def v: DeferredQueryBuilder = {
-    graphElement.toVariable()
-  }
-
-  def o: DeferredQueryBuilder = {
-    graphElement.toObject()
-  }
-
-  def so: DeferredQueryBuilder = {
-    graphElement.toSearchObject()
-  }
-
-  def f: DeferredQueryBuilder = {
-    graphElement.fields()
-  }
 }
