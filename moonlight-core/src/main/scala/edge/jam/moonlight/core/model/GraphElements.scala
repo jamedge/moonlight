@@ -92,13 +92,18 @@ object GraphElements {
   def constructCreateOrUpdateQuery(
       node1: GraphElement,
       relationship: Option[GraphElement] = None,
-      node2: Option[GraphElement] = None): DeferredQueryBuilder = {
+      node2: Option[GraphElement] = None,
+      createDuplicates: Boolean = false,
+      matchArgument: Option[DeferredQueryBuilder] = None
+  ): DeferredQueryBuilder = {
     relationship.flatMap { r =>
       node2.map { n2 =>
-        c"MATCH" + node1.toSearchObject() +
-          c"MERGE" + node1.toVariableEnclosed() + r.toObject() + n2.toSearchObject() +
+        val specific = if (createDuplicates) n2.toObject() else n2.toSearchObject()
+        c"MATCH" + matchArgument.getOrElse(node1.toSearchObject()) +
+          c"MERGE" + specific +
           c"ON MATCH SET" + n2.toVariable() + c"=" + n2.fields() +
-          c"ON CREATE SET" + n2.toVariable() + c"=" + n2.fields()
+          c"ON CREATE SET" + n2.toVariable() + c"=" + n2.fields() +
+          c"MERGE" + node1.toVariableEnclosed() + r.toObject() + n2.toVariableEnclosed()
       }
     }.getOrElse(
       c"MERGE" + node1.toSearchObject() +
@@ -130,6 +135,7 @@ object GraphElements {
   object ElementClass {
     // Nodes
     case object Line extends ElementClass("Line", ElementType.Node)
+    case object IO extends ElementClass("IO", ElementType.Node)
     case object Details extends ElementClass("Details", ElementType.Node)
     case object Storage extends ElementClass("Storage", ElementType.Node)
     case object Process extends ElementClass("Process", ElementType.Node)
@@ -155,19 +161,25 @@ object GraphElements {
 }
 
 object Nodes {
-  import edge.jam.moonlight.core.model.{Line => ModelLine}
+  import edge.jam.moonlight.core.model.{Line => ModelLine, IOElement => ModelIOElement}
 
   case class Line(fieldPairs: Map[String, String], variablePrefix: String = "")
     extends GraphElement(ElementClass.Line, GraphElements.generateVariable(variablePrefix), fieldPairs)
   object Line {
     def apply(from: ModelLine, variablePrefix: String): Line = {
-      val fields = Map(
-        "name" -> from.name,
-        "owner" -> from.owner.getOrElse(""),
-        "purpose" -> from.purpose.getOrElse(""),
-        "notes" -> s"[${from.notes.getOrElse(List()).map(el => s""""$el"""").mkString(", ")}]"
-      )
+      val fields = from.fieldsMap()
       Line(fields, variablePrefix)
+    }
+  }
+
+  case class IO(fieldPairs: Map[String, String], variablePrefix: String = "")
+    extends GraphElement(ElementClass.IO, GraphElements.generateVariable(variablePrefix), fieldPairs)
+  object IO {
+    def apply(from: ModelIOElement, variablePrefix: String): IO = {
+      val fields = from.fieldsMap() ++ Map(
+        "locationRelativePath" -> from.locationRelativePath.getOrElse("")
+      )
+      IO(fields, variablePrefix)
     }
   }
 
@@ -204,32 +216,32 @@ object Relationships {
     extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasInput(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasInput, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasOutput(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasOutput, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasStorage(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasStorage, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class IsProcessedBy(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.IsProcessedBy, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasProcessingFramework(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasProcessingFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasMetrics(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasMetrics, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasMetricsFramework(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasMetricsFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasAlert(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasAlert, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasAlertsFramework(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasAlertsFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class HasCode(fieldsPairs: Map[String, String] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.HasCode, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 }

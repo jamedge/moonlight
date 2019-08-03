@@ -24,7 +24,7 @@ case class IOElement(
     notes: Option[List[String]],
     details: Option[Map[String, String]],
     storage: Option[Storage],
-    locationRealtivePath: Option[String]
+    locationRelativePath: Option[String]
 ) extends Metadata
 
 case class Storage(

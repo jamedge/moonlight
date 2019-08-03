@@ -26,6 +26,15 @@ class LineService(
       session.transact[Unit] { implicit tx =>
         constructLineQuery(line).execute(tx)
         constructLineDetailsQuery(line).execute(tx)
+        line.io.flatMap { io =>
+          io.inputs.flatMap { input =>
+            constructInputQuery(line, input).execute(tx)
+            io.outputs.map { output =>
+              constructOutputQuery(line, input, output).execute(tx)
+            }
+          }
+        }
+        Future()
       }
     }
   }
@@ -44,11 +53,37 @@ class LineService(
       .+(line.details.map(ld => GraphElements.constructCreateOrUpdateQuery(
         lineNode,
         Some(R.HasDetails()),
-        Some(N.Details(ld, "ld")))).getOrElse(
+        Some(N.Details(ld, "ld")),
+        true)).getOrElse(
         GraphElements.constructDeleteQuery(
           lineNode,
           R.HasDetails(Map(), "ldr"),
           N.Details(Map(), "ld")))).query[Unit]
+    logQueryCreation(query)
+    query
+  }
+
+  private def constructInputQuery(line: Line, input: IOElement): DeferredQuery[Unit] = {
+    val lineNode = N.Line(line, "l")
+    val query = c""
+      .+(GraphElements.constructCreateOrUpdateQuery(
+        lineNode,
+        Some(R.HasInput()),
+        Some(N.IO(input, "i")))).query[Unit]
+    logQueryCreation(query)
+    query
+  }
+
+  private def constructOutputQuery(line: Line, input: IOElement, output: IOElement): DeferredQuery[Unit] = {
+    val lineNode = N.Line(line, "l")
+    val inputNode = N.IO(input, "i")
+    val outputNode = N.IO(output, "o")
+    val query = c""
+      .+(GraphElements.constructCreateOrUpdateQuery(
+        inputNode,
+        Some(R.HasOutput()),
+        Some(N.IO(output, "o"))
+      )).query[Unit]
     logQueryCreation(query)
     query
   }
