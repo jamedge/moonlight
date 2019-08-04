@@ -32,6 +32,7 @@ class LineService(
             io.outputs.map { output =>
               constructOutputQuery(line, input, output).execute(tx)
             }
+            // TODO: add pruning of all other inputs and outputs if they are not connected to some other node
           }
         }
         Future()

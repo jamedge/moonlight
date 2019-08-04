@@ -93,17 +93,23 @@ object GraphElements {
       node1: GraphElement,
       relationship: Option[GraphElement] = None,
       node2: Option[GraphElement] = None,
-      createDuplicates: Boolean = false,
+      createDuplicateNode2IfPathNotFound: Boolean = false,
       matchArgument: Option[DeferredQueryBuilder] = None
   ): DeferredQueryBuilder = {
     relationship.flatMap { r =>
       node2.map { n2 =>
-        val specific = if (createDuplicates) n2.toObject() else n2.toSearchObject()
-        c"MATCH" + matchArgument.getOrElse(node1.toSearchObject()) +
-          c"MERGE" + specific +
-          c"ON MATCH SET" + n2.toVariable() + c"=" + n2.fields() +
-          c"ON CREATE SET" + n2.toVariable() + c"=" + n2.fields() +
-          c"MERGE" + node1.toVariableEnclosed() + r.toObject() + n2.toVariableEnclosed()
+        if (createDuplicateNode2IfPathNotFound) {
+          c"MATCH" + matchArgument.getOrElse(node1.toSearchObject()) +
+            c"MERGE" + node1.toVariableEnclosed() + r.toObject() + n2.toSearchObject() +
+            c"ON MATCH SET" + n2.toVariable() + c"=" + n2.fields() +
+            c"ON CREATE SET" + n2.toVariable() + c"=" + n2.fields()
+        } else {
+          c"MATCH" + matchArgument.getOrElse(node1.toSearchObject()) +
+            c"MERGE" + n2.toSearchObject() +
+            c"ON MATCH SET" + n2.toVariable() + c"=" + n2.fields() +
+            c"ON CREATE SET" + n2.toVariable() + c"=" + n2.fields() +
+            c"MERGE" + node1.toVariableEnclosed() + r.toObject() + n2.toVariableEnclosed()
+        }
       }
     }.getOrElse(
       c"MERGE" + node1.toSearchObject() +
