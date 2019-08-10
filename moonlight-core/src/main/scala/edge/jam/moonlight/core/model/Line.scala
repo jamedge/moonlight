@@ -95,7 +95,7 @@ case class AlertsFramework(
     locationPath: Option[String]
 ) extends Metadata
 
-case class Code( // TODO: update cypher to support Code metadata addition
+case class Code(
     name: String,
     owner: Option[String],
     purpose: Option[String],

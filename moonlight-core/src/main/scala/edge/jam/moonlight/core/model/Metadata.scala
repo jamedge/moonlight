@@ -7,9 +7,9 @@ trait Metadata {
   def notes: Option[List[String]]
   def details: Option[Map[String, String]]
 
-  def fieldsMap(): Map[String, String] = Map(
+  def fieldsMap(): Map[String, _] = Map(
     "name" -> name,
     "owner" -> owner.getOrElse(""),
     "purpose" -> purpose.getOrElse(""),
-    "notes" -> s"[${notes.getOrElse(List()).map(el => s""""$el"""").mkString(", ")}]")
+    "notes" -> notes.getOrElse(List()))
 }
