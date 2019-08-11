@@ -1,6 +1,7 @@
 package edge.jam.moonlight.core.model
 
-import neotypes.{DeferredQuery, Driver}
+import edge.jam.moonlight.core.model.GraphElements.ElementType
+import neotypes.{DeferredQuery, DeferredQueryBuilder, Driver}
 
 import scala.concurrent.{ExecutionContext, Future}
 import neotypes.implicits._
@@ -29,15 +30,71 @@ class LineService(
         line.io.flatMap { io =>
           io.inputs.flatMap { input =>
             constructInputQuery(line, input).execute(tx)
+            val outputsGenerated = GraphElements.foldList(io.outputs.map(el => c"${el.name}"))
+            constructMutualOutputsQuery(input, outputsGenerated).list(tx).map { foundOutputs =>
+              if (foundOutputs.nonEmpty) {
+                val foundOutputsGenerated = GraphElements.foldList(foundOutputs.map(el => c"${el.name}"))
+                val allOutputsGenerated = GraphElements.foldList((io.outputs ++ foundOutputs).map(el => c"${el.name}"))
+                constructDetachOutputs(input, foundOutputsGenerated).execute(tx)
+                constructDeleteOutputs(input, allOutputsGenerated).execute(tx)
+              } else {
+                constructDeleteOutputs(input, outputsGenerated).execute(tx)
+              }
+            }
             io.outputs.map { output =>
               constructOutputQuery(line, input, output).execute(tx)
             }
-            // TODO: add pruning of all other inputs and outputs if they are not connected to some other node
+            // TODO: add pruning of all other inputs if they are not connected to the line
           }
         }
         Future()
       }
     }
+  }
+
+  // TODO: eztract all DDL keywards to GraphElements
+  private def constructMutualOutputsQuery(input: IOElement, outputsGenerated: DeferredQueryBuilder): DeferredQuery[IOElement] = {
+//    val query = c"MATCH (i:IO {name: ${input.name}}) -[:HAS_OUTPUT]-> (o:IO) <-[:HAS_OUTPUT]- (others:IO)" + c"WHERE NOT o.name IN [" + outputsGenerated + c"] AND others.name <> ${input.name} RETURN o"
+    val (i, o, others) = (
+      N.IO(input, "i"),
+      N.IO("o"),
+      N.IO("others"))
+    val (rHasOutputRight, rHasOutputLeft) = (
+      R.HasOutput(elementType = ElementType.RelationshipRight),
+      R.HasOutput(elementType = ElementType.RelationshipLeft))
+    val query = (c"MATCH" + i.toSearchObject() + rHasOutputRight.toAnyObjectOfType() + o.toAnyObjectOfType() + rHasOutputLeft.toAnyObjectOfType() + others.toAnyObjectOfType() +
+      c"WHERE NOT" + o.toVariableWithField("name") + c"IN" + outputsGenerated + c"AND" + others.toVariableWithField("name") + c"<> ${input.name}" +
+      c"RETURN" + o.toVariable()).query[IOElement]
+    logQueryCreation(query)
+    query
+  }
+
+  // TODO: eztract all DDL keywards to GraphElements
+  private def constructDetachOutputs(input: IOElement, foundOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
+//    val query = (c"""MATCH (i:IO {name: ${input.name}}) -[r:HAS_OUTPUT]-> (o:IO) WHERE o.name IN [""" + foundOutputsGenerated + c"] DELETE r").query[Unit]
+    val (i, o) = (
+      N.IO(input, "i"),
+      N.IO("o"))
+    val r = R.HasOutput(variablePrefix = "r")
+    val query = (c"MATCH" + i.toSearchObject() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
+      c"WHERE" + o.toVariableWithField("name") + c"IN" + foundOutputsGenerated +
+      c"DELETE" + r.toVariable()).query[Unit]
+    logQueryCreation(query)
+    query
+  }
+
+  // TODO: eztract all DDL keywards to GraphElements
+  private def constructDeleteOutputs(input: IOElement, existingOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
+//    val query = (c"""MATCH (i:IO {name: ${input.name}}) -[r:HAS_OUTPUT]-> (o:IO) WHERE NOT o.name IN [""" + existingOutputsGenerated + c"] DELETE r,o").query[Unit]
+    val (i, o) = (
+      N.IO(input, "i"),
+      N.IO("o"))
+    val r = R.HasOutput(variablePrefix = "r")
+    val query = (c"MATCH" + i.toSearchObject() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
+      c"WHERE NOT" + o.toVariableWithField("name") + c"IN" + existingOutputsGenerated +
+      c"DELETE" + r.toVariable() + c"," + o.toVariable()).query[Unit]
+    logQueryCreation(query)
+    query
   }
 
   private def constructLineQuery(line: Line): DeferredQuery[Unit] = {
@@ -89,7 +146,7 @@ class LineService(
     query
   }
 
-  private def logQueryCreation(query: DeferredQuery[Unit]): Unit = {
+  private def logQueryCreation(query: DeferredQuery[_]): Unit = {
     logger.debug(s"Creating query: ${query.query} with params ${query.params.map(p => s"${p._1}: ${p._2.toString}")}")
   }
 }

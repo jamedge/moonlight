@@ -1,6 +1,6 @@
 package edge.jam.moonlight.core.model
 
-import edge.jam.moonlight.core.model.GraphElements.{ElementClass, GraphElement}
+import edge.jam.moonlight.core.model.GraphElements.{ElementClass, ElementType, GraphElement}
 import neotypes.DeferredQueryBuilder
 import neotypes.implicits._
 
@@ -28,7 +28,15 @@ object GraphElements {
     def toSearchObject(): DeferredQueryBuilder = {
       fieldsPairs.get("name").map { name =>
         constructObject(constructFields(Map("name" -> name)))
-      }.getOrElse(constructObject(c""))
+      }.getOrElse(toAnyObjectOfType())
+    }
+
+    /**
+     * Gets object of a graph element with just its type. Used to find all objects of that type.
+     * e.g. (l:Line)
+     */
+    def toAnyObjectOfType(): DeferredQueryBuilder = {
+      constructObject(c"")
     }
 
     /**
@@ -48,6 +56,18 @@ object GraphElements {
     }
 
     /**
+     * Gets variable with the specified field.
+     * e.g. l.name
+     */
+    def toVariableWithField(fieldName: String): DeferredQueryBuilder = {
+      if (fieldsPairs.contains(fieldName)) {
+        c"" + s"$variable.$fieldName"
+      } else {
+        throw new IllegalAccessException(s"Field name $fieldName of the ${elementClass.name} doesn't exist!")
+      }
+    }
+
+    /**
      * Gets fields a graph element.
      * e.g. {name: "test", owner: "John Doe"}
      */
@@ -63,34 +83,42 @@ object GraphElements {
     }
 
     private def constructFields(pairs: Map[String, _]): DeferredQueryBuilder = {
-      def foldList(elements: List[DeferredQueryBuilder], query: DeferredQueryBuilder): DeferredQueryBuilder = {
-        if (elements.isEmpty) {
-          c"[" + query + c"]"
-        } else {
-          val separator = if (elements.tail.isEmpty) "" else ", "
-          foldList(elements.tail, query + elements.head + separator)
-        }
-      }
-      def foldMap(pairs: Map[String, _], query: DeferredQueryBuilder): DeferredQueryBuilder = {
-        if (pairs.isEmpty) {
-          c"{" + query + c"}"
-        } else {
-          val name = pairs.head._1
-          val value = pairs.head._2 match {
-            case element: String => c"$element"
-            case list: List[_] => foldList(list.map(e => c"${e.toString}"), c"")
-            case _ => c""
-          }
-          val separator = if (pairs.tail.isEmpty) "" else ", "
-          foldMap(pairs.tail, query + s"$name:" + value + separator)
-        }
-      }
-      val allFields = foldMap(pairs, c"")
+      val allFields = foldMap(pairs)
       if (pairs.nonEmpty) {
         allFields
       } else
         c""
     }
+  }
+
+  def foldList(list: List[DeferredQueryBuilder]): DeferredQueryBuilder = {
+    def fold(elements: List[DeferredQueryBuilder], acc: DeferredQueryBuilder): DeferredQueryBuilder = {
+      if (elements.isEmpty) {
+        c"[" + acc + c"]"
+      } else {
+        val separator = if (elements.tail.isEmpty) "" else ", "
+        fold(elements.tail, acc + elements.head + separator)
+      }
+    }
+    fold(list, c"")
+  }
+
+  def foldMap(map: Map[String, _]): DeferredQueryBuilder = {
+    def fold(pairs: Map[String, _], acc: DeferredQueryBuilder): DeferredQueryBuilder = {
+      if (pairs.isEmpty) {
+        c"{" + acc + c"}"
+      } else {
+        val name = pairs.head._1
+        val value = pairs.head._2 match {
+          case element: String => c"$element"
+          case list: List[_] => foldList(list.map(e => c"${e.toString}"))
+          case _ => c""
+        }
+        val separator = if (pairs.tail.isEmpty) "" else ", "
+        fold(pairs.tail, acc + s"$name:" + value + separator)
+      }
+    }
+    fold(map, c"")
   }
 
   def generateVariable(prefix: String): String = {
@@ -151,6 +179,7 @@ object GraphElements {
 
   sealed class ElementClass(val name: String, val elementType: ElementType)
   object ElementClass {
+
     // Nodes
     case object Line extends ElementClass("Line", ElementType.Node)
     case object IO extends ElementClass("IO", ElementType.Node)
@@ -163,23 +192,26 @@ object GraphElements {
     case object Alert extends ElementClass("Alert", ElementType.Node)
     case object AlertsFramework extends ElementClass("AlertFramework", ElementType.Node)
     case object Code extends ElementClass("Code", ElementType.Node)
+
     // Relationships
-    case object HasDetails extends ElementClass("HAS_DETAILS", ElementType.RelationshipRight)
-    case object HasInput extends ElementClass("HAS_INPUT", ElementType.RelationshipRight)
-    case object HasOutput extends ElementClass("HAS_OUTPUT", ElementType.RelationshipRight)
-    case object HasStorage extends ElementClass("HAS_STORAGE", ElementType.RelationshipRight)
-    case object IsProcessedBy extends ElementClass("IS_PROCESSED_BY", ElementType.RelationshipRight)
-    case object HasProcessingFramework extends ElementClass("HAS_PROCESSING_FRAMEWORK", ElementType.RelationshipRight)
-    case object HasMetrics extends ElementClass("HAS_METRIC", ElementType.RelationshipRight)
-    case object HasMetricsFramework extends ElementClass("HAS_METRICS_FRAMEWORK", ElementType.RelationshipRight)
-    case object HasAlert extends ElementClass("HAS_ALERT", ElementType.RelationshipRight)
-    case object HasAlertsFramework extends ElementClass("HAS_ALERTS_FRAMEWORK", ElementType.RelationshipRight)
-    case object HasCode extends ElementClass("HAS_CODE", ElementType.RelationshipRight)
+    case class HasDetails(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_DETAILS", elementType)
+    case class HasInput(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_INPUT", elementType)
+    case class HasOutput(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_OUTPUT", elementType)
+    case class HasStorage(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_STORAGE", elementType)
+    case class IsProcessedBy(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("IS_PROCESSED_BY", elementType)
+    case class HasProcessingFramework(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_PROCESSING_FRAMEWORK", elementType)
+    case class HasMetrics(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_METRIC", elementType)
+    case class HasMetricsFramework(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_METRICS_FRAMEWORK", elementType)
+    case class HasAlert(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_ALERT", elementType)
+    case class HasAlertsFramework(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_ALERTS_FRAMEWORK", elementType)
+    case class HasCode(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_CODE", elementType)
   }
 }
 
 object Nodes {
-  import edge.jam.moonlight.core.model.{Line => ModelLine, IOElement => ModelIOElement}
+  import edge.jam.moonlight.core.model.{
+    Line => ModelLine,
+    IOElement => ModelIOElement}
 
   case class Line(fieldPairs: Map[String, _], variablePrefix: String = "")
     extends GraphElement(ElementClass.Line, GraphElements.generateVariable(variablePrefix), fieldPairs)
@@ -198,6 +230,9 @@ object Nodes {
         "locationRelativePath" -> from.locationRelativePath.getOrElse("")
       )
       IO(fields, variablePrefix)
+    }
+    def apply(anyObjectVariable: String): IO = {
+      IO(IOElement("", None, None, None, None, None, None), anyObjectVariable)
     }
   }
 
@@ -230,36 +265,36 @@ object Nodes {
 }
 
 object Relationships {
-  case class HasDetails(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasDetails, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasDetails(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasDetails(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasInput(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasInput, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasInput(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasInput(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasOutput(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasOutput, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasOutput(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasOutput(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasStorage(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasStorage, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasStorage(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasStorage(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class IsProcessedBy(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.IsProcessedBy, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class IsProcessedBy(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.IsProcessedBy(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasProcessingFramework(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasProcessingFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasProcessingFramework(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasProcessingFramework(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasMetrics(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasMetrics, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasMetrics(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasMetrics(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasMetricsFramework(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasMetricsFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasMetricsFramework(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasMetricsFramework(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasAlert(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasAlert, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasAlert(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasAlert(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasAlertsFramework(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasAlertsFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasAlertsFramework(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasAlertsFramework(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class HasCode(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "")
-    extends GraphElement(ElementClass.HasCode, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  case class HasCode(fieldsPairs: Map[String, _] = Map(), variablePrefix: String = "", elementType: ElementType = ElementType.RelationshipRight)
+    extends GraphElement(ElementClass.HasCode(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 }
