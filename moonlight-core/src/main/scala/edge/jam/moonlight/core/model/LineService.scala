@@ -152,9 +152,9 @@ class LineService(
         Some(N.IO(output, "o")),
         false,
         None,
-        Some(c"ON MATCH SET" + relationship.toVariableWithNewField("from_lines") +
-          c"=" + relationship.toVariableWithNewField("from_lines") + "+" + c"${line.name}" +
-          c"ON CREATE SET" + relationship.toVariableWithNewField("from_lines") + "=" + c"[${line.name}]"
+        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + relationship.toVariableWithNewField("from_lines") +
+          c"THEN" + relationship.toVariable() + c"END).from_lines =" + relationship.toVariableWithNewField("from_lines") + c"[${line.name}]" +
+          c"ON CREATE SET" + relationship.toVariableWithNewField("from_lines") + c"= ${line.name}"
         )
       )).query[Unit]
     logQueryCreation(query)
