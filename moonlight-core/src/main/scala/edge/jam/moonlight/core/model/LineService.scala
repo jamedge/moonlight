@@ -52,7 +52,7 @@ class LineService(
     }
   }
 
-  // TODO: eztract all DDL keywards to GraphElements
+  // TODO: extract all DDL keywords to GraphElements
   private def constructMutualOutputsQuery(input: IOElement, outputsGenerated: DeferredQueryBuilder): DeferredQuery[IOElement] = {
 //    val query = c"MATCH (i:IO {name: ${input.name}}) -[:HAS_OUTPUT]-> (o:IO) <-[:HAS_OUTPUT]- (others:IO)" + c"WHERE NOT o.name IN [" + outputsGenerated + c"] AND others.name <> ${input.name} RETURN o"
     val (i, o, others) = (
@@ -69,7 +69,7 @@ class LineService(
     query
   }
 
-  // TODO: eztract all DDL keywards to GraphElements
+  // TODO: extract all DDL keywords to GraphElements
   private def constructDetachOutputs(input: IOElement, foundOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
 //    val query = (c"""MATCH (i:IO {name: ${input.name}}) -[r:HAS_OUTPUT]-> (o:IO) WHERE o.name IN [""" + foundOutputsGenerated + c"] DELETE r").query[Unit]
     val (i, o) = (
@@ -83,7 +83,7 @@ class LineService(
     query
   }
 
-  // TODO: eztract all DDL keywards to GraphElements
+  // TODO: extract all DDL keywords to GraphElements
   private def constructDeleteOutputs(input: IOElement, existingOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
 //    val query = (c"""MATCH (i:IO {name: ${input.name}}) -[r:HAS_OUTPUT]-> (o:IO) WHERE NOT o.name IN [""" + existingOutputsGenerated + c"] DELETE r,o").query[Unit]
     val (i, o) = (
@@ -136,11 +136,18 @@ class LineService(
     val lineNode = N.Line(line, "l")
     val inputNode = N.IO(input, "i")
     val outputNode = N.IO(output, "o")
+    val relationship = R.HasOutput(Map(), "r")
     val query = c""
       .+(GraphElements.constructCreateOrUpdateQuery(
         inputNode,
-        Some(R.HasOutput()),
-        Some(N.IO(output, "o"))
+        Some(relationship),
+        Some(N.IO(output, "o")),
+        false,
+        None,
+        Some(c"ON MATCH SET" + relationship.toVariableWithNewField("from_lines") +
+          c"=" + relationship.toVariableWithNewField("from_lines") + "+" + c"${line.name}" +
+          c"ON CREATE SET" + relationship.toVariableWithNewField("from_lines") + "=" + c"[${line.name}]"
+        )
       )).query[Unit]
     logQueryCreation(query)
     query
