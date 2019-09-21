@@ -35,10 +35,10 @@ class LineService(
               if (foundOutputs.nonEmpty) {
                 val foundOutputsGenerated = GraphElements.foldList(foundOutputs.map(el => c"${el.name}"))
                 val allOutputsGenerated = GraphElements.foldList((io.outputs ++ foundOutputs).map(el => c"${el.name}"))
-                constructDetachOutputs(input, foundOutputsGenerated).execute(tx)
-                constructDeleteOutputs(input, allOutputsGenerated).execute(tx)
+                constructDetachOutputs(line, input, foundOutputsGenerated).execute(tx)
+                constructDeleteOutputs(line, input, allOutputsGenerated).execute(tx)
               } else {
-                constructDeleteOutputs(input, outputsGenerated).execute(tx)
+                constructDeleteOutputs(line, input, outputsGenerated).execute(tx)
               }
             }
             io.outputs.map { output =>
@@ -53,16 +53,14 @@ class LineService(
   }
 
   // TODO: extract all DDL keywords to GraphElements
+  // finds IO nodes that have relationship with other IO nodes (other then existing one)
   private def constructMutualOutputsQuery(input: IOElement, outputsGenerated: DeferredQueryBuilder): DeferredQuery[IOElement] = {
-//    val query = c"MATCH (i:IO {name: ${input.name}}) -[:HAS_OUTPUT]-> (o:IO) <-[:HAS_OUTPUT]- (others:IO)" + c"WHERE NOT o.name IN [" + outputsGenerated + c"] AND others.name <> ${input.name} RETURN o"
     val (i, o, others) = (
       N.IO(input, "i"),
       N.IO("o"),
       N.IO("others"))
-    val (rHasOutputRight, rHasOutputLeft) = (
-      R.HasOutput(elementType = ElementType.RelationshipRight),
-      R.HasOutput(elementType = ElementType.RelationshipLeft))
-    val query = (c"MATCH" + i.toSearchObject() + rHasOutputRight.toAnyObjectOfType() + o.toAnyObjectOfType() + rHasOutputLeft.toAnyObjectOfType() + others.toAnyObjectOfType() +
+    val rHasOutputRight = R.HasOutput(elementType = ElementType.RelationshipRight)
+    val query = (c"MATCH" + i.toSearchObject() + rHasOutputRight.toAnyObjectOfType() + o.toAnyObjectOfType() + c"--" + others.toAnyObjectOfType() +
       c"WHERE NOT" + o.toVariableWithField("name") + c"IN" + outputsGenerated + c"AND" + others.toVariableWithField("name") + c"<> ${input.name}" +
       c"RETURN" + o.toVariable()).query[IOElement]
     logQueryCreation(query)
@@ -70,28 +68,38 @@ class LineService(
   }
 
   // TODO: extract all DDL keywords to GraphElements
-  private def constructDetachOutputs(input: IOElement, foundOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
-//    val query = (c"""MATCH (i:IO {name: ${input.name}}) -[r:HAS_OUTPUT]-> (o:IO) WHERE o.name IN [""" + foundOutputsGenerated + c"] DELETE r").query[Unit]
+  // detaches a relationship with mutual output if it's created by this line and no others or removes line name from the "from_lines" property of the relationship
+  private def constructDetachOutputs(line: Line, input: IOElement, foundOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
     val (i, o) = (
       N.IO(input, "i"),
       N.IO("o"))
     val r = R.HasOutput(variablePrefix = "r")
     val query = (c"MATCH" + i.toSearchObject() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
       c"WHERE" + o.toVariableWithField("name") + c"IN" + foundOutputsGenerated +
+      c"AND ${line.name} IN" + r.toVariableWithNewField("from_lines") +
+      c"SET" + r.toVariableWithNewField("from_lines") + c"= [x IN" + r.toVariableWithNewField("from_lines") + c" WHERE x <> ${line.name}]" +
+      c"WITH" + i.toVariable() + c"MATCH" + i.toVariableEnclosed() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
+      c"WHERE" + o.toVariableWithField("name") + c"IN" + foundOutputsGenerated +
+      c"AND" + r.toVariableWithNewField("from_lines") + c"= []" +
       c"DELETE" + r.toVariable()).query[Unit]
     logQueryCreation(query)
     query
   }
 
   // TODO: extract all DDL keywords to GraphElements
-  private def constructDeleteOutputs(input: IOElement, existingOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
-//    val query = (c"""MATCH (i:IO {name: ${input.name}}) -[r:HAS_OUTPUT]-> (o:IO) WHERE NOT o.name IN [""" + existingOutputsGenerated + c"] DELETE r,o").query[Unit]
+  // deletes an output that has no other connections if it's used only by selected line; otherwise just removes line name from the "from_lines" property of the relationship
+  private def constructDeleteOutputs(line: Line, input: IOElement, existingOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
     val (i, o) = (
       N.IO(input, "i"),
       N.IO("o"))
     val r = R.HasOutput(variablePrefix = "r")
     val query = (c"MATCH" + i.toSearchObject() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
       c"WHERE NOT" + o.toVariableWithField("name") + c"IN" + existingOutputsGenerated +
+      c"AND ${line.name} IN" + r.toVariableWithNewField("from_lines") +
+      c"SET" + r.toVariableWithNewField("from_lines") + c"= [x IN" + r.toVariableWithNewField("from_lines") + c" WHERE x <> ${line.name}]" +
+      c"WITH" + i.toVariable() + c"MATCH" + i.toVariableEnclosed() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
+      c"WHERE NOT" + o.toVariableWithField("name") + c"IN" + existingOutputsGenerated +
+      c"AND" + r.toVariableWithNewField("from_lines") + c"= []" +
       c"DELETE" + r.toVariable() + c"," + o.toVariable()).query[Unit]
     logQueryCreation(query)
     query
