@@ -154,7 +154,7 @@ class LineService(
         None,
         Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + relationship.toVariableWithNewField("fromLines") +
           c"THEN" + relationship.toVariable() + c"END).fromLines =" + relationship.toVariableWithNewField("fromLines") + c"[${line.name}]" +
-          c"ON CREATE SET" + relationship.toVariableWithNewField("fromLines") + c"= ${line.name}"
+          c"ON CREATE SET" + relationship.toVariableWithNewField("fromLines") + c"= [${line.name}]"
         )
       )).query[Unit]
     logQueryCreation(query)
@@ -162,6 +162,6 @@ class LineService(
   }
 
   private def logQueryCreation(query: DeferredQuery[_]): Unit = {
-    logger.debug(s"Creating query: ${query.query} with params ${query.params.map(p => s"${p._1}: ${p._2.toString}")}")
+    logger.debug(s"Creating query:\n${query.query}\nwith params:\n${query.params.map(p => s"${p._1}: ${p._2.toString}")}")
   }
 }
