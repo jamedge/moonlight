@@ -68,7 +68,7 @@ class LineService(
   }
 
   // TODO: extract all DDL keywords to GraphElements
-  // detaches a relationship with mutual output if it's created by this line and no others or removes line name from the "from_lines" property of the relationship
+  // detaches a relationship with mutual output if it's created by this line and no others or removes line name from the "fromLines" property of the relationship
   private def constructDetachOutputs(line: Line, input: IOElement, foundOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
     val (i, o) = (
       N.IO(input, "i"),
@@ -76,18 +76,18 @@ class LineService(
     val r = R.HasOutput(variablePrefix = "r")
     val query = (c"MATCH" + i.toSearchObject() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
       c"WHERE" + o.toVariableWithField("name") + c"IN" + foundOutputsGenerated +
-      c"AND ${line.name} IN" + r.toVariableWithNewField("from_lines") +
-      c"SET" + r.toVariableWithNewField("from_lines") + c"= [x IN" + r.toVariableWithNewField("from_lines") + c" WHERE x <> ${line.name}]" +
+      c"AND ${line.name} IN" + r.toVariableWithNewField("fromLines") +
+      c"SET" + r.toVariableWithNewField("fromLines") + c"= [x IN" + r.toVariableWithNewField("fromLines") + c" WHERE x <> ${line.name}]" +
       c"WITH" + i.toVariable() + c"MATCH" + i.toVariableEnclosed() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
       c"WHERE" + o.toVariableWithField("name") + c"IN" + foundOutputsGenerated +
-      c"AND" + r.toVariableWithNewField("from_lines") + c"= []" +
+      c"AND" + r.toVariableWithNewField("fromLines") + c"= []" +
       c"DELETE" + r.toVariable()).query[Unit]
     logQueryCreation(query)
     query
   }
 
   // TODO: extract all DDL keywords to GraphElements
-  // deletes an output that has no other connections if it's used only by selected line; otherwise just removes line name from the "from_lines" property of the relationship
+  // deletes an output that has no other connections if it's used only by selected line; otherwise just removes line name from the "fromLines" property of the relationship
   private def constructDeleteOutputs(line: Line, input: IOElement, existingOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
     val (i, o) = (
       N.IO(input, "i"),
@@ -95,11 +95,11 @@ class LineService(
     val r = R.HasOutput(variablePrefix = "r")
     val query = (c"MATCH" + i.toSearchObject() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
       c"WHERE NOT" + o.toVariableWithField("name") + c"IN" + existingOutputsGenerated +
-      c"AND ${line.name} IN" + r.toVariableWithNewField("from_lines") +
-      c"SET" + r.toVariableWithNewField("from_lines") + c"= [x IN" + r.toVariableWithNewField("from_lines") + c" WHERE x <> ${line.name}]" +
+      c"AND ${line.name} IN" + r.toVariableWithNewField("fromLines") +
+      c"SET" + r.toVariableWithNewField("fromLines") + c"= [x IN" + r.toVariableWithNewField("fromLines") + c" WHERE x <> ${line.name}]" +
       c"WITH" + i.toVariable() + c"MATCH" + i.toVariableEnclosed() + r.toAnyObjectOfType() + o.toAnyObjectOfType() +
       c"WHERE NOT" + o.toVariableWithField("name") + c"IN" + existingOutputsGenerated +
-      c"AND" + r.toVariableWithNewField("from_lines") + c"= []" +
+      c"AND" + r.toVariableWithNewField("fromLines") + c"= []" +
       c"DELETE" + r.toVariable() + c"," + o.toVariable()).query[Unit]
     logQueryCreation(query)
     query
@@ -152,9 +152,9 @@ class LineService(
         Some(N.IO(output, "o")),
         false,
         None,
-        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + relationship.toVariableWithNewField("from_lines") +
-          c"THEN" + relationship.toVariable() + c"END).from_lines =" + relationship.toVariableWithNewField("from_lines") + c"[${line.name}]" +
-          c"ON CREATE SET" + relationship.toVariableWithNewField("from_lines") + c"= ${line.name}"
+        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + relationship.toVariableWithNewField("fromLines") +
+          c"THEN" + relationship.toVariable() + c"END).fromLines =" + relationship.toVariableWithNewField("fromLines") + c"[${line.name}]" +
+          c"ON CREATE SET" + relationship.toVariableWithNewField("fromLines") + c"= ${line.name}"
         )
       )).query[Unit]
     logQueryCreation(query)
