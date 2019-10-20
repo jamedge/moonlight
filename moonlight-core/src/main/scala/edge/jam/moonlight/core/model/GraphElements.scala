@@ -23,12 +23,30 @@ object GraphElements {
     /**
      * Gets search object of a graph element. Used to find it by name.
      * It contains variable, type and name parameter if defined.
-     * e.g. (l:Line {name: "test"}) or (l:Line) if name is not defined
+     * e.g. (l:Line {name: "test"}) or (l:Line) if name field doesn't exist
      */
     def toSearchObject(): DeferredQueryBuilder = {
       fieldsPairs.get("name").map { name =>
         constructObject(constructFields(Map("name" -> name)))
       }.getOrElse(toAnyObjectOfType())
+    }
+
+    /**
+     * Gets search object of a graph element. Used to find it by given field name and value.
+     * It contains variable, type and value of the provided parameter.
+     * e.g. (l:Line {name: "test"}) or (l:Line) if name is not defined
+     */
+    def toSearchObjectSpecified(name: String, value: String): DeferredQueryBuilder = {
+      constructAnyClassObject(constructFields(Map(name -> value)))
+    }
+
+    /**
+     * Gets search object of a graph element. Used to find it by given fields map of names and values.
+     * It contains variable, type and values of the provided parameter.
+     * e.g. (r:HasOutput {isDelete: "true", fromLines: []}) or (r:HasOutput) if fields map is not defined
+     */
+    def toSearchObjectSpecified(fieldsMap: Map[String, _]): DeferredQueryBuilder = {
+      constructAnyClassObject(constructFields(fieldsMap))
     }
 
     /**
@@ -53,6 +71,16 @@ object GraphElements {
      */
     def toVariableEnclosed(): DeferredQueryBuilder = {
       c"" + s"${elementClass.elementType.openMark}$variable${elementClass.elementType.endMark}"
+    }
+
+    /**
+     * Gets variable enclosed in and object type of a graph element.
+     * e.g. (l*1..4)
+     */
+    def toVariableEnclosedWithCardinality(cardinalityFrom: Option[Int], cardinalityTo: Option[Int]): DeferredQueryBuilder = {
+      val from = cardinalityFrom.map(f => s"$f..").getOrElse("..")
+      val fromAndTo = cardinalityTo.map(t => s"$from$t").getOrElse(from)
+      c"" + s"${elementClass.elementType.openMark}$variable*$fromAndTo${elementClass.elementType.endMark}"
     }
 
     /**
@@ -86,6 +114,13 @@ object GraphElements {
     private def constructObject(pairs: DeferredQueryBuilder): DeferredQueryBuilder = {
       c"" +
         s"${elementClass.elementType.openMark}$variable:${elementClass.name}" +
+        pairs +
+        s"${elementClass.elementType.endMark}"
+    }
+
+    private def constructAnyClassObject(pairs: DeferredQueryBuilder): DeferredQueryBuilder = {
+      c"" +
+        s"${elementClass.elementType.openMark}$variable" +
         pairs +
         s"${elementClass.elementType.endMark}"
     }
