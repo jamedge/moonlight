@@ -258,7 +258,9 @@ object GraphElements {
 object Nodes {
   import edge.jam.moonlight.core.model.{
     Line => ModelLine,
-    IOElement => ModelIOElement}
+    IOElement => ModelIOElement,
+    Storage => ModelStorage
+  }
 
   case class Line(fieldPairs: Map[String, _], variablePrefix: String = "")
     extends GraphElement(ElementClass.Line, GraphElements.generateVariable(variablePrefix), fieldPairs)
@@ -283,32 +285,43 @@ object Nodes {
     }
   }
 
+  case class Storage(fieldsPairs: Map[String, _], variablePrefix: String = "")
+    extends GraphElement(ElementClass.Storage, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  object Storage {
+    def apply(from: ModelStorage, variablePrefix: String): Storage = {
+      val fields = from.fieldsMap() ++ Map(
+        "locationPath" -> from.locationPath.getOrElse("")
+      )
+      Storage(fields, variablePrefix)
+    }
+    def apply(anyObjectVariable: String): Storage = {
+      Storage(ModelStorage("", None, None, None, None, None), anyObjectVariable)
+    }
+  }
+
   case class Details(fieldsPairs: Map[String, _], variablePrefix: String = "")
     extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
-  case class Storage(fieldsPairs: Map[String, _], variablePrefix: String = "")
-    extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
-
   case class Process(fieldsPairs: Map[String, _], variablePrefix: String = "")
-    extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.Process, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class ProcessingFramework(fieldsPairs: Map[String, _], variablePrefix: String = "")
-    extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.ProcessingFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class Metric(fieldsPairs: Map[String, _], variablePrefix: String = "")
-    extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.Metric, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class MetricsFramework(fieldsPairs: Map[String, _], variablePrefix: String = "")
-    extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.MetricsFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class Alert(fieldsPairs: Map[String, _], variablePrefix: String = "")
-    extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.Alert, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class AlertsFramework(fieldsPairs: Map[String, _], variablePrefix: String = "")
-    extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.AlertsFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
   case class Code(fieldsPairs: Map[String, _], variablePrefix: String = "")
-    extends GraphElement(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends GraphElement(ElementClass.Code, GraphElements.generateVariable(variablePrefix), fieldsPairs)
 }
 
 object Relationships {

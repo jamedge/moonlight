@@ -34,6 +34,7 @@ class LineService(
         line.io.flatMap { io =>
           io.inputs.flatMap { input =>
             constructInputQuery(line, input).execute(tx)
+            input.storage.map(constructAttachStorageQuery(line, input, _).execute(tx)).getOrElse(Future())
             val outputsGenerated = GraphElements.foldList(io.outputs.map(el => c"${el.name}"))
             constructMutualOutputsQuery(input, outputsGenerated).list(tx).map { foundOutputs =>
               if (foundOutputs.nonEmpty) {
@@ -47,6 +48,7 @@ class LineService(
             }
             io.outputs.map { output =>
               constructOutputQuery(line, input, output).execute(tx)
+              output.storage.map(constructAttachStorageQuery(line, output, _).execute(tx)).getOrElse(Future())
             }
           }
         }
@@ -192,6 +194,25 @@ class LineService(
         Some(R.HasInput()),
         Some(N.IO(input, "i")))).query[Unit]
     logQueryCreation(query)
+    query
+  }
+
+  private def constructAttachStorageQuery(line: Line, ioElement: IOElement, storage: Storage): DeferredQuery[Unit] = {
+    val io = N.IO(ioElement, "io")
+    val s = N.Storage(storage, "s")
+    val r = R.HasStorage(Map(), "r")
+    val query = c""
+      .+(GraphElements.constructCreateOrUpdateQuery(
+        io,
+        Some(r),
+        Some(s),
+        false,
+        None,
+        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + r.toVariableWithNewField("fromLines") +
+          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c"[${line.name}]" +
+          c"ON CREATE SET" + r.toVariableWithNewField("fromLines") + c"= [${line.name}]"
+        )
+      )).query[Unit]
     query
   }
 
