@@ -196,7 +196,7 @@ class LineService(
         false,
         None,
         Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + r.toVariableWithNewField("fromLines") +
-          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c"[${line.name}]" +
+          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
           c"ON CREATE SET" + r.toVariableWithNewField("fromLines") + c"= [${line.name}]"
         )
       )).query[Unit]
@@ -216,7 +216,7 @@ class LineService(
         false,
         None,
         Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + r.toVariableWithNewField("fromLines") +
-          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c"[${line.name}]" +
+          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
           c"ON CREATE SET" + r.toVariableWithNewField("fromLines") + c"= [${line.name}]"
         )
       )).query[Unit]
@@ -236,7 +236,7 @@ class LineService(
         false,
         None,
         Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + relationship.toVariableWithNewField("fromLines") +
-          c"THEN" + relationship.toVariable() + c"END).fromLines =" + relationship.toVariableWithNewField("fromLines") + c"[${line.name}]" +
+          c"THEN" + relationship.toVariable() + c"END).fromLines =" + relationship.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
           c"ON CREATE SET" + relationship.toVariableWithNewField("fromLines") + c"= [${line.name}]"
         )
       )).query[Unit]
