@@ -1,6 +1,6 @@
 package edge.jam.moonlight.core.model
 
-import edge.jam.moonlight.core.model.GraphElements.ElementType
+import edge.jam.moonlight.core.model.GraphElements.{ElementType, GraphElement}
 import neotypes.{DeferredQuery, DeferredQueryBuilder, Driver}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -146,7 +146,7 @@ class LineService(
     val i = N.IO("i")
     val r = R.HasOutput(Map(), "s", ElementType.RelationshipLeft)
     val query =
-      (c"MATCH" + i.toAnyObjectOfType() + r.toSearchObjectSpecified(Map("toDelete" -> "true", "fromLines" -> List())) + c"()" +
+      (c"MATCH" + i.toVariableEnclosed() + r.toSearchObjectSpecified(Map("toDelete" -> "true", "fromLines" -> List())) + c"()" +
         "DELETE" + r.toVariable()).query[Unit]
     logQueryCreation(query)
     query
@@ -155,9 +155,8 @@ class LineService(
   // TODO: extract all DDL keywords to GraphElements
   // deletes all detached IO nodes
   private def constructDeleteDetachedInputs(): DeferredQuery[Unit] = {
-    val i = N.IO("i")
     val query =
-      (c"MATCH" + i.toAnyObjectOfType() + c"WHERE NOT" + i.toVariableEnclosed() + c"<-- () DELETE" + i.toVariable()).query[Unit]
+      c"MATCH (i:IO:Storage) WHERE NOT (i) <-- () DELETE i".query[Unit]
     logQueryCreation(query)
     query
   }
