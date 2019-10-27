@@ -187,11 +187,19 @@ class LineService(
 
   private def constructInputQuery(line: Line, input: IOElement): DeferredQuery[Unit] = {
     val lineNode = N.Line(line, "l")
+    val r = R.HasInput(Map(), "r")
     val query = c""
       .+(GraphElements.constructCreateOrUpdateQuery(
         lineNode,
-        Some(R.HasInput()),
-        Some(N.IO(input, "i")))).query[Unit]
+        Some(r),
+        Some(N.IO(input, "i")),
+        false,
+        None,
+        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + r.toVariableWithNewField("fromLines") +
+          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c"[${line.name}]" +
+          c"ON CREATE SET" + r.toVariableWithNewField("fromLines") + c"= [${line.name}]"
+        )
+      )).query[Unit]
     logQueryCreation(query)
     query
   }
