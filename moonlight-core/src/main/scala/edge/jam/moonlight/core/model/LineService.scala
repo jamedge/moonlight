@@ -27,7 +27,7 @@ class LineService(
       session.transact[Unit] { implicit tx =>
         cleanupDownstream(line, tx)
         constructLineQuery(line).execute(tx)
-        constructLineDetailsQuery(line).execute(tx)
+        line.details.map(constructLineDetailsQuery(line, _).execute(tx)).getOrElse(Future())
         line.io.flatMap { io =>
           io.inputs.flatMap { input =>
             constructInputQuery(line, input).execute(tx)
@@ -86,22 +86,17 @@ class LineService(
     query
   }
 
-  private def constructLineDetailsQuery(line: Line): DeferredQuery[Unit] = {
+  private def constructLineDetailsQuery(line: Line, details: Map[String, String]): DeferredQuery[Unit] = {
     val lineNode = N.Line(line, "l")
     val r = R.HasDetails(Map(), "r")
     val query = c""
-      .+(line.details.map(ld => GraphElements.constructCreateOrUpdateQuery(
+      .+(GraphElements.constructCreateOrUpdateQuery(
         lineNode,
         Some(r),
-        Some(N.Details(ld, "ld")),
+        Some(N.Details(details, "ld")),
         true,
         None,
-        Some(lineTaggingSnippet(line, r)))).getOrElse(
-        GraphElements.constructDeleteQuery(
-          lineNode,
-          R.HasDetails(Map(), "ldr"),
-          N.Details(Map(), "ld")),
-      )).query[Unit]
+        Some(lineTaggingSnippet(line, r)))).query[Unit]
     logQueryCreation(query)
     query
   }
