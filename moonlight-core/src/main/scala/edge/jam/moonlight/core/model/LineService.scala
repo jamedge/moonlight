@@ -100,10 +100,7 @@ class LineService(
         Some(N.Details(ld, "ld")),
         true,
         None,
-        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + r.toVariableWithNewField("fromLines") +
-          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
-          c"ON CREATE SET" + r.toVariableWithNewField("fromLines") + c"= [${line.name}]"
-        ))).getOrElse(
+        Some(lineTaggingSnippet(line, r)))).getOrElse(
         GraphElements.constructDeleteQuery(
           lineNode,
           R.HasDetails(Map(), "ldr"),
@@ -123,10 +120,7 @@ class LineService(
         Some(N.IO(input, "i")),
         false,
         None,
-        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + r.toVariableWithNewField("fromLines") +
-          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
-          c"ON CREATE SET" + r.toVariableWithNewField("fromLines") + c"= [${line.name}]"
-        )
+        Some(lineTaggingSnippet(line, r))
       )).query[Unit]
     logQueryCreation(query)
     query
@@ -143,31 +137,29 @@ class LineService(
         Some(s),
         false,
         None,
-        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + r.toVariableWithNewField("fromLines") +
-          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
-          c"ON CREATE SET" + r.toVariableWithNewField("fromLines") + c"= [${line.name}]"
-        )
-      )).query[Unit]
+        Some(lineTaggingSnippet(line, r)))).query[Unit]
     query
   }
 
   private def constructOutputQuery(line: Line, input: IOElement, output: IOElement): DeferredQuery[Unit] = {
     val inputNode = N.IO(input, "i")
-    val relationship = R.HasOutput(Map(), "r")
+    val r = R.HasOutput(Map(), "r")
     val query = c""
       .+(GraphElements.constructCreateOrUpdateQuery(
         inputNode,
-        Some(relationship),
+        Some(r),
         Some(N.IO(output, "o")),
         false,
         None,
-        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + relationship.toVariableWithNewField("fromLines") +
-          c"THEN" + relationship.toVariable() + c"END).fromLines =" + relationship.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
-          c"ON CREATE SET" + relationship.toVariableWithNewField("fromLines") + c"= [${line.name}]"
-        )
-      )).query[Unit]
+        Some(lineTaggingSnippet(line, r)))).query[Unit]
     logQueryCreation(query)
     query
+  }
+
+  private def lineTaggingSnippet(line: Line, relationship: GraphElement): DeferredQueryBuilder = {
+    c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + relationship.toVariableWithNewField("fromLines") +
+      c"THEN" + relationship.toVariable() + c"END).fromLines =" + relationship.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
+      c"ON CREATE SET" + relationship.toVariableWithNewField("fromLines") + c"= [${line.name}]"
   }
 
   private def logQueryCreation(query: DeferredQuery[_]): Unit = {
