@@ -25,71 +25,48 @@ class LineService(
   def addLine(line: Line): Future[Unit] = {
     neo4jDriver.writeSession { implicit session =>
       session.transact[Unit] { implicit tx =>
+        cleanupDownstream(line, tx)
         constructLineQuery(line).execute(tx)
         constructLineDetailsQuery(line).execute(tx)
-        val inputsGenerated = GraphElements.foldList(line.io.flatMap(_.inputs).map(el => c"${el.name}"))
-        constructInputRelationshipsCleaning(line, inputsGenerated).execute(tx)
         line.io.flatMap { io =>
           io.inputs.flatMap { input =>
             constructInputQuery(line, input).execute(tx)
             input.storage.map(constructAttachStorageQuery(line, input, _).execute(tx)).getOrElse(Future())
-            val outputsGenerated = GraphElements.foldList(io.outputs.map(el => c"${el.name}"))
-            constructOutputRelationshipsCleaning(line, input, outputsGenerated).execute(tx)
-            constructStorageRelationshipsCleaning(line, input, input.storage.map(s => c"[${s.name}]").getOrElse(c"[]")).execute(tx)
             io.outputs.map { output =>
               constructOutputQuery(line, input, output).execute(tx)
-              constructStorageRelationshipsCleaning(line, output, output.storage.map(s => c"[${s.name}]").getOrElse(c"[]")).execute(tx)
               output.storage.map(constructAttachStorageQuery(line, output, _).execute(tx)).getOrElse(Future())
             }
           }
         }
-        cleanup(tx)
+        Future()
       }
     }
   }
 
-  private def constructInputRelationshipsCleaning(line:Line, existingInputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
-    constructRelationshipCleaning(line, N.Line(line, "line"), existingInputsGenerated, ElementClass.IO)
-  }
-
-  private def constructOutputRelationshipsCleaning(line:Line, input: IOElement, existingOutputsGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
-    constructRelationshipCleaning(line, N.IO(input, "input"), existingOutputsGenerated, ElementClass.IO)
-  }
-
-  private def constructStorageRelationshipsCleaning(line:Line, ioElement: IOElement, existingStorageGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
-    constructRelationshipCleaning(line, N.IO(ioElement, "io"), existingStorageGenerated, ElementClass.Storage)
-  }
-
-  private def cleanup(tx: Transaction[Future]): Future[Unit] = {
+  private def cleanupDownstream(line:Line, tx: Transaction[Future]): Future[Unit] = {
+    constructRelationshipDeleteMarking(line, N.Line(line, "l")).execute(tx)
     constructDeleteCleanedRelationships().execute(tx)
     constructDeleteDetachedNodes(ElementClass.IO).execute(tx)
     constructDeleteDetachedNodes(ElementClass.Storage).execute(tx)
   }
 
   // TODO: extract all DDL keywords to GraphElements
-  // marks IO relationships previously used by line but not provided in version which is passed for deletion by setting their "toDelete" attribute to true and removing line name from attribute "fromLines"
-  private def constructRelationshipCleaning(
+  private def constructRelationshipDeleteMarking(
       line:Line,
-      startElement: GraphElement,
-      existingConnectingElementsGenerated: DeferredQueryBuilder,
-      connectingElementClass: ElementClass
+      startElement: GraphElement
   ): DeferredQuery[Unit] = {
-    val query = (c"MATCH" + startElement.toSearchObject() + c"-[ir]->" + s"(i:${connectingElementClass.name})" +
-      c"WHERE NOT i.name IN" + existingConnectingElementsGenerated +
-      c"WITH i, ir" +
-      c"MATCH p = (i) -[r*0..]-> (othersOut) <-[s*0..]- (connection)" +
-      c"FOREACH ( x IN r | SET (CASE WHEN " + c"${line.name}" +
+    val query = (
+      c"MATCH p =" +  startElement.toSearchObject() + "-[*0..]-> (x)" +
+      c"FOREACH ( x IN relationships(p) | SET (CASE WHEN " + c"${line.name}" +
       c"IN x.fromLines THEN x END).toDelete = ${"true"})" +
-      c"WITH p, ir" +
-      c"OPTIONAL MATCH (a) -[r {toDelete: ${"true"}}]-> (b)" +
-      c"SET r.fromLines = FILTER ( y IN r.fromLines WHERE y <> ${line.name}), r.toDelete = NULL" +
-      c"DELETE ir").query[Unit]
+      c"WITH p" +
+      c"MATCH (a) -[r {toDelete: ${"true"}}]-> (b)" +
+      c"SET r.fromLines = FILTER ( y IN r.fromLines WHERE y <> ${line.name}), r.toDelete = NULL").query[Unit]
     logQueryCreation(query)
     query
   }
 
   // TODO: extract all DDL keywords to GraphElements
-  // deletes all IO relationships with toDelete = true and fromLines = []
   private def constructDeleteCleanedRelationships(): DeferredQuery[Unit] = {
     val query =
       c"MATCH (i) <-[s {fromLines: []}]- () DELETE s".query[Unit]
@@ -98,7 +75,6 @@ class LineService(
   }
 
   // TODO: extract all DDL keywords to GraphElements
-  // deletes all detached IO nodes
   private def constructDeleteDetachedNodes(elementClass: ElementClass): DeferredQuery[Unit] = {
     val query =
       (c"MATCH" + s"(i:${elementClass.name})" + c"WHERE NOT (i) <-- () DELETE i").query[Unit]
