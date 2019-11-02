@@ -54,6 +54,10 @@ class LineService(
     constructRelationshipCleaning(line, N.IO(input, "input"), existingOutputsGenerated, ElementClass.IO)
   }
 
+  private def constructStorageRelationshipsCleaning(line:Line, ioElement: IOElement, existingStorageGenerated: DeferredQueryBuilder): DeferredQuery[Unit] = {
+    constructRelationshipCleaning(line, N.IO(ioElement, "io"), existingStorageGenerated, ElementClass.Storage)
+  }
+
   private def cleanup(tx: Transaction[Future]): Future[Unit] = {
     constructDeleteCleanedRelationships().execute(tx)
     constructDeleteDetachedNodes(ElementClass.IO).execute(tx)
@@ -71,12 +75,12 @@ class LineService(
     val query = (c"MATCH" + startElement.toSearchObject() + c"-[ir]->" + s"(i:${connectingElementClass.name})" +
       c"WHERE NOT i.name IN" + existingConnectingElementsGenerated +
       c"WITH i, ir" +
-      c"MATCH p = (i) -[r*1..]-> (othersOut) <-[s*0..]- (connection)" +
+      c"MATCH p = (i) -[r*0..]-> (othersOut) <-[s*0..]- (connection)" +
       c"FOREACH ( x IN r | SET (CASE WHEN " + c"${line.name}" +
       c"IN x.fromLines THEN x END).toDelete = ${"true"})" +
       c"WITH p, ir" +
-      c"MATCH (a) -[r {toDelete: ${"true"}}]-> (b)" +
-      c"SET r.fromLines = FILTER ( y IN r.fromLines WHERE y <> ${line.name})" +
+      c"OPTIONAL MATCH (a) -[r {toDelete: ${"true"}}]-> (b)" +
+      c"SET r.fromLines = FILTER ( y IN r.fromLines WHERE y <> ${line.name}), r.toDelete = NULL" +
       c"DELETE ir").query[Unit]
     logQueryCreation(query)
     query
@@ -86,7 +90,7 @@ class LineService(
   // deletes all IO relationships with toDelete = true and fromLines = []
   private def constructDeleteCleanedRelationships(): DeferredQuery[Unit] = {
     val query =
-      c"MATCH (i) <-[s {toDelete: ${"true"}, fromLines: []}]- () DELETE s".query[Unit]
+      c"MATCH (i) <-[s {fromLines: []}]- () DELETE s".query[Unit]
     logQueryCreation(query)
     query
   }
@@ -110,16 +114,23 @@ class LineService(
 
   private def constructLineDetailsQuery(line: Line): DeferredQuery[Unit] = {
     val lineNode = N.Line(line, "l")
+    val r = R.HasDetails(Map(), "r")
     val query = c""
       .+(line.details.map(ld => GraphElements.constructCreateOrUpdateQuery(
         lineNode,
-        Some(R.HasDetails()),
+        Some(r),
         Some(N.Details(ld, "ld")),
-        true)).getOrElse(
+        true,
+        None,
+        Some(c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + r.toVariableWithNewField("fromLines") +
+          c"THEN" + r.toVariable() + c"END).fromLines =" + r.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
+          c"ON CREATE SET" + r.toVariableWithNewField("fromLines") + c"= [${line.name}]"
+        ))).getOrElse(
         GraphElements.constructDeleteQuery(
           lineNode,
           R.HasDetails(Map(), "ldr"),
-          N.Details(Map(), "ld")))).query[Unit]
+          N.Details(Map(), "ld")),
+      )).query[Unit]
     logQueryCreation(query)
     query
   }
