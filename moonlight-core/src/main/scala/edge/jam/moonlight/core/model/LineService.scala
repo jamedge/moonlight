@@ -35,8 +35,10 @@ class LineService(
             input.storage.map(constructAttachStorageQuery(line, input, _).execute(tx)).getOrElse(Future())
             val outputsGenerated = GraphElements.foldList(io.outputs.map(el => c"${el.name}"))
             constructOutputRelationshipsCleaning(line, input, outputsGenerated).execute(tx)
+            constructStorageRelationshipsCleaning(line, input, input.storage.map(s => c"[${s.name}]").getOrElse(c"[]")).execute(tx)
             io.outputs.map { output =>
               constructOutputQuery(line, input, output).execute(tx)
+              constructStorageRelationshipsCleaning(line, output, output.storage.map(s => c"[${s.name}]").getOrElse(c"[]")).execute(tx)
               output.storage.map(constructAttachStorageQuery(line, output, _).execute(tx)).getOrElse(Future())
             }
           }
