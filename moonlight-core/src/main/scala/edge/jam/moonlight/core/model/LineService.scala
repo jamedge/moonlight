@@ -85,11 +85,8 @@ class LineService(
   // TODO: extract all DDL keywords to GraphElements
   // deletes all IO relationships with toDelete = true and fromLines = []
   private def constructDeleteCleanedRelationships(): DeferredQuery[Unit] = {
-    val i = N.IO("i")
-    val r = R.HasOutput(Map(), "s", ElementType.RelationshipLeft)
     val query =
-      (c"MATCH" + i.toVariableEnclosed() + r.toSearchObjectSpecified(Map("toDelete" -> "true", "fromLines" -> List())) + c"()" +
-        "DELETE" + r.toVariable()).query[Unit]
+      c"MATCH (i) <-[s {toDelete: ${"true"}, fromLines: []}]- () DELETE s".query[Unit]
     logQueryCreation(query)
     query
   }
@@ -166,9 +163,7 @@ class LineService(
   }
 
   private def constructOutputQuery(line: Line, input: IOElement, output: IOElement): DeferredQuery[Unit] = {
-    val lineNode = N.Line(line, "l")
     val inputNode = N.IO(input, "i")
-    val outputNode = N.IO(output, "o")
     val relationship = R.HasOutput(Map(), "r")
     val query = c""
       .+(GraphElements.constructCreateOrUpdateQuery(
