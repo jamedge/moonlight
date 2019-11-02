@@ -57,11 +57,7 @@ class LineService(
   ): DeferredQuery[Unit] = {
     val query = (
       c"MATCH p =" +  startElement.toSearchObject() + "-[*0..]-> (x)" +
-      c"FOREACH ( x IN relationships(p) | SET (CASE WHEN " + c"${line.name}" +
-      c"IN x.fromLines THEN x END).toDelete = ${"true"})" +
-      c"WITH p" +
-      c"MATCH (a) -[r {toDelete: ${"true"}}]-> (b)" +
-      c"SET r.fromLines = FILTER ( y IN r.fromLines WHERE y <> ${line.name}), r.toDelete = NULL").query[Unit]
+      c"FOREACH ( x IN relationships(p) | SET x.fromLines = FILTER ( y IN x.fromLines WHERE y <> ${line.name}))").query[Unit]
     logQueryCreation(query)
     query
   }
