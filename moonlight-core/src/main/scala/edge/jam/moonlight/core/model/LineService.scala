@@ -26,15 +26,39 @@ class LineService(
     neo4jDriver.writeSession { implicit session =>
       session.transact[Unit] { implicit tx =>
         cleanupDownstream(line, tx)
-        constructLineQuery(line).execute(tx)
-        line.details.map(constructLineDetailsQuery(line, _).execute(tx)).getOrElse(Future())
+        constructCreateOrUpdateQuery(line, N.Line(line, "l")).execute(tx)
+        line.details.map(ld =>
+          constructCreateOrUpdateQuery(
+            line,
+            N.Line(line, "l"),
+            Some(R.HasDetails(Map(), "r")),
+            Some(N.Details(ld, "ld")),
+            true).execute(tx)).getOrElse(Future())
         line.io.flatMap { io =>
           io.inputs.flatMap { input =>
-            constructInputQuery(line, input).execute(tx)
-            input.storage.map(constructAttachStorageQuery(line, input, _).execute(tx)).getOrElse(Future())
+            constructCreateOrUpdateQuery(
+              line,
+              N.Line(line, "l"),
+              Some(R.HasInput(Map(), "r")),
+              Some(N.IO(input, "i"))).execute(tx)
+            input.storage.map(s =>
+              constructCreateOrUpdateQuery(
+                line,
+                N.IO(input, "i"),
+                Some(R.HasStorage(Map(), "r")),
+                Some(N.Storage(s, "s"))).execute(tx)).getOrElse(Future())
             io.outputs.map { output =>
-              constructOutputQuery(line, input, output).execute(tx)
-              output.storage.map(constructAttachStorageQuery(line, output, _).execute(tx)).getOrElse(Future())
+              constructCreateOrUpdateQuery(
+                line,
+                N.IO(input, "i"),
+                Some(R.HasOutput(Map(), "r")),
+                Some(N.IO(output, "o"))).execute(tx)
+              output.storage.map(s =>
+                constructCreateOrUpdateQuery(
+                  line,
+                  N.IO(output, "o"),
+                  Some(R.HasStorage(Map(), "r")),
+                  Some(N.Storage(s, "s"))).execute(tx)).getOrElse(Future())
             }
           }
         }
@@ -78,71 +102,21 @@ class LineService(
     query
   }
 
-  private def constructLineQuery(line: Line): DeferredQuery[Unit] = {
-    val lineNode = N.Line(line, "l")
-    val query = c""
-      .+(GraphElements.constructCreateOrUpdateQuery(lineNode)).query[Unit]
-    logQueryCreation(query)
-    query
-  }
-
-  private def constructLineDetailsQuery(line: Line, details: Map[String, String]): DeferredQuery[Unit] = {
-    val lineNode = N.Line(line, "l")
-    val r = R.HasDetails(Map(), "r")
+  private def constructCreateOrUpdateQuery(
+      line: Line,
+      n1: GraphElement,
+      r: Option[GraphElement] = None,
+      n2: Option[GraphElement] = None,
+      createDuplicateNode2IfPathNotFound: Boolean = false,
+  ): DeferredQuery[Unit] = {
     val query = c""
       .+(GraphElements.constructCreateOrUpdateQuery(
-        lineNode,
-        Some(r),
-        Some(N.Details(details, "ld")),
-        true,
+        n1,
+        r,
+        n2,
+        createDuplicateNode2IfPathNotFound,
         None,
-        Some(lineTaggingSnippet(line, r)))).query[Unit]
-    logQueryCreation(query)
-    query
-  }
-
-  private def constructInputQuery(line: Line, input: IOElement): DeferredQuery[Unit] = {
-    val lineNode = N.Line(line, "l")
-    val r = R.HasInput(Map(), "r")
-    val query = c""
-      .+(GraphElements.constructCreateOrUpdateQuery(
-        lineNode,
-        Some(r),
-        Some(N.IO(input, "i")),
-        false,
-        None,
-        Some(lineTaggingSnippet(line, r))
-      )).query[Unit]
-    logQueryCreation(query)
-    query
-  }
-
-  private def constructAttachStorageQuery(line: Line, ioElement: IOElement, storage: Storage): DeferredQuery[Unit] = {
-    val io = N.IO(ioElement, "io")
-    val s = N.Storage(storage, "s")
-    val r = R.HasStorage(Map(), "r")
-    val query = c""
-      .+(GraphElements.constructCreateOrUpdateQuery(
-        io,
-        Some(r),
-        Some(s),
-        false,
-        None,
-        Some(lineTaggingSnippet(line, r)))).query[Unit]
-    query
-  }
-
-  private def constructOutputQuery(line: Line, input: IOElement, output: IOElement): DeferredQuery[Unit] = {
-    val inputNode = N.IO(input, "i")
-    val r = R.HasOutput(Map(), "r")
-    val query = c""
-      .+(GraphElements.constructCreateOrUpdateQuery(
-        inputNode,
-        Some(r),
-        Some(N.IO(output, "o")),
-        false,
-        None,
-        Some(lineTaggingSnippet(line, r)))).query[Unit]
+        r.map(lineTaggingSnippet(line, _)))).query[Unit]
     logQueryCreation(query)
     query
   }
