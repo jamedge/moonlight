@@ -15,7 +15,7 @@ case class Line(
 
 case class IO(
     inputs: List[IOElement],
-    outputs: List[IOElement]) {}
+    outputs: List[IOElement])
 
 case class IOElement(
     name: String,

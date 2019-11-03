@@ -1,12 +1,13 @@
 package edge.jam.moonlight.core.model
 
-import edge.jam.moonlight.core.model.GraphElements.{ElementClass, ElementType, GraphElement}
+import edge.jam.moonlight.core.model.neo4j.GraphElements
+import edge.jam.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
 import neotypes.{DeferredQuery, DeferredQueryBuilder, Driver, Transaction}
 
 import scala.concurrent.{ExecutionContext, Future}
 import neotypes.implicits._
 import org.slf4j.Logger
-import edge.jam.moonlight.core.model.{Nodes => N, Relationships => R}
+import edge.jam.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 
 class LineService(
     neo4jDriver: Driver[Future],
