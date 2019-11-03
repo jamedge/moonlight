@@ -15,7 +15,7 @@ case class Line(
 
 case class IO(
     inputs: List[IOElement],
-    outputs: List[IOElement])
+    outputs: List[IOElement]) {}
 
 case class IOElement(
     name: String,
@@ -25,7 +25,13 @@ case class IOElement(
     details: Option[Map[String, String]],
     storage: Option[Storage],
     locationRelativePath: Option[String]
-) extends Metadata
+) extends Metadata {
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "locationRelativePath" -> locationRelativePath.getOrElse("")
+    )
+  }
+}
 
 case class Storage(
     name: String,
@@ -34,7 +40,13 @@ case class Storage(
     notes: Option[List[String]],
     details: Option[Map[String, String]],
     locationPath: Option[String]
-) extends Metadata
+) extends Metadata {
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "locationPath" -> locationPath.getOrElse("")
+    )
+  }
+}
 
 case class Process(
     name: String,
@@ -46,7 +58,15 @@ case class Process(
     triggeredAt: Option[Long],
     triggeredBy: Option[String],
     locationRelativePath: Option[String]
-) extends Metadata
+) extends Metadata {
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "triggeredAt" -> triggeredAt.getOrElse(""),
+      "triggeredBy" -> triggeredBy.getOrElse(""),
+      "locationRelativePath" -> locationRelativePath.getOrElse("")
+    )
+  }
+}
 
 case class ProcessingFramework(
     name: String,
@@ -55,7 +75,13 @@ case class ProcessingFramework(
     notes: Option[List[String]],
     details: Option[Map[String, String]],
     locationPath: Option[String]
-) extends Metadata
+) extends Metadata {
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "locationPath" -> locationPath.getOrElse("")
+    )
+  }
+}
 
 case class Metric(
     name: String,
@@ -65,16 +91,28 @@ case class Metric(
     details: Option[Map[String, String]],
     metricFramework: Option[ProcessingFramework],
     locationRelativePath: Option[String]
-) extends Metadata
+) extends Metadata {
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "locationRelativePath" -> locationRelativePath.getOrElse("")
+    )
+  }
+}
 
-case class MetricFramework(
+case class MetricsFramework(
     name: String,
     owner: Option[String],
     purpose: Option[String],
     notes: Option[List[String]],
     details: Option[Map[String, String]],
     locationPath: Option[String]
-) extends Metadata
+) extends Metadata {
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "locationPath" -> locationPath.getOrElse("")
+    )
+  }
+}
 
 case class Alert(
     name: String,
@@ -84,7 +122,13 @@ case class Alert(
     details: Option[Map[String, String]],
     alertsFramework: Option[AlertsFramework],
     locationRelativePath: Option[String]
-) extends Metadata
+) extends Metadata {
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "locationRelativePath" -> locationRelativePath.getOrElse("")
+    )
+  }
+}
 
 case class AlertsFramework(
     name: String,
@@ -93,7 +137,13 @@ case class AlertsFramework(
     notes: Option[List[String]],
     details: Option[Map[String, String]],
     locationPath: Option[String]
-) extends Metadata
+) extends Metadata {
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "locationPath" -> locationPath.getOrElse("")
+    )
+  }
+}
 
 case class Code(
     name: String,
@@ -104,4 +154,12 @@ case class Code(
     remotePath: String,
     entryPointClass: String,
     entryPointArguments: Option[List[String]]
-) extends Metadata
+) extends Metadata{
+  override def fieldsMap(): Map[String, _] = {
+    super.fieldsMap() ++ Map(
+      "remotePath" -> remotePath,
+      "entryPointClass" -> entryPointClass,
+      "entryPointArguments" -> entryPointArguments.getOrElse(List()),
+    )
+  }
+}

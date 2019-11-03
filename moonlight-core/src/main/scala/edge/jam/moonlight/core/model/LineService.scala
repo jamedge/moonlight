@@ -22,6 +22,11 @@ class LineService(
     result.map(_.map(_.toString))
   }
 
+  // Guarantees data entered in a line with additional data gained by merging with data from other lines
+  // Deletion of line doesn't clean the mutual properties until there are other lines using them.
+  // They will override these properties if they are the only owners of the node or if they do it explicitly
+  // TODO: try to remove the properties from mutual nodes during cleanup
+  // TODO: there needs to be a way of knowing which property belongs to which Line (is this that important?). Maybe a merge strategy can be chosen externally (merge or overwrite)
   def addLine(line: Line): Future[Unit] = {
     neo4jDriver.writeSession { implicit session =>
       session.transact[Unit] { implicit tx =>
@@ -41,24 +46,40 @@ class LineService(
               N.Line(line, "l"),
               Some(R.HasInput(Map(), "r")),
               Some(N.IO(input, "i"))).execute(tx)
-            input.storage.map(s =>
+            input.storage.map { s =>
               constructCreateOrUpdateQuery(
                 line,
                 N.IO(input, "i"),
                 Some(R.HasStorage(Map(), "r")),
-                Some(N.Storage(s, "s"))).execute(tx)).getOrElse(Future())
+                Some(N.Storage(s, "s"))).execute(tx)
+              s.details.map(sd =>
+                constructCreateOrUpdateQuery(
+                  line,
+                  N.Storage(s, "s"),
+                  Some(R.HasDetails(Map(), "r")),
+                  Some(N.Details(sd, "sd")),
+                  true).execute(tx)).getOrElse(Future())
+            }.getOrElse(Future())
             io.outputs.map { output =>
               constructCreateOrUpdateQuery(
                 line,
                 N.IO(input, "i"),
                 Some(R.HasOutput(Map(), "r")),
                 Some(N.IO(output, "o"))).execute(tx)
-              output.storage.map(s =>
+              output.storage.map { s =>
                 constructCreateOrUpdateQuery(
                   line,
                   N.IO(output, "o"),
                   Some(R.HasStorage(Map(), "r")),
-                  Some(N.Storage(s, "s"))).execute(tx)).getOrElse(Future())
+                  Some(N.Storage(s, "s"))).execute(tx)
+                s.details.map(sd =>
+                  constructCreateOrUpdateQuery(
+                    line,
+                    N.Storage(s, "s"),
+                    Some(R.HasDetails(Map(), "r")),
+                    Some(N.Details(sd, "sd")),
+                    true).execute(tx)).getOrElse(Future())
+              }.getOrElse(Future())
             }
           }
         }
