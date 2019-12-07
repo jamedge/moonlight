@@ -28,61 +28,150 @@ class LineService(
   // They will override these properties if they are the only owners of the node or if they do it explicitly
   // TODO: try to remove the properties from mutual nodes during cleanup
   // TODO: there needs to be a way of knowing which property belongs to which Line (is this that important?). Maybe a merge strategy can be chosen externally (merge or overwrite)
-  def addLine(line: Line): Future[Unit] = {
+  def addLine(implicit line: Line): Future[Unit] = {
     neo4jDriver.writeSession { implicit session =>
       session.transact[Unit] { implicit tx =>
         cleanupDownstream(line, tx)
-        constructCreateOrUpdateQuery(line, N.Line(line, "l")).execute(tx)
-        line.details.map(ld =>
+        constructCreateOrUpdateQuery(N.Line(line)).execute(tx)
+        line.details.map(details =>
           constructCreateOrUpdateQuery(
-            line,
-            N.Line(line, "l"),
-            Some(R.HasDetails(Map(), "r")),
-            Some(N.Details(ld, "ld")),
+            N.Line(line),
+            Some(R.HasDetails()),
+            Some(N.Details(details)),
             true).execute(tx)).getOrElse(Future())
         line.io.flatMap { io =>
           io.inputs.flatMap { input =>
             constructCreateOrUpdateQuery(
-              line,
-              N.Line(line, "l"),
-              Some(R.HasInput(Map(), "r")),
-              Some(N.IO(input, "i"))).execute(tx)
-            input.storage.map { s =>
+              N.Line(line),
+              Some(R.HasInput()),
+              Some(N.IO(input))).execute(tx)
+            input.details.map(details =>
               constructCreateOrUpdateQuery(
-                line,
-                N.IO(input, "i"),
-                Some(R.HasStorage(Map(), "r")),
-                Some(N.Storage(s, "s"))).execute(tx)
-              s.details.map(sd =>
+                N.IO(input),
+                Some(R.HasDetails()),
+                Some(N.Details(details)),
+                true).execute(tx)).getOrElse(Future())
+            input.storage.map { storage =>
+              constructCreateOrUpdateQuery(
+                N.IO(input),
+                Some(R.HasStorage()),
+                Some(N.Storage(storage))).execute(tx)
+              storage.details.map(details =>
                 constructCreateOrUpdateQuery(
-                  line,
-                  N.Storage(s, "s"),
-                  Some(R.HasDetails(Map(), "r")),
-                  Some(N.Details(sd, "sd")),
+                  N.Storage(storage),
+                  Some(R.HasDetails()),
+                  Some(N.Details(details)),
                   true).execute(tx)).getOrElse(Future())
             }.getOrElse(Future())
             io.outputs.map { output =>
               constructCreateOrUpdateQuery(
-                line,
-                N.IO(input, "i"),
-                Some(R.HasOutput(Map(), "r")),
-                Some(N.IO(output, "o"))).execute(tx)
-              output.storage.map { s =>
+                N.IO(input),
+                Some(R.HasOutput()),
+                Some(N.IO(output))).execute(tx)
+              output.details.map(details =>
                 constructCreateOrUpdateQuery(
-                  line,
-                  N.IO(output, "o"),
-                  Some(R.HasStorage(Map(), "r")),
-                  Some(N.Storage(s, "s"))).execute(tx)
-                s.details.map(sd =>
+                  N.IO(output),
+                  Some(R.HasDetails()),
+                  Some(N.Details(details)),
+                  true).execute(tx)).getOrElse(Future())
+              output.storage.map { storage =>
+                constructCreateOrUpdateQuery(
+                  N.IO(output),
+                  Some(R.HasStorage()),
+                  Some(N.Storage(storage))).execute(tx)
+                storage.details.map(details =>
                   constructCreateOrUpdateQuery(
-                    line,
-                    N.Storage(s, "s"),
-                    Some(R.HasDetails(Map(), "r")),
-                    Some(N.Details(sd, "sd")),
+                    N.Storage(storage),
+                    Some(R.HasDetails()),
+                    Some(N.Details(details)),
                     true).execute(tx)).getOrElse(Future())
               }.getOrElse(Future())
             }
           }
+        }
+        line.processedBy.map { process =>
+          constructCreateOrUpdateQuery(
+            N.Line(line),
+            Some(R.IsProcessedBy()),
+            Some(N.Process(process))).execute(tx)
+          process.details.map( details =>
+            constructCreateOrUpdateQuery(
+              N.Process(process),
+              Some(R.HasDetails()),
+              Some(N.Details(details)),
+              true).execute(tx)).getOrElse(Future())
+          process.processingFramework.map { processingFramework =>
+            constructCreateOrUpdateQuery(
+              N.Process(process),
+              Some(R.HasProcessingFramework()),
+              Some(N.ProcessingFramework(processingFramework))).execute(tx)
+            processingFramework.details.map( details =>
+              constructCreateOrUpdateQuery(
+                N.ProcessingFramework(processingFramework),
+                Some(R.HasDetails()),
+                Some(N.Details(details)),
+                true).execute(tx)).getOrElse(Future())
+          }
+        }
+        line.metrics.map { metric =>
+          constructCreateOrUpdateQuery(
+            N.Line(line),
+            Some(R.HasMetrics()),
+            Some(N.Metric(metric))).execute(tx)
+          metric.details.map( details =>
+            constructCreateOrUpdateQuery(
+              N.Metric(metric),
+              Some(R.HasDetails()),
+              Some(N.Details(details)),
+              true).execute(tx)).getOrElse(Future())
+          metric.metricFramework.map { metricsFramework =>
+            constructCreateOrUpdateQuery(
+              N.Metric(metric),
+              Some(R.HasMetricsFramework()),
+              Some(N.MetricsFramework(metricsFramework))).execute(tx)
+            metricsFramework.details.map( details =>
+              constructCreateOrUpdateQuery(
+                N.MetricsFramework(metricsFramework),
+                Some(R.HasDetails()),
+                Some(N.Details(details)),
+                true).execute(tx)).getOrElse(Future())
+          }
+        }
+        line.alerts.map { alert =>
+          constructCreateOrUpdateQuery(
+            N.Line(line),
+            Some(R.HasAlert()),
+            Some(N.Alert(alert))).execute(tx)
+          alert.details.map( details =>
+            constructCreateOrUpdateQuery(
+              N.Alert(alert),
+              Some(R.HasDetails()),
+              Some(N.Details(details)),
+              true).execute(tx)).getOrElse(Future())
+          alert.alertsFramework.map { alertsFramework =>
+            constructCreateOrUpdateQuery(
+              N.Alert(alert),
+              Some(R.HasAlertsFramework()),
+              Some(N.AlertsFramework(alertsFramework))).execute(tx)
+            alertsFramework.details.map( details =>
+              constructCreateOrUpdateQuery(
+                N.AlertsFramework(alertsFramework),
+                Some(R.HasDetails()),
+                Some(N.Details(details)),
+                true).execute(tx)).getOrElse(Future())
+          }
+        }
+        line.code.map { code =>
+          constructCreateOrUpdateQuery(
+            N.Line(line),
+            Some(R.HasCode()),
+            Some(N.Code(code))).execute(tx)
+          code.details.map( details =>
+            constructCreateOrUpdateQuery(
+              N.Code(code),
+              Some(R.HasDetails()),
+              Some(N.Details(details)),
+              true).execute(tx)).getOrElse(Future())
         }
         Future()
       }
@@ -90,10 +179,19 @@ class LineService(
   }
 
   private def cleanupDownstream(line:Line, tx: Transaction[Future]): Future[Unit] = {
-    constructRelationshipDeleteMarking(line, N.Line(line, "l")).execute(tx)
+    constructRelationshipDeleteMarking(line, N.Line(line)).execute(tx)
     constructDeleteCleanedRelationships().execute(tx)
+    constructDeleteDetachedNodes(ElementClass.Line).execute(tx)
+    constructDeleteDetachedNodes(ElementClass.Details).execute(tx)
     constructDeleteDetachedNodes(ElementClass.IO).execute(tx)
     constructDeleteDetachedNodes(ElementClass.Storage).execute(tx)
+    constructDeleteDetachedNodes(ElementClass.Alert).execute(tx)
+    constructDeleteDetachedNodes(ElementClass.AlertsFramework).execute(tx)
+    constructDeleteDetachedNodes(ElementClass.Metric).execute(tx)
+    constructDeleteDetachedNodes(ElementClass.MetricsFramework).execute(tx)
+    constructDeleteDetachedNodes(ElementClass.Process).execute(tx)
+    constructDeleteDetachedNodes(ElementClass.ProcessingFramework).execute(tx)
+    constructDeleteDetachedNodes(ElementClass.Code).execute(tx)
   }
 
   // TODO: extract all DDL keywords to GraphElements
@@ -125,12 +223,11 @@ class LineService(
   }
 
   private def constructCreateOrUpdateQuery(
-      line: Line,
       n1: GraphElement,
       r: Option[GraphElement] = None,
       n2: Option[GraphElement] = None,
       createDuplicateNode2IfPathNotFound: Boolean = false,
-  ): DeferredQuery[Unit] = {
+  )(implicit line: Line): DeferredQuery[Unit] = {
     val query = c""
       .+(GraphElements.constructCreateOrUpdateQuery(
         n1,

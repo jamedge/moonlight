@@ -27,9 +27,8 @@ case class IOElement(
     locationRelativePath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "locationRelativePath" -> locationRelativePath.getOrElse("")
-    )
+    val locationRelativePathMap = locationRelativePath.map(e => Map("locationRelativePath" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ locationRelativePathMap
   }
 }
 
@@ -42,9 +41,8 @@ case class Storage(
     locationPath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "locationPath" -> locationPath.getOrElse("")
-    )
+    val locationPathMap = locationPath.map(e => Map("locationPath" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ locationPathMap
   }
 }
 
@@ -55,16 +53,15 @@ case class Process(
     notes: Option[List[String]],
     details: Option[Map[String, String]],
     processingFramework: Option[ProcessingFramework],
-    triggeredAt: Option[Long],
+    triggeredAt: Option[String],
     triggeredBy: Option[String],
     locationRelativePath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "triggeredAt" -> triggeredAt.getOrElse(""),
-      "triggeredBy" -> triggeredBy.getOrElse(""),
-      "locationRelativePath" -> locationRelativePath.getOrElse("")
-    )
+    val locationRelativePathMap = locationRelativePath.map(e => Map("locationRelativePath" -> e)).getOrElse(Map())
+    val triggeredAtMap = triggeredAt.map(e => Map("triggeredAt" -> e)).getOrElse(Map())
+    val triggeredByMap = triggeredBy.map(e => Map("triggeredBy" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ locationRelativePathMap ++ triggeredAtMap ++ triggeredByMap
   }
 }
 
@@ -77,9 +74,8 @@ case class ProcessingFramework(
     locationPath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "locationPath" -> locationPath.getOrElse("")
-    )
+    val locationPathMap = locationPath.map(e => Map("locationPath" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ locationPathMap
   }
 }
 
@@ -89,13 +85,12 @@ case class Metric(
     purpose: Option[String],
     notes: Option[List[String]],
     details: Option[Map[String, String]],
-    metricFramework: Option[ProcessingFramework],
+    metricFramework: Option[MetricsFramework],
     locationRelativePath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "locationRelativePath" -> locationRelativePath.getOrElse("")
-    )
+    val locationRelativePathMap = locationRelativePath.map(e => Map("locationRelativePath" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ locationRelativePathMap
   }
 }
 
@@ -108,9 +103,8 @@ case class MetricsFramework(
     locationPath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "locationPath" -> locationPath.getOrElse("")
-    )
+    val locationPathMap = locationPath.map(e => Map("locationPath" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ locationPathMap
   }
 }
 
@@ -124,9 +118,8 @@ case class Alert(
     locationRelativePath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "locationRelativePath" -> locationRelativePath.getOrElse("")
-    )
+    val locationRelativePathMap = locationRelativePath.map(e => Map("locationRelativePath" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ locationRelativePathMap
   }
 }
 
@@ -139,9 +132,8 @@ case class AlertsFramework(
     locationPath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "locationPath" -> locationPath.getOrElse("")
-    )
+    val locationPathMap = locationPath.map(e => Map("locationPath" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ locationPathMap
   }
 }
 
@@ -156,10 +148,7 @@ case class Code(
     entryPointArguments: Option[List[String]]
 ) extends Metadata{
   override def fieldsMap(): Map[String, _] = {
-    super.fieldsMap() ++ Map(
-      "remotePath" -> remotePath,
-      "entryPointClass" -> entryPointClass,
-      "entryPointArguments" -> entryPointArguments.getOrElse(List()),
-    )
+    val entryPointArgumentsMap = entryPointArguments.map(e => Map("entryPointArguments" -> e)).getOrElse(Map())
+    super.fieldsMap() ++ Map("remotePath" -> remotePath, "entryPointClass" -> entryPointClass) ++ entryPointArgumentsMap
   }
 }
