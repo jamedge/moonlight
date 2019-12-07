@@ -65,5 +65,5 @@ lazy val core = project.in(file("moonlight-core")).
     "com.typesafe.akka" %% "akka-http-testkit" % "10.0.11",
 
     "org.neo4j.driver" % "neo4j-java-driver" % "1.7.5",
-    "com.dimafeng" %% "neotypes" % "0.9.0"
+    "com.dimafeng" %% "neotypes" % "0.13.0"
   ))

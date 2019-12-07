@@ -1,7 +1,7 @@
 package edge.jam.moonlight.core.model.neo4j
 
 import neotypes.DeferredQueryBuilder
-import neotypes.implicits._
+import neotypes.implicits.all._
 
 object GraphElements {
   abstract class GraphElement(
