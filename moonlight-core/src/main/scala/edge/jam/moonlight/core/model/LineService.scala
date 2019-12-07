@@ -244,14 +244,13 @@ class LineService(
       n2: Option[GraphElement] = None,
       createDuplicateNode2IfPathNotFound: Boolean = false,
   )(implicit line: Line): DeferredQuery[Unit] = {
-    val query = c""
-      .+(GraphElements.constructCreateOrUpdateQuery(
+    val query = GraphElements.constructCreateOrUpdateQuery(
         n1,
         r,
         n2,
         createDuplicateNode2IfPathNotFound,
         None,
-        r.map(lineTaggingSnippet(line, _)))).query[Unit]
+        r.map(lineTaggingSnippet(line, _))).query[Unit]
     logQueryCreation(query)
     query
   }
