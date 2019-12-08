@@ -53,15 +53,12 @@ case class Process(
     notes: Option[List[String]],
     details: Option[Map[String, String]],
     processingFramework: Option[ProcessingFramework],
-    triggeredAt: Option[String],
-    triggeredBy: Option[String],
+    triggered: Option[ProcessingHistoryRecord],
     locationRelativePath: Option[String]
 ) extends Metadata {
   override def fieldsMap(): Map[String, _] = {
     val locationRelativePathMap = locationRelativePath.map(e => Map("locationRelativePath" -> e)).getOrElse(Map())
-    val triggeredAtMap = triggeredAt.map(e => Map("triggeredAt" -> e)).getOrElse(Map())
-    val triggeredByMap = triggeredBy.map(e => Map("triggeredBy" -> e)).getOrElse(Map())
-    super.fieldsMap() ++ locationRelativePathMap ++ triggeredAtMap ++ triggeredByMap
+    super.fieldsMap() ++ locationRelativePathMap
   }
 }
 
@@ -78,6 +75,26 @@ case class ProcessingFramework(
     super.fieldsMap() ++ locationPathMap
   }
 }
+
+case class ProcessingHistoryRecord(
+    triggeredAt: String,
+    triggeredBy: String,
+    processingHistory: ProcessingHistory = ProcessingHistory(
+      name = "processing_history",
+      purpose = Some("Enables saving of processing history."),
+      owner = None,
+      details = None,
+      notes = None
+    )
+) extends HistoryRecord
+
+case class ProcessingHistory(
+    name: String,
+    owner: Option[String],
+    purpose: Option[String],
+    notes: Option[List[String]],
+    details: Option[Map[String, String]],
+) extends Metadata
 
 case class Metric(
     name: String,

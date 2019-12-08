@@ -14,6 +14,7 @@ object Nodes {
     MetricsFramework => ModelMetricsFramework,
     Process => ModelProcess,
     ProcessingFramework => ModelProcessingFramework,
+    ProcessingHistory => ModelProcessingHistory,
     Storage => ModelStorage
   }
 
@@ -64,7 +65,7 @@ object Nodes {
       Process(fields, variablePrefix)
     }
     def apply(anyObjectVariable: String): Process = {
-      Process(ModelProcess("", None, None, None, None, None, None, None, None), anyObjectVariable)
+      Process(ModelProcess("", None, None, None, None, None, None, None), anyObjectVariable)
     }
   }
 
@@ -77,6 +78,18 @@ object Nodes {
     }
     def apply(anyObjectVariable: String): ProcessingFramework = {
       ProcessingFramework(ModelProcessingFramework("", None, None, None, None, None), anyObjectVariable)
+    }
+  }
+
+  case class ProcessingHistory(fieldsPairs: Map[String, _], variablePrefix: String)
+    extends GraphElement(ElementClass.ProcessingHistory, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+  object ProcessingHistory {
+    def apply(from: ModelProcessingHistory, variablePrefix: String = "ph"): ProcessingHistory = {
+      val fields = from.fieldsMap()
+      ProcessingHistory(fields, variablePrefix)
+    }
+    def apply(anyObjectVariable: String): ProcessingHistory = {
+      ProcessingHistory(ModelProcessingHistory("", None, None, None, None), anyObjectVariable)
     }
   }
 

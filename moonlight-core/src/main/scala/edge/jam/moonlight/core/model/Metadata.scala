@@ -15,3 +15,15 @@ trait Metadata {
     nameMap ++ ownerMap ++ purposeMap ++ notesMap
   }
 }
+
+trait HistoryRecord {
+  def triggeredAt: String
+  def triggeredBy: String
+
+  def fieldsMap(): Map[String, _] = {
+    Map(
+      "triggeredAt" -> triggeredAt,
+      "triggeredBy" -> triggeredBy
+    )
+  }
+}

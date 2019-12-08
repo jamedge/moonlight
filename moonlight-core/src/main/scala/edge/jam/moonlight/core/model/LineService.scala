@@ -151,19 +151,38 @@ class LineService(
               N.Process(process),
               Some(R.HasDetails()),
               Some(N.Details(details)),
-              true).execute(tx)).getOrElse(Future()),
+              true).execute(tx)).getOrElse(Future())) ++
           process.processingFramework.map { processingFramework =>
+            List(
+              constructCreateOrUpdateQuery(
+                N.Process(process),
+                Some(R.HasProcessingFramework()),
+                Some(N.ProcessingFramework(processingFramework))).execute(tx),
+              processingFramework.details.map(details =>
+                constructCreateOrUpdateQuery(
+                  N.ProcessingFramework(processingFramework),
+                  Some(R.HasDetails()),
+                  Some(N.Details(details)),
+                  true).execute(tx)).getOrElse(Future()))
+          }.getOrElse(List()) ++
+        process.triggered.map { processingHistoryRecord =>
+          List(
             constructCreateOrUpdateQuery(
               N.Process(process),
-              Some(R.HasProcessingFramework()),
-              Some(N.ProcessingFramework(processingFramework))).execute(tx)
-            processingFramework.details.map(details =>
+              Some(R.HasProcessingHistory()),
+              Some(N.ProcessingHistory(processingHistoryRecord.processingHistory))).execute(tx),
+            processingHistoryRecord.processingHistory.details.map(details =>
               constructCreateOrUpdateQuery(
-                N.ProcessingFramework(processingFramework),
+                N.ProcessingHistory(processingHistoryRecord.processingHistory),
                 Some(R.HasDetails()),
                 Some(N.Details(details)),
-                true).execute(tx)).getOrElse(Future())
-          }.getOrElse(Future()))
+                true).execute(tx)).getOrElse(Future()),
+            constructCreateOrUpdateQuery(
+              N.ProcessingHistory(processingHistoryRecord.processingHistory),
+              Some(R.HasProcessingHistoryRecord(processingHistoryRecord.fieldsMap() + ("relationshipType" -> "permanent"))),
+              Some(N.ProcessingHistory(processingHistoryRecord.processingHistory))).execute(tx),
+          )
+        }.getOrElse(List())
       }
     }
   }

@@ -234,7 +234,8 @@ object GraphElements {
       tagValue: String,
       startElement: GraphElement): DeferredQueryBuilder = {
     c"MATCH p =" +  startElement.toSearchObject() + "-[*0..]-> (x)" +
-      s"FOREACH ( x IN relationships(p) | SET x.$tagContainerFieldName = FILTER ( y IN x.$tagContainerFieldName" + c"WHERE y <> $tagValue))"
+      s"FOREACH ( x IN relationships(p) | SET x.$tagContainerFieldName = FILTER ( y IN x.$tagContainerFieldName" +
+        c"WHERE y <> $tagValue OR x.relationshipType = ${"permanent"}))"
   }
 
   sealed class ElementType(
@@ -258,6 +259,7 @@ object GraphElements {
     case object Storage extends ElementClass("Storage", ElementType.Node)
     case object Process extends ElementClass("Process", ElementType.Node)
     case object ProcessingFramework extends ElementClass("ProcessingFramework", ElementType.Node)
+    case object ProcessingHistory extends ElementClass("ProcessingHistory", ElementType.Node)
     case object Metric extends ElementClass("Metric", ElementType.Node)
     case object MetricsFramework extends ElementClass("MetricsFramework", ElementType.Node)
     case object Alert extends ElementClass("Alert", ElementType.Node)
@@ -271,6 +273,8 @@ object GraphElements {
     case class HasStorage(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_STORAGE", elementType)
     case class IsProcessedBy(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("IS_PROCESSED_BY", elementType)
     case class HasProcessingFramework(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_PROCESSING_FRAMEWORK", elementType)
+    case class HasProcessingHistory(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_PROCESSING_HISTORY", elementType)
+    case class HasProcessingHistoryRecord(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_PROCESSING_HISTORY_RECORD", elementType)
     case class HasMetrics(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_METRIC", elementType)
     case class HasMetricsFramework(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_METRICS_FRAMEWORK", elementType)
     case class HasAlert(override val elementType: ElementType = ElementType.RelationshipRight) extends ElementClass("HAS_ALERT", elementType)
