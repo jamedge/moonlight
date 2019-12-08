@@ -2,7 +2,7 @@ package edge.jam.moonlight.core.model
 
 import edge.jam.moonlight.core.model.neo4j.GraphElements
 import edge.jam.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
-import neotypes.{DeferredQuery, DeferredQueryBuilder, Driver, GraphDatabase, Transaction}
+import neotypes.{DeferredQuery, Driver, Transaction}
 
 import scala.concurrent.{ExecutionContext, Future}
 import neotypes.implicits.all._
@@ -22,11 +22,19 @@ class LineService(
       result.map(_.map(_.toString))
   }
 
-  // Guarantees data entered in a line with additional data gained by merging with data from other lines
-  // Deletion of line doesn't clean the mutual properties until there are other lines using them.
-  // They will override these properties if they are the only owners of the node or if they do it explicitly
-  // TODO: try to remove the properties from mutual nodes during cleanup
-  // TODO: there needs to be a way of knowing which property belongs to which Line (is this that important?). Maybe a merge strategy can be chosen externally (merge or overwrite)
+  /**
+   * Adds an ETL line to Graph database.
+   * <br/><br/>
+   * Guarantees persistence of data entered in the line with additional data gained by merging with data from other lines.
+   * Changing property values for selected `name` overrides previously set value - e.g. if same input has the same property
+   * set twice, only the latter one will be persisted, as the db stores only the last state of the elements and their relationships.
+   * <br/><br/>
+   * Deletion of line doesn't clean the mutual properties with other lines (mutual node points) until they are using them.
+   * Properties of the node (and node itself) are deleted if the deleting entity is the last one using the node.
+   *
+   * @param line Line object that needs to be saved.
+   * @return Future containing query executions on neo4j db.
+   */
   def addLine(implicit line: Line): Future[Unit] = {
     neo4jDriver.writeSession { implicit session =>
       session.transact[Unit] { implicit tx =>
@@ -234,30 +242,23 @@ class LineService(
     }.getOrElse(List()))
   }
 
-  // TODO: extract all DDL keywords to GraphElements
   private def constructRelationshipDeleteMarking(
       line:Line,
       startElement: GraphElement
   ): DeferredQuery[Unit] = {
-    val query = (
-      c"MATCH p =" +  startElement.toSearchObject() + "-[*0..]-> (x)" +
-      c"FOREACH ( x IN relationships(p) | SET x.fromLines = FILTER ( y IN x.fromLines WHERE y <> ${line.name}))").query[Unit]
+    val query = GraphElements.constructRelationshipDeleteMarkingQuery("fromLines", line.name, startElement).query[Unit]
     logQueryCreation(query)
     query
   }
 
-  // TODO: extract all DDL keywords to GraphElements
   private def constructDeleteCleanedRelationships(): DeferredQuery[Unit] = {
-    val query =
-      c"MATCH (i) <-[s {fromLines: []}]- () DELETE s".query[Unit]
+    val query = GraphElements.constructDeleteCleanedRelationshipsQuery().query[Unit]
     logQueryCreation(query)
     query
   }
 
-  // TODO: extract all DDL keywords to GraphElements
   private def constructDeleteDetachedNodes(elementClass: ElementClass): DeferredQuery[Unit] = {
-    val query =
-      (c"MATCH" + s"(i:${elementClass.name})" + c"WHERE NOT (i) <-- () DELETE i").query[Unit]
+    val query = GraphElements.constructDeleteDetachedNodesQuery(elementClass).query[Unit]
     logQueryCreation(query)
     query
   }
@@ -274,15 +275,9 @@ class LineService(
         n2,
         createDuplicateNode2IfPathNotFound,
         None,
-        r.map(lineTaggingSnippet(line, _))).query[Unit]
+        r.map(GraphElements.constructRelationshipTaggingSnippet("fromLines", line.name, _))).query[Unit]
     logQueryCreation(query)
     query
-  }
-
-  private def lineTaggingSnippet(line: Line, relationship: GraphElement): DeferredQueryBuilder = {
-    c"ON MATCH SET (CASE WHEN NOT ${line.name} IN" + relationship.toVariableWithNewField("fromLines") +
-      c"THEN" + relationship.toVariable() + c"END).fromLines =" + relationship.toVariableWithNewField("fromLines") + c" + [${line.name}]" +
-      c"ON CREATE SET" + relationship.toVariableWithNewField("fromLines") + c"= [${line.name}]"
   }
 
   private def logQueryCreation(query: DeferredQuery[_]): Unit = {
