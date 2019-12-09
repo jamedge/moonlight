@@ -55,7 +55,6 @@ class LineService(
     Future.sequence(List(
       constructRelationshipDeleteMarking(line, N.Line(line)).execute(tx),
       constructDeleteCleanedRelationships().execute(tx),
-      constructDeleteDetachedNodes(ElementClass.Line).execute(tx),
       constructDeleteDetachedNodes(ElementClass.Details).execute(tx),
       constructDeleteDetachedNodes(ElementClass.IO).execute(tx),
       constructDeleteDetachedNodes(ElementClass.Storage).execute(tx),
