@@ -8,7 +8,13 @@ import scala.concurrent.{ExecutionContext, Future}
 import neotypes.implicits.all._
 import org.slf4j.Logger
 import edge.jam.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
+import org.neo4j.driver.v1.{Value, Values}
+import scala.collection.JavaConverters._
 import shapeless._
+import scalax.collection.Graph
+import scalax.collection.edge.LDiEdge
+import scalax.collection.io.json.descriptor.predefined.LDi
+import scalax.collection.io.json.{Descriptor, NodeDescriptor}
 
 class LineService(
     neo4jDriver: Id[Driver[Future]],
@@ -16,10 +22,67 @@ class LineService(
 )(implicit val executionContext: ExecutionContext) {
 
   def getAllCodeMetadata(): Future[Option[String]] = {
-      val result = neo4jDriver.readSession { session =>
-        "MATCH (code:Code) RETURN code".query[Option[Code]].single(session)
+    val resultEdges = neo4jDriver.readSession { session =>
+      """MATCH p = (i:IO {name:'mi1'}) -[:HAS_OUTPUT *1..]-> (n:IO)
+        |WITH p
+        |MATCH (a) -[r]-> (b) WHERE r IN relationships(p)
+        |RETURN DISTINCT a, r.fromLines, b""".stripMargin.
+        query[(IOElement, List[String], IOElement)].list(session)
+    }
+
+    val resultIODetails = neo4jDriver.readSession { session =>
+      """MATCH (i:IO) -[:HAS_DETAILS]-> (d)
+        |RETURN DISTINCT i.name, d {.*}""".stripMargin.
+        query[(String, Value)].list(session)
+    }
+
+    val resultStorage = neo4jDriver.readSession { session =>
+      """MATCH (i:IO) -[:HAS_STORAGE]-> (s)
+        |RETURN i.name, s""".stripMargin.
+        query[(String, Storage)].list(session)
+    }
+
+    val resultStorageDetails = neo4jDriver.readSession { session =>
+      """MATCH (s:Storage) -[:HAS_DETAILS]-> (d)
+        |RETURN DISTINCT s.name, d {.*}""".stripMargin.
+        query[(String, Value)].list(session)
+    }
+
+
+    val ioDescriptor = new NodeDescriptor[IOElement](typeId = "IOs") {
+      def id(node: Any) = node match {
+        case IOElement(name, owner, purpose, notes, details, storage, locationRelativePath) => name
       }
-      result.map(_.map(_.toString))
+    }
+    val quickJson = new Descriptor[IOElement](
+      defaultNodeDescriptor = ioDescriptor,
+      defaultEdgeDescriptor = LDi.descriptor[IOElement, String]("lines"),
+      namedNodeDescriptors = Seq(ioDescriptor),
+      namedEdgeDescriptors = Seq(LDi.descriptor[IOElement, String]("lines"))
+    )
+
+    resultEdges.flatMap { re =>
+      resultIODetails.flatMap { riod =>
+        resultStorage.flatMap { rs =>
+          resultStorageDetails.map { rsd =>
+            val edges = re.map { e =>
+              val left = e._1.copy(
+                storage = rs.toMap.get(e._1.name).map(s => s.copy(
+                    details = rsd.toMap.get(s.name).map(_.asMap[String](Values.ofString()).asScala.toMap))),
+                details = riod.toMap.get(e._1.name).map(_.asMap[String](Values.ofString()).asScala.toMap))
+              val right = e._3.copy(
+                storage = rs.toMap.get(e._3.name).map(s => s.copy(
+                  details = rsd.toMap.get(s.name).map(_.asMap[String](Values.ofString()).asScala.toMap))),
+                details = riod.toMap.get(e._3.name).map(_.asMap[String](Values.ofString()).asScala.toMap))
+              LDiEdge(left, right)(e._2)
+            }
+            val g = Graph[IOElement, LDiEdge](edges: _*)
+            import scalax.collection.io.json._
+            Some(g.toJson(quickJson))
+          }
+        }
+      }
+    }
   }
 
   /**

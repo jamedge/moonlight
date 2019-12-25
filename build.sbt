@@ -1,13 +1,13 @@
 import sbtassembly.AssemblyKeys.assemblyMergeStrategy
 import sbtassembly.MergeStrategy
 
-ThisBuild / scalaVersion := "2.12.8"
+ThisBuild / scalaVersion := "2.12.10"
 ThisBuild / organization := "jamedge"
 
 name := "moonlight"
 
 val commonSettings = Seq(
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.12.10",
 
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javaOptions ++= Seq("-Xms1024M", "-Xmx2200M"),
@@ -65,5 +65,7 @@ lazy val core = project.in(file("moonlight-core")).
     "com.typesafe.akka" %% "akka-http-testkit" % "10.0.11",
 
     "org.neo4j.driver" % "neo4j-java-driver" % "1.7.5",
-    "com.dimafeng" %% "neotypes" % "0.13.0"
+    "com.dimafeng" %% "neotypes" % "0.13.0",
+    "org.scala-graph" %% "graph-core" % "1.13.0",
+    "org.scala-graph" %% "graph-json" % "1.12.1"
   ))
