@@ -1,6 +1,5 @@
 package edge.jam.moonlight.core.api
 
-import akka.stream.ActorMaterializer
 import edge.jam.moonlight.core.Context
 import com.softwaremill.macwire.wire
 import edge.jam.moonlight.core.model.LineService
@@ -12,8 +11,6 @@ import shapeless._
 import scala.concurrent.Future
 
 class Module(app: String) extends Context(app) {
-  implicit val materializer = ActorMaterializer()
-
   lazy val dbConfig: DbConfig = loadConfigOrThrow[DbConfig](config, "db")
   val neo4jDriver: Id[Driver[Future]] = GraphDatabase.
     driver[Future](dbConfig.neo4j.uri,

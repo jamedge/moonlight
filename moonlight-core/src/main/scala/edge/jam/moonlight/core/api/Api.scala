@@ -5,7 +5,6 @@ import org.slf4j.Logger
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Route
-import akka.stream.ActorMaterializer
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
 import edge.jam.moonlight.core.model._
@@ -16,7 +15,7 @@ class Api(
     logger: Logger,
     apiConfig: ApiConfig,
     lineService: LineService
-) (implicit val executionContext: ExecutionContext, actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) {
+) (implicit val executionContext: ExecutionContext, actorSystem: ActorSystem) {
   private implicit val formats = DefaultFormats
 
   import akka.http.scaladsl.server.Directives._
@@ -37,7 +36,9 @@ class Api(
           path("lineage" / "graph") {
             parameters("root_io") { rootIOElementName =>
               complete {
-                getLineageGraphJson(rootIOElementName)
+                getLineageGraphJson(rootIOElementName).map { graphJson =>
+                  HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
+                }
               }
             }
           }

@@ -60,9 +60,10 @@ lazy val core = project.in(file("moonlight-core")).
     //credentials += Credentials(new File("credentials.properties"))
   ).
   settings(libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-http-core" % "10.0.11",
-    "com.typesafe.akka" %% "akka-http" % "10.0.11",
-    "com.typesafe.akka" %% "akka-http-testkit" % "10.0.11",
+    "com.typesafe.akka" %% "akka-stream" % "2.6.1",
+    "com.typesafe.akka" %% "akka-http-core" % "10.1.11",
+    "com.typesafe.akka" %% "akka-http" % "10.1.11",
+    "com.typesafe.akka" %% "akka-http-testkit" % "10.1.11",
 
     "org.neo4j.driver" % "neo4j-java-driver" % "1.7.5",
     "com.dimafeng" %% "neotypes" % "0.13.0",
