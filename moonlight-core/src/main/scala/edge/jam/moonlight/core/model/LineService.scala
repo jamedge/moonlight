@@ -9,7 +9,7 @@ import neotypes.implicits.all._
 import org.slf4j.Logger
 import edge.jam.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 import org.neo4j.driver.v1.{Value, Values}
-import scala.collection.JavaConverters._
+
 import shapeless._
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
@@ -21,33 +21,35 @@ class LineService(
     logger: Logger
 )(implicit val executionContext: ExecutionContext) {
 
+  case class RawEdge(left: IOElement, properties: List[String], right: IOElement)
+
   def getAllCodeMetadata(): Future[Option[String]] = {
+
     val resultEdges = neo4jDriver.readSession { session =>
       """MATCH p = (i:IO {name:'mi1'}) -[:HAS_OUTPUT *1..]-> (n:IO)
         |WITH p
         |MATCH (a) -[r]-> (b) WHERE r IN relationships(p)
-        |RETURN DISTINCT a, r.fromLines, b""".stripMargin.
-        query[(IOElement, List[String], IOElement)].list(session)
+        |RETURN DISTINCT a AS left, r.fromLines AS properties, b AS right""".stripMargin.
+        query[RawEdge].list(session)
     }
 
     val resultIODetails = neo4jDriver.readSession { session =>
       """MATCH (i:IO) -[:HAS_DETAILS]-> (d)
         |RETURN DISTINCT i.name, d {.*}""".stripMargin.
-        query[(String, Value)].list(session)
+        query[(String, Value)].map(session)
     }
 
     val resultStorage = neo4jDriver.readSession { session =>
       """MATCH (i:IO) -[:HAS_STORAGE]-> (s)
         |RETURN i.name, s""".stripMargin.
-        query[(String, Storage)].list(session)
+        query[(String, Storage)].map(session)
     }
 
     val resultStorageDetails = neo4jDriver.readSession { session =>
       """MATCH (s:Storage) -[:HAS_DETAILS]-> (d)
         |RETURN DISTINCT s.name, d {.*}""".stripMargin.
-        query[(String, Value)].list(session)
+        query[(String, Value)].map(session)
     }
-
 
     val ioDescriptor = new NodeDescriptor[IOElement](typeId = "IOs") {
       def id(node: Any) = node match {
@@ -61,20 +63,14 @@ class LineService(
       namedEdgeDescriptors = Seq(LDi.descriptor[IOElement, String]("lines"))
     )
 
-    resultEdges.flatMap { re =>
-      resultIODetails.flatMap { riod =>
-        resultStorage.flatMap { rs =>
-          resultStorageDetails.map { rsd =>
-            val edges = re.map { e =>
-              val left = e._1.copy(
-                storage = rs.toMap.get(e._1.name).map(s => s.copy(
-                    details = rsd.toMap.get(s.name).map(_.asMap[String](Values.ofString()).asScala.toMap))),
-                details = riod.toMap.get(e._1.name).map(_.asMap[String](Values.ofString()).asScala.toMap))
-              val right = e._3.copy(
-                storage = rs.toMap.get(e._3.name).map(s => s.copy(
-                  details = rsd.toMap.get(s.name).map(_.asMap[String](Values.ofString()).asScala.toMap))),
-                details = riod.toMap.get(e._3.name).map(_.asMap[String](Values.ofString()).asScala.toMap))
-              LDiEdge(left, right)(e._2)
+    resultEdges.flatMap { rawEdges =>
+      resultIODetails.flatMap { rawIODetails =>
+        resultStorage.flatMap { storages =>
+          resultStorageDetails.map { rawStorageDetails =>
+            val edges = rawEdges.map { rawEdge =>
+              val left = buildIOElement(rawEdge.left, rawIODetails, storages, rawStorageDetails)
+              val right = buildIOElement(rawEdge.right, rawIODetails, storages, rawStorageDetails)
+              LDiEdge(left, right)(rawEdge.properties)
             }
             val g = Graph[IOElement, LDiEdge](edges: _*)
             import scalax.collection.io.json._
@@ -83,6 +79,23 @@ class LineService(
         }
       }
     }
+  }
+
+  private def buildIOElement(
+      ioElement: IOElement,
+      rawIODetails: Map[String, Value],
+      storages: Map[String, Storage],
+      rawStorageDetails: Map[String, Value]
+  ): IOElement = {
+    ioElement.copy(
+      storage = storages.get(ioElement.name).map(s => s.copy(
+        details = extractDetailsFromGraphValues(rawStorageDetails, s.name))),
+      details = extractDetailsFromGraphValues(rawIODetails, ioElement.name))
+  }
+
+  private def extractDetailsFromGraphValues(values: Map[String, Value], parentName: String): Option[Map[String, String]] = {
+    import scala.collection.JavaConverters._
+    values.get(parentName).map(_.asMap[String](Values.ofString()).asScala.toMap)
   }
 
   /**
