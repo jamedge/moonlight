@@ -3,6 +3,7 @@ package edge.jam.moonlight.core.api
 import akka.actor.ActorSystem
 import org.slf4j.Logger
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import org.json4s.DefaultFormats
@@ -33,9 +34,11 @@ class Api(
           }
         } ~
         get {
-          path("codeTest") {
-            complete {
-              getAllCodeMetadata().map(_.getOrElse("Error"))
+          path("lineage" / "graph") {
+            parameters("root_io") { rootIOElementName =>
+              complete {
+                getLineageGraphJson(rootIOElementName)
+              }
             }
           }
         }
@@ -52,8 +55,8 @@ class Api(
     logger.info("Server started.")
   }
 
-  def getAllCodeMetadata(): Future[Option[String]] = {
-    lineService.getAllCodeMetadata()
+  def getLineageGraphJson(rootIOElementName: String): Future[String] = {
+    lineService.getLineageGraphJson(rootIOElementName)
   }
 
   def addLine(requestJson: String): Route = {

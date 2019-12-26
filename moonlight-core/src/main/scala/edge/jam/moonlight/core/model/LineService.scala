@@ -23,62 +23,66 @@ class LineService(
 
   case class RawEdge(left: IOElement, properties: List[String], right: IOElement)
 
-  def getAllCodeMetadata(): Future[Option[String]] = {
-
-    val resultEdges = neo4jDriver.readSession { session =>
-      """MATCH p = (i:IO {name:'mi1'}) -[:HAS_OUTPUT *1..]-> (n:IO)
-        |WITH p
-        |MATCH (a) -[r]-> (b) WHERE r IN relationships(p)
-        |RETURN DISTINCT a AS left, r.fromLines AS properties, b AS right""".stripMargin.
-        query[RawEdge].list(session)
-    }
-
-    val resultIODetails = neo4jDriver.readSession { session =>
-      """MATCH (i:IO) -[:HAS_DETAILS]-> (d)
-        |RETURN DISTINCT i.name, d {.*}""".stripMargin.
-        query[(String, Value)].map(session)
-    }
-
-    val resultStorage = neo4jDriver.readSession { session =>
-      """MATCH (i:IO) -[:HAS_STORAGE]-> (s)
-        |RETURN i.name, s""".stripMargin.
-        query[(String, Storage)].map(session)
-    }
-
-    val resultStorageDetails = neo4jDriver.readSession { session =>
-      """MATCH (s:Storage) -[:HAS_DETAILS]-> (d)
-        |RETURN DISTINCT s.name, d {.*}""".stripMargin.
-        query[(String, Value)].map(session)
-    }
-
-    val ioDescriptor = new NodeDescriptor[IOElement](typeId = "IOs") {
-      def id(node: Any) = node match {
-        case IOElement(name, owner, purpose, notes, details, storage, locationRelativePath) => name
+  def getLineageGraph(rootIOElementName: String): Future[Graph[IOElement, LDiEdge]] = {
+    neo4jDriver.readSession { implicit session =>
+      session.transact[Graph[IOElement, LDiEdge]] { implicit tx =>
+        for {
+          rawEdges <- getLineageRawEdges(rootIOElementName)
+          rawIODetails <- getAllIODetails
+          storages <- getAllIOStorages
+          rawStorageDetails <- getAllStorageDetails
+          graph <- Future(buildLineageGraph(rawEdges, rawIODetails, storages, rawStorageDetails))
+        } yield graph
       }
     }
-    val quickJson = new Descriptor[IOElement](
-      defaultNodeDescriptor = ioDescriptor,
-      defaultEdgeDescriptor = LDi.descriptor[IOElement, String]("lines"),
-      namedNodeDescriptors = Seq(ioDescriptor),
-      namedEdgeDescriptors = Seq(LDi.descriptor[IOElement, String]("lines"))
-    )
+  }
 
-    resultEdges.flatMap { rawEdges =>
-      resultIODetails.flatMap { rawIODetails =>
-        resultStorage.flatMap { storages =>
-          resultStorageDetails.map { rawStorageDetails =>
-            val edges = rawEdges.map { rawEdge =>
-              val left = buildIOElement(rawEdge.left, rawIODetails, storages, rawStorageDetails)
-              val right = buildIOElement(rawEdge.right, rawIODetails, storages, rawStorageDetails)
-              LDiEdge(left, right)(rawEdge.properties)
-            }
-            val g = Graph[IOElement, LDiEdge](edges: _*)
-            import scalax.collection.io.json._
-            Some(g.toJson(quickJson))
-          }
-        }
-      }
+  def getLineageGraphJson(rootIOElementName: String): Future[String] = {
+    import scalax.collection.io.json._
+    for {
+      graph <- getLineageGraph(rootIOElementName)
+      resultJson <- Future(graph.toJson(createLineageGraphJsonDescriptor()))
+    } yield resultJson
+  }
+
+  private def getLineageRawEdges(rootIOElementName: String)(implicit tx: Transaction[Future]): Future[List[RawEdge]] = {
+    c"""MATCH p = (i:IO {name: $rootIOElementName}) -[:HAS_OUTPUT *1..]-> (n:IO)
+      WITH p
+      MATCH (a) -[r]-> (b) WHERE r IN relationships(p)
+      RETURN DISTINCT a AS left, r.fromLines AS properties, b AS right""".
+      query[RawEdge].list(tx)
+  }
+
+  private def getAllIODetails(implicit tx: Transaction[Future]): Future[Map[String, Value]] = {
+    """MATCH (i:IO) -[:HAS_DETAILS]-> (d)
+      |RETURN DISTINCT i.name, d {.*}""".stripMargin.
+      query[(String, Value)].map(tx)
+  }
+
+  private def getAllIOStorages(implicit tx: Transaction[Future]): Future[Map[String, Storage]] = {
+    """MATCH (i:IO) -[:HAS_STORAGE]-> (s)
+      |RETURN i.name, s""".stripMargin.
+      query[(String, Storage)].map(tx)
+  }
+
+  private def getAllStorageDetails(implicit tx: Transaction[Future]): Future[Map[String, Value]] = {
+    """MATCH (s:Storage) -[:HAS_DETAILS]-> (d)
+      |RETURN DISTINCT s.name, d {.*}""".stripMargin.
+      query[(String, Value)].map(tx)
+  }
+
+  private def buildLineageGraph(
+      rawEdges: List[RawEdge],
+      rawIODetails: Map[String, Value],
+      storages: Map[String, Storage],
+      rawStorageDetails: Map[String, Value]
+  ): Graph[IOElement, LDiEdge] = {
+    val edges = rawEdges.map { rawEdge =>
+      val left = buildIOElement(rawEdge.left, rawIODetails, storages, rawStorageDetails)
+      val right = buildIOElement(rawEdge.right, rawIODetails, storages, rawStorageDetails)
+      LDiEdge(left, right)(rawEdge.properties)
     }
+    Graph[IOElement, LDiEdge](edges: _*)
   }
 
   private def buildIOElement(
@@ -96,6 +100,20 @@ class LineService(
   private def extractDetailsFromGraphValues(values: Map[String, Value], parentName: String): Option[Map[String, String]] = {
     import scala.collection.JavaConverters._
     values.get(parentName).map(_.asMap[String](Values.ofString()).asScala.toMap)
+  }
+
+  private def createLineageGraphJsonDescriptor(): Descriptor[IOElement] = {
+    val ioDescriptor = new NodeDescriptor[IOElement](typeId = "IOs") {
+      def id(node: Any): String = node match {
+        case IOElement(name, owner, purpose, notes, details, storage, locationRelativePath) => name
+      }
+    }
+    new Descriptor[IOElement](
+      defaultNodeDescriptor = ioDescriptor,
+      defaultEdgeDescriptor = LDi.descriptor[IOElement, String]("lines"),
+      namedNodeDescriptors = Seq(ioDescriptor),
+      namedEdgeDescriptors = Seq(LDi.descriptor[IOElement, String]("lines"))
+    )
   }
 
   /**
