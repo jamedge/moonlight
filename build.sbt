@@ -28,7 +28,7 @@ val commonSettings = Seq(
     "com.softwaremill.macwire" %% "util" % "2.3.0",
     "com.softwaremill.macwire" %% "proxy" % "2.3.0",
     "org.slf4j" % "slf4j-log4j12" % "1.7.7",
-    "com.trueaccord.scalapb" %% "scalapb-json4s" % "0.1.6",
+    "org.json4s" %% "json4s-jackson" % "3.7.0-M1"
   )
 )
 

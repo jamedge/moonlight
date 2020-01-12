@@ -36,7 +36,29 @@ class Api(
           path("lineage" / "graph") {
             parameters("root_io") { rootIOElementName =>
               complete {
-                getLineageGraphJson(rootIOElementName).map { graphJson =>
+                getLineageGraph(rootIOElementName).map { graphJson =>
+                  HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
+                }
+              }
+            }
+          }
+        } ~
+        get {
+          path("lineage" / "graph" / "md") { // TODO: distinguish this vs json output based on content type
+            parameters("root_io") { rootIOElementName =>
+              complete {
+                getLineageGraphDownstream(rootIOElementName, LineageGraphDownstreamOutputType.Md).map { graphMd =>
+                  HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/html(UTF-8)`, graphMd))
+                }
+              }
+            }
+          }
+        } ~
+        get {
+          path("lineage" / "graph" / "json") {
+            parameters("root_io") { rootIOElementName =>
+              complete {
+                getLineageGraphDownstream(rootIOElementName, LineageGraphDownstreamOutputType.Json).map { graphJson =>
                   HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
                 }
               }
@@ -56,8 +78,12 @@ class Api(
     logger.info("Server started.")
   }
 
-  def getLineageGraphJson(rootIOElementName: String): Future[String] = {
+  def getLineageGraph(rootIOElementName: String): Future[String] = {
     lineService.getLineageGraphJson(rootIOElementName)
+  }
+
+  def getLineageGraphDownstream(rootIOElementName: String, outputType: LineageGraphDownstreamOutputType): Future[String] = {
+    lineService.getLineageGraphDownstream(rootIOElementName, outputType)
   }
 
   def addLine(requestJson: String): Route = {

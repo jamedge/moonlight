@@ -2,7 +2,7 @@ package edge.jam.moonlight.core.api
 
 import edge.jam.moonlight.core.Context
 import com.softwaremill.macwire.wire
-import edge.jam.moonlight.core.model.LineService
+import edge.jam.moonlight.core.model.{LineService, OutputConfig}
 import neotypes.{Driver, GraphDatabase}
 import org.neo4j.driver.v1.AuthTokens
 import pureconfig.loadConfigOrThrow
@@ -20,4 +20,5 @@ class Module(app: String) extends Context(app) {
   lazy val api: Api = wire[Api]
 
   lazy val lineService: LineService = wire[LineService]
+  lazy val outputConfig: OutputConfig.Output = loadConfigOrThrow[OutputConfig.Output](config, "output")
 }
