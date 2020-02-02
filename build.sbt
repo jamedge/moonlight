@@ -36,9 +36,7 @@ val commonSettings = Seq(
     "com.typesafe" % "config" % "1.4.0",
     "com.github.pureconfig" %% "pureconfig" % "0.12.2",
 
-    "org.scalaj" %% "scalaj-http" % "2.4.2",
-    "org.slf4j" % "slf4j-log4j12" % "1.7.7",
-    "org.json4s" %% "json4s-jackson" % "3.7.0-M1"
+    "org.slf4j" % "slf4j-log4j12" % "1.7.7"
   )
 )
 
@@ -56,18 +54,26 @@ val assemblySettings = Seq(
   assemblyJarName in assembly := s"${name.value}.jar",
 )
 
-lazy val `moonlight-core` = project.in(file("moonlight-core")).
-  settings(commonSettings).
-  settings(assemblySettings).
-  settings(
-    mainClass in assembly := Some("com.github.jamedge.moonlight.core.api.Api")
-  ).
-  settings(libraryDependencies ++= Seq(
+val apiSettings = Seq(
+  libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-stream" % "2.6.1",
     "com.typesafe.akka" %% "akka-http-core" % "10.1.11",
     "com.typesafe.akka" %% "akka-http" % "10.1.11",
     "com.typesafe.akka" %% "akka-http-testkit" % "10.1.11",
 
+    "org.scalaj" %% "scalaj-http" % "2.4.2",
+    "org.json4s" %% "json4s-jackson" % "3.7.0-M1"
+  )
+)
+
+lazy val `moonlight-core` = project.in(file("moonlight-core")).
+  settings(commonSettings).
+  settings(assemblySettings).
+  settings(apiSettings).
+  settings(
+    mainClass in assembly := Some("com.github.jamedge.moonlight.core.api.Api")
+  ).
+  settings(libraryDependencies ++= Seq(
     "org.neo4j.driver" % "neo4j-java-driver" % "1.7.5",
     "com.dimafeng" %% "neotypes" % "0.13.0",
     "org.scala-graph" %% "graph-core" % "1.13.2",
