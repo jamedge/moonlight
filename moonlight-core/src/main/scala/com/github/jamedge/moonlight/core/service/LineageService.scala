@@ -1,6 +1,7 @@
 package com.github.jamedge.moonlight.core.service
 
 import com.github.jamedge.moonlight.core.model.{IOElement, Storage}
+import com.github.jamedge.moonlight.core.service.neo4j.LineageQueries
 import neotypes.{Driver, Transaction}
 import org.neo4j.driver.v1.{Value, Values}
 import org.slf4j.Logger
@@ -40,40 +41,14 @@ class LineageService(
     neo4jDriver.readSession { implicit session =>
       session.transact[Graph[IOElement, LDiEdge]] { implicit tx =>
         for {
-          rawEdges <- getLineageRawEdges(rootIOElementName)
-          rawIODetails <- getAllIODetails
-          storages <- getAllIOStorages
-          rawStorageDetails <- getAllStorageDetails
+          rawEdges <- LineageQueries.constructGetLineageRawEdgesQuery(rootIOElementName).query[RawEdge].list(tx)
+          rawIODetails <- LineageQueries.constructGetAllIODetailsQuery().query[(String, Value)].map(tx)
+          storages <- LineageQueries.constructGetAllIOStoragesQuery().query[(String, Storage)].map(tx)
+          rawStorageDetails <- LineageQueries.constructGetAllStorageDetailsQuery().query[(String, Value)].map(tx)
           graph <- Future(buildLineageGraph(rawEdges, rawIODetails, storages, rawStorageDetails))
         } yield graph
       }
     }
-  }
-
-  private def getLineageRawEdges(rootIOElementName: String)(implicit tx: Transaction[Future]): Future[List[RawEdge]] = {
-    c"""MATCH p = (i:IO {name: $rootIOElementName}) -[:HAS_OUTPUT *1..]-> (n:IO)
-      WITH p
-      MATCH (a) -[r]-> (b) WHERE r IN relationships(p)
-      RETURN DISTINCT a AS left, r.fromLines AS properties, b AS right""".
-      query[RawEdge].list(tx)
-  }
-
-  private def getAllIODetails(implicit tx: Transaction[Future]): Future[Map[String, Value]] = {
-    """MATCH (i:IO) -[:HAS_DETAILS]-> (d)
-      |RETURN DISTINCT i.name, d {.*}""".stripMargin.
-      query[(String, Value)].map(tx)
-  }
-
-  private def getAllIOStorages(implicit tx: Transaction[Future]): Future[Map[String, Storage]] = {
-    """MATCH (i:IO) -[:HAS_STORAGE]-> (s)
-      |RETURN i.name, s""".stripMargin.
-      query[(String, Storage)].map(tx)
-  }
-
-  private def getAllStorageDetails(implicit tx: Transaction[Future]): Future[Map[String, Value]] = {
-    """MATCH (s:Storage) -[:HAS_DETAILS]-> (d)
-      |RETURN DISTINCT s.name, d {.*}""".stripMargin.
-      query[(String, Value)].map(tx)
   }
 
   private def buildLineageGraph(

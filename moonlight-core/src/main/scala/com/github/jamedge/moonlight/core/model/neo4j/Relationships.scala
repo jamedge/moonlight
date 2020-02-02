@@ -1,8 +1,9 @@
-package com.github.jamedge.moonlight.core.service.neo4j
+package com.github.jamedge.moonlight.core.model.neo4j
 
-import com.github.jamedge.moonlight.core.service.neo4j.GraphElements.{ElementClass, ElementType, GraphElement}
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, ElementType, GraphElement}
 
 object Relationships {
+
   case class HasDetails(fieldsPairs: Map[String, _] = Map("relationshipType" -> "mutable"), variablePrefix: String = "hd", elementType: ElementType = ElementType.RelationshipRight)
     extends GraphElement(ElementClass.HasDetails(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
 
@@ -41,4 +42,5 @@ object Relationships {
 
   case class HasCode(fieldsPairs: Map[String, _] = Map("relationshipType" -> "mutable"), variablePrefix: String = "hc", elementType: ElementType = ElementType.RelationshipRight)
     extends GraphElement(ElementClass.HasCode(elementType), GraphElements.generateVariable(variablePrefix), fieldsPairs)
+
 }

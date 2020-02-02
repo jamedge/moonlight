@@ -1,8 +1,9 @@
 package com.github.jamedge.moonlight.core.service
 
-import com.github.jamedge.moonlight.core.service.neo4j.GraphElements.{ElementClass, GraphElement}
-import com.github.jamedge.moonlight.core.service.neo4j.{GraphElements, Nodes => N, Relationships => R}
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
+import com.github.jamedge.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 import com.github.jamedge.moonlight.core.model.Line
+import com.github.jamedge.moonlight.core.service.neo4j.LineQueries
 import neotypes.implicits.all._
 import neotypes.{DeferredQuery, Driver, Transaction}
 import org.slf4j.Logger
@@ -258,19 +259,19 @@ class LineService(
       line:Line,
       startElement: GraphElement
   ): DeferredQuery[Unit] = {
-    val query = GraphElements.constructRelationshipDeleteMarkingQuery("fromLines", line.name, startElement).query[Unit]
+    val query = LineQueries.constructRelationshipDeleteMarkingQuery("fromLines", line.name, startElement).query[Unit]
     logQueryCreation(query)
     query
   }
 
   private def constructDeleteCleanedRelationships(): DeferredQuery[Unit] = {
-    val query = GraphElements.constructDeleteCleanedRelationshipsQuery().query[Unit]
+    val query = LineQueries.constructDeleteCleanedRelationshipsQuery().query[Unit]
     logQueryCreation(query)
     query
   }
 
   private def constructDeleteDetachedNodes(elementClass: ElementClass): DeferredQuery[Unit] = {
-    val query = GraphElements.constructDeleteDetachedNodesQuery(elementClass).query[Unit]
+    val query = LineQueries.constructDeleteDetachedNodesQuery(elementClass).query[Unit]
     logQueryCreation(query)
     query
   }
@@ -281,13 +282,13 @@ class LineService(
       n2: Option[GraphElement] = None,
       createDuplicateNode2IfPathNotFound: Boolean = false,
   )(implicit line: Line): DeferredQuery[Unit] = {
-    val query = GraphElements.constructCreateOrUpdateQuery(
+    val query = LineQueries.constructCreateOrUpdateQuery(
         n1,
         r,
         n2,
         createDuplicateNode2IfPathNotFound,
         None,
-        r.map(GraphElements.constructRelationshipTaggingSnippet("fromLines", line.name, _))).query[Unit]
+        r.map(LineQueries.constructRelationshipTaggingSnippet("fromLines", line.name, _))).query[Unit]
     logQueryCreation(query)
     query
   }
