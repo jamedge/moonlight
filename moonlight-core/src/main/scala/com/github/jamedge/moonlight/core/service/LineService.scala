@@ -24,7 +24,7 @@ class LineService(
    * Changing property values for selected `name` overrides previously set value - e.g. if same input has the same property
    * set twice, only the latter one will be persisted, as the db stores only the last state of the elements and their relationships.
    * <br/><br/>
-   * Deletion of line doesn't clean the mutual properties with other lines (mutual node points) until they are using them.
+   * Deletion of line doesn't clean the mutual properties with other lines (mutual node points) until they are still using them.
    * Properties of the node (and node itself) are deleted if the deleting entity is the last one using the node.
    *
    * @param line Line object that needs to be saved.

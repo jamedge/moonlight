@@ -2,7 +2,7 @@ package com.github.jamedge.moonlight.core.service
 
 import com.github.jamedge.moonlight.core.model.{IOElement, Storage}
 import com.github.jamedge.moonlight.core.service.neo4j.LineageQueries
-import neotypes.{Driver, Transaction}
+import neotypes.Driver
 import org.neo4j.driver.v1.{Value, Values}
 import org.slf4j.Logger
 import scalax.collection.Graph
@@ -22,12 +22,12 @@ class LineageService(
   case class RawEdge(left: IOElement, properties: List[String], right: IOElement)
 
   /**
-   * Gets json representation of the lineage graph fetched from the persistence layer.
-   * <br/><br/>
-   * Retrieves graph of downstream IO Elements for the specified root element.
+   * Gets json representation of the lineage graph made from downstream IO Elements which is
+   * fetched from the persistence layer for the specified root element.
    *
    * @param rootIOElementName Value of the `name` attribute of the root IO Element.
-   * @return Graph containing all IO Elements downstream from the root IO Element.
+   * @return Json representation of the graph containing all IO Elements downstream from the root IO Element.
+   *         Resulting json object represents graph by 2 fields: `nodes` and `edges`.
    */
   def getLineageGraphJson(rootIOElementName: String): Future[String] = {
     import scalax.collection.io.json._
@@ -37,6 +37,13 @@ class LineageService(
     } yield resultJson
   }
 
+  /**
+   * Gets lineage graph made from downstream IO Elements which is
+   * fetched from the persistence layer for the specified root element.
+   *
+   * @param rootIOElementName Value of the `name` attribute of the root IO Element.
+   * @return Graph containing all IO Elements downstream from the root IO Element.
+   */
   protected def getLineageGraph(rootIOElementName: String): Future[Graph[IOElement, LDiEdge]] = {
     neo4jDriver.readSession { implicit session =>
       session.transact[Graph[IOElement, LDiEdge]] { implicit tx =>
@@ -97,13 +104,13 @@ class LineageService(
   }
 
   /**
-   * Gets json representation of the lineage graph fetched from the persistence layer.
-   * <br/><br/>
-   * Retrieves graph of downstream IO Elements for the specified root element.
+   * Gets formatted representation of the lineage graph made from downstream IO Elements which is
+   * fetched from the persistence layer for the specified root element.
    *
    * @param rootIOElementName Value of the `name` attribute of the root IO Element.
-   * @param outputType Desired format of output representation (can be
-   * @return Graph containing all IO Elements downstream from the root IO Element.
+   * @param outputType Desired format of output representation.
+   * @return Formatted representation of the graph containing all IO Elements downstream from the root IO Element.
+   *         Result presents the graph as a formatted tree of IO Elements.
    */
   def getLineageGraphFormatted(rootIOElementName: String, outputType: LineageGraphFormattedOutputType): Future[String] = {
     for {
