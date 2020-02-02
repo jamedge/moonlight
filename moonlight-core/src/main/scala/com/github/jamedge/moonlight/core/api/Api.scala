@@ -3,67 +3,33 @@ package com.github.jamedge.moonlight.core.api
 import akka.actor.ActorSystem
 import org.slf4j.Logger
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
-import akka.http.scaladsl.server.Route
-import com.github.jamedge.moonlight.core.api.handlers.ExceptionHandlerBuilder
+import akka.http.scaladsl.server.{Directives, RejectionHandler, RouteConcatenation}
+import com.github.jamedge.moonlight.core.api.handlers.{ExceptionHandlerBuilder, RejectionHandlerBuilder}
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.read
-import com.github.jamedge.moonlight.core.model._
-import com.github.jamedge.moonlight.core.service.line.LineService
-import com.github.jamedge.moonlight.core.service.lineage.{LineageGraphFormattedOutputType, LineageService}
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
+import com.github.jamedge.moonlight.core.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiStatusRoutes}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class Api(
     logger: Logger,
     apiConfig: ApiConfig,
-    lineService: LineService,
-    lineageService: LineageService
-) (implicit val executionContext: ExecutionContext, actorSystem: ActorSystem) {
-  private implicit val formats = DefaultFormats
+    apiStatusRoutes: ApiStatusRoutes,
+    apiLineRoutes: ApiLineRoutes,
+    apiLineageRoutes: ApiLineageRoutes
+)(implicit val executionContext: ExecutionContext, actorSystem: ActorSystem)
+  extends Directives with RouteConcatenation with DefaultFormats {
 
-  import akka.http.scaladsl.server.Directives._
+  implicit val rejectionHandler: RejectionHandler = RejectionHandlerBuilder.build()(logger)
 
-  val route =
+  val route = cors() {
     handleExceptions(ExceptionHandlerBuilder.build()(logger)) {
-      post {
-        path("line" / "add") {
-          entity(as[String]) { requestBody => addLine(requestBody) }
-        }
-      } ~
-      get {
-        path("status") {
-          complete("OK")
-        } ~
-        path("lineage" / "graph") {
-          parameters("root_io") { rootIOElementName =>
-            complete {
-              getLineageGraph(rootIOElementName).map { graphJson =>
-                HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
-              }
-            }
-          }
-        } ~
-        path("lineage" / "graph" / "md") { // TODO: distinguish this vs json output based on content type
-          parameters("root_io") { rootIOElementName =>
-            complete {
-              getLineageGraphDownstream(rootIOElementName, LineageGraphFormattedOutputType.Md).map { graphMd =>
-                HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/html(UTF-8)`, graphMd))
-              }
-            }
-          }
-        } ~
-        path("lineage" / "graph" / "json") {
-          parameters("root_io") { rootIOElementName =>
-            complete {
-              getLineageGraphDownstream(rootIOElementName, LineageGraphFormattedOutputType.Json).map { graphJson =>
-                HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
-              }
-            }
-          }
-        }
-      }
+      apiStatusRoutes.route ~
+      apiLineRoutes.routes ~
+      apiLineageRoutes.routes
     }
+  }
+
   logger.info("Route initialized.")
 
   def init(): Unit = {
@@ -74,20 +40,6 @@ class Api(
       apiConfig.server.port
     )
     logger.info("Server started.")
-  }
-
-  def getLineageGraph(rootIOElementName: String): Future[String] = {
-    lineageService.getLineageGraphJson(rootIOElementName)
-  }
-
-  def getLineageGraphDownstream(rootIOElementName: String, outputType: LineageGraphFormattedOutputType): Future[String] = {
-    lineageService.getLineageGraphFormatted(rootIOElementName, outputType)
-  }
-
-  def addLine(requestJson: String): Route = {
-    val line = read[Line](requestJson)
-    val result = lineService.addLine(line).map(r => "Line added/updated.")
-    complete(result)
   }
 }
 

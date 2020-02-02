@@ -1,9 +1,10 @@
 package com.github.jamedge.moonlight.core.api
 
 import com.github.jamedge.moonlight.core.Context
+import com.github.jamedge.moonlight.core.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiStatusRoutes}
 import com.github.jamedge.moonlight.core.service.line.{LinePersistenceLayer, LineService}
 import com.softwaremill.macwire.wire
-import com.github.jamedge.moonlight.core.service.lineage.{GraphFormatter, LineageService, OutputConfig, LineagePersistenceLayer}
+import com.github.jamedge.moonlight.core.service.lineage.{GraphFormatter, LineagePersistenceLayer, LineageService, OutputConfig}
 import neotypes.{Driver, GraphDatabase}
 import org.neo4j.driver.v1.AuthTokens
 import pureconfig.ConfigSource
@@ -21,8 +22,13 @@ class Module(app: String) extends Context(app) {
   lazy val apiConfig: ApiConfig = ConfigSource.fromConfig(config).at("api").loadOrThrow[ApiConfig]
   lazy val api: Api = wire[Api]
 
+  lazy val apiStatusRoutes: ApiStatusRoutes = wire[ApiStatusRoutes]
+  lazy val apiLineRoutes: ApiLineRoutes = wire[ApiLineRoutes]
+  lazy val apiLineageRoutes: ApiLineageRoutes = wire[ApiLineageRoutes]
+
   lazy val lineService: LineService = wire[LineService]
   lazy val linePersistenceLayer: LinePersistenceLayer = wire[LinePersistenceLayer]
+
   lazy val lineageService: LineageService = wire[LineageService]
   lazy val lineageGraphFormatter: GraphFormatter = wire[GraphFormatter]
   lazy val lineagePersistenceLayer: LineagePersistenceLayer = wire[LineagePersistenceLayer]

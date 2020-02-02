@@ -60,6 +60,7 @@ lazy val apiSettings = Seq(
     "com.typesafe.akka" %% "akka-http-core" % "10.1.11",
     "com.typesafe.akka" %% "akka-http" % "10.1.11",
     "com.typesafe.akka" %% "akka-http-testkit" % "10.1.11",
+    "ch.megard" %% "akka-http-cors" % "0.4.1",
 
     "org.scalaj" %% "scalaj-http" % "2.4.2",
     "org.json4s" %% "json4s-jackson" % "3.7.0-M1"
