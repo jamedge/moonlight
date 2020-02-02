@@ -9,7 +9,7 @@ ThisBuild / scalacOptions ++= Seq("-feature", "-deprecation")
 
 name := "moonlight"
 
-val commonSettings = Seq(
+lazy val commonSettings = Seq(
   resolvers ++= Seq(
     "Akka Repository" at "https://repo.akka.io/releases/",
     DefaultMavenRepository,
@@ -40,7 +40,7 @@ val commonSettings = Seq(
   )
 )
 
-val assemblySettings = Seq(
+lazy val assemblySettings = Seq(
   updateOptions := updateOptions.value.withCachedResolution(true),
 
   assemblyMergeStrategy in assembly := {
@@ -50,11 +50,11 @@ val assemblySettings = Seq(
     case x if x startsWith "META-INF" => MergeStrategy.discard
     case _ => MergeStrategy.last
   },
-  
-  assemblyJarName in assembly := s"${name.value}.jar",
+
+  assemblyJarName in assembly := s"${name.value}.jar", // just if jar needs to be used separately for testing
 )
 
-val apiSettings = Seq(
+lazy val apiSettings = Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-stream" % "2.6.1",
     "com.typesafe.akka" %% "akka-http-core" % "10.1.11",
@@ -66,9 +66,43 @@ val apiSettings = Seq(
   )
 )
 
+def dockerSettings(exposePort: Option[Int] = None) = Seq(
+  dockerfile in docker := {
+    val artifact: File = assembly.value
+    val artifactTargetPath = s"/usr/local/lib/app.jar"
+    new Dockerfile {
+      from("java:openjdk-8")
+      add(artifact, artifactTargetPath)
+      entryPoint("java", "-jar", artifactTargetPath)
+      if (exposePort.isDefined) {
+        expose(exposePort.get)
+      }
+    }
+  },
+
+  imageNames in docker := {
+    val dockerhubRegistry = "markojamedzija"
+    val dockerhubRepository = name.value
+    val finalImageName = dockerhubRegistry + "/" + dockerhubRepository
+    val latestTag = "latest"
+    val gitCommitTag = git.gitHeadCommit.value map { sha => sha.take(7) }
+    Seq(
+      ImageName(s"$finalImageName:$latestTag"), // TODO: add version tag when it's added
+      ImageName(
+        registry = Some(dockerhubRegistry),
+        namespace = None,
+        repository = dockerhubRepository,
+        tag = gitCommitTag
+      )
+    )
+  }
+)
+
 lazy val `moonlight-core` = project.in(file("moonlight-core")).
+  enablePlugins(DockerPlugin).
   settings(commonSettings).
   settings(assemblySettings).
+  settings(dockerSettings(Some(8080))).
   settings(apiSettings).
   settings(
     mainClass in assembly := Some("com.github.jamedge.moonlight.core.api.Api")
