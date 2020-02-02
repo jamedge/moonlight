@@ -1,4 +1,4 @@
-package edge.jam.moonlight.core.api
+package com.github.jamedge.moonlight.core.api
 
 import akka.actor.ActorSystem
 import org.slf4j.Logger
@@ -7,7 +7,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusC
 import akka.http.scaladsl.server.Route
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
-import edge.jam.moonlight.core.model._
+import com.github.jamedge.moonlight.core.model._
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -1,4 +1,4 @@
-package edge.jam.moonlight.core.model
+package com.github.jamedge.moonlight.core.model
 
 sealed class LineageGraphDownstreamOutputType(val name: String)
 object LineageGraphDownstreamOutputType {

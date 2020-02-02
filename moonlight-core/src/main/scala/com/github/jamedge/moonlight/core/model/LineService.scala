@@ -1,13 +1,13 @@
-package edge.jam.moonlight.core.model
+package com.github.jamedge.moonlight.core.model
 
-import edge.jam.moonlight.core.model.neo4j.GraphElements
-import edge.jam.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
 import neotypes.{DeferredQuery, Driver, Transaction}
 
 import scala.concurrent.{ExecutionContext, Future}
 import neotypes.implicits.all._
 import org.slf4j.Logger
-import edge.jam.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
+import com.github.jamedge.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 import org.neo4j.driver.v1.{Value, Values}
 import shapeless._
 import scalax.collection.Graph

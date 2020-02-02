@@ -1,10 +1,10 @@
-package edge.jam.moonlight.core.model.neo4j
+package com.github.jamedge.moonlight.core.model.neo4j
 
-import edge.jam.moonlight.core.model.IOElement
-import edge.jam.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
+import com.github.jamedge.moonlight.core.model.IOElement
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
 
 object Nodes {
-  import edge.jam.moonlight.core.model.{
+  import com.github.jamedge.moonlight.core.model.{
     Line => ModelLine,
     Alert => ModelAlert,
     AlertsFramework => ModelAlertsFramework,

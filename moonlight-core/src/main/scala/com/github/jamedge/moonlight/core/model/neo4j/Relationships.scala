@@ -1,6 +1,6 @@
-package edge.jam.moonlight.core.model.neo4j
+package com.github.jamedge.moonlight.core.model.neo4j
 
-import edge.jam.moonlight.core.model.neo4j.GraphElements.{ElementClass, ElementType, GraphElement}
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, ElementType, GraphElement}
 
 object Relationships {
   case class HasDetails(fieldsPairs: Map[String, _] = Map("relationshipType" -> "mutable"), variablePrefix: String = "hd", elementType: ElementType = ElementType.RelationshipRight)

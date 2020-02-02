@@ -1,13 +1,21 @@
+import sbt.Keys.mainClass
 import sbtassembly.AssemblyKeys.assemblyMergeStrategy
-import sbtassembly.MergeStrategy
+import sbtassembly.{MergeStrategy, PathList}
 
 ThisBuild / scalaVersion := "2.13.1"
 ThisBuild / organization := "com.github.jamedge"
+
 ThisBuild / scalacOptions ++= Seq("-feature", "-deprecation")
 
 name := "moonlight"
 
 val commonSettings = Seq(
+  resolvers ++= Seq(
+    "Akka Repository" at "https://repo.akka.io/releases/",
+    DefaultMavenRepository,
+    Resolver.jcenterRepo
+  ),
+
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javaOptions ++= Seq("-Xms1024M", "-Xmx2200M", "-Xss8M"),
   
@@ -34,32 +42,25 @@ val commonSettings = Seq(
   )
 )
 
-lazy val core = project.in(file("moonlight-core")).
+val assemblySettings = Seq(
+  updateOptions := updateOptions.value.withCachedResolution(true),
+
+  assemblyMergeStrategy in assembly := {
+    case "reference.conf" => MergeStrategy.concat
+    case PathList("META-INF", "services", _*) => MergeStrategy.concat
+    case PathList("META-INF", "log4j-provider.properties") => MergeStrategy.concat
+    case x if x startsWith "META-INF" => MergeStrategy.discard
+    case _ => MergeStrategy.last
+  },
+  
+  assemblyJarName in assembly := s"${name.value}.jar",
+)
+
+lazy val `moonlight-core` = project.in(file("moonlight-core")).
   settings(commonSettings).
+  settings(assemblySettings).
   settings(
-    name := "moonlight-core",
-    version := "0.0.1-SNAPSHOT",
-    organization := "jamedge",
-
-    updateOptions := updateOptions.value.withCachedResolution(true),
-
-    resolvers ++= Seq(
-      "Java.net Maven2 Repository" at "http://download.java.net/maven/2/",
-      "Akka Repository" at "http://repo.akka.io/releases/",
-      DefaultMavenRepository
-    ),
-
-    assemblyMergeStrategy in assembly := {
-      case x if x startsWith "javax/xml" => MergeStrategy.last
-      case x if x startsWith "org/apache/commons" => MergeStrategy.last
-      case x if x endsWith "io.netty.versions.properties" => MergeStrategy.last
-      case x =>
-        val oldStrategy = (assemblyMergeStrategy in assembly).value
-        oldStrategy(x)
-    },
-
-    publishTo := Some(Resolver.file("file", new File(Path.userHome.absolutePath+"/.m2/repository"))), // TODO: publish to external repo
-    //credentials += Credentials(new File("credentials.properties"))
+    mainClass in assembly := Some("com.github.jamedge.moonlight.core.api.Api")
   ).
   settings(libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-stream" % "2.6.1",

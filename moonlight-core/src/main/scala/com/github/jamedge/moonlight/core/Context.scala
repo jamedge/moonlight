@@ -1,4 +1,4 @@
-package edge.jam.moonlight.core
+package com.github.jamedge.moonlight.core
 
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory

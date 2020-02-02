@@ -1,8 +1,8 @@
-package edge.jam.moonlight.core.api
+package com.github.jamedge.moonlight.core.api
 
-import edge.jam.moonlight.core.Context
+import com.github.jamedge.moonlight.core.Context
 import com.softwaremill.macwire.wire
-import edge.jam.moonlight.core.model.{LineService, OutputConfig}
+import com.github.jamedge.moonlight.core.model.{LineService, OutputConfig}
 import neotypes.{Driver, GraphDatabase}
 import org.neo4j.driver.v1.AuthTokens
 import pureconfig.{ConfigSource, loadConfigOrThrow}

@@ -1,4 +1,4 @@
-package edge.jam.moonlight.core.api
+package com.github.jamedge.moonlight.core.api
 
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives.complete

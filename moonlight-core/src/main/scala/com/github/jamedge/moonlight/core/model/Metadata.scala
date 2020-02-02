@@ -1,4 +1,4 @@
-package edge.jam.moonlight.core.model
+package com.github.jamedge.moonlight.core.model
 
 trait Metadata {
   def name: String

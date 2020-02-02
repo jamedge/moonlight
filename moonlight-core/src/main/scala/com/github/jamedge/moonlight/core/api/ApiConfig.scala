@@ -1,4 +1,4 @@
-package edge.jam.moonlight.core.api
+package com.github.jamedge.moonlight.core.api
 
 case class ApiConfig(server: ServerConfig)
 case class ServerConfig(
