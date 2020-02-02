@@ -1,9 +1,8 @@
-package com.github.jamedge.moonlight.core.service
+package com.github.jamedge.moonlight.core.service.line
 
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
-import com.github.jamedge.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 import com.github.jamedge.moonlight.core.model.Line
-import com.github.jamedge.moonlight.core.service.neo4j.LineQueries
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
+import com.github.jamedge.moonlight.core.model.neo4j.{LineQueries, Nodes => N, Relationships => R}
 import neotypes.implicits.all._
 import neotypes.{DeferredQuery, Driver, Transaction}
 import org.slf4j.Logger
@@ -13,8 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class LineService(
     neo4jDriver: Id[Driver[Future]],
-    logger: Logger,
-    outputConfig: OutputConfig.Output
+    logger: Logger
 )(implicit val executionContext: ExecutionContext) {
 
   /**

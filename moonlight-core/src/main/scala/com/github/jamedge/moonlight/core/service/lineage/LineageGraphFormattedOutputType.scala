@@ -1,4 +1,4 @@
-package com.github.jamedge.moonlight.core.service
+package com.github.jamedge.moonlight.core.service.lineage
 
 sealed class LineageGraphFormattedOutputType(val name: String)
 object LineageGraphFormattedOutputType {

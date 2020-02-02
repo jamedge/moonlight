@@ -1,4 +1,4 @@
-package com.github.jamedge.moonlight.core.service.neo4j
+package com.github.jamedge.moonlight.core.model.neo4j
 
 import neotypes.DeferredQueryBuilder
 import neotypes.implicits.all._

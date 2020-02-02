@@ -8,7 +8,8 @@ import akka.http.scaladsl.server.Route
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
 import com.github.jamedge.moonlight.core.model._
-import com.github.jamedge.moonlight.core.service.{LineService, LineageGraphFormattedOutputType, LineageService}
+import com.github.jamedge.moonlight.core.service.line.LineService
+import com.github.jamedge.moonlight.core.service.lineage.{LineageGraphFormattedOutputType, LineageService}
 
 import scala.concurrent.{ExecutionContext, Future}
 

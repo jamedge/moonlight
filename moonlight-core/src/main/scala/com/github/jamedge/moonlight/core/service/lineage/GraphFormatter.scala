@@ -1,125 +1,22 @@
-package com.github.jamedge.moonlight.core.service
+package com.github.jamedge.moonlight.core.service.lineage
 
-import com.github.jamedge.moonlight.core.model.{IOElement, Storage}
-import com.github.jamedge.moonlight.core.service.neo4j.LineageQueries
-import neotypes.Driver
-import org.neo4j.driver.v1.{Value, Values}
-import org.slf4j.Logger
+import com.github.jamedge.moonlight.core.model.IOElement
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
-import scalax.collection.io.json.{Descriptor, NodeDescriptor}
-import scalax.collection.io.json.descriptor.predefined.LDi
-import shapeless.Id
-import neotypes.implicits.all._
 
-import scala.concurrent.{ExecutionContext, Future}
-
-class LineageService(
-    neo4jDriver: Id[Driver[Future]],
-    logger: Logger,
+class GraphFormatter(
     outputConfig: OutputConfig.Output
-)(implicit val executionContext: ExecutionContext) {
-  case class RawEdge(left: IOElement, properties: List[String], right: IOElement)
-
+) {
   /**
-   * Gets json representation of the lineage graph made from downstream IO Elements which is
-   * fetched from the persistence layer for the specified root element.
+   * Transforms the lineage graph made from downstream IO Elements and the specified root element
+   * into the desired representation.
    *
-   * @param rootIOElementName Value of the `name` attribute of the root IO Element.
-   * @return Json representation of the graph containing all IO Elements downstream from the root IO Element.
-   *         Resulting json object represents graph by 2 fields: `nodes` and `edges`.
-   */
-  def getLineageGraphJson(rootIOElementName: String): Future[String] = {
-    import scalax.collection.io.json._
-    for {
-      graph <- getLineageGraph(rootIOElementName)
-      resultJson <- Future(graph.toJson(createLineageGraphJsonDescriptor()))
-    } yield resultJson
-  }
-
-  /**
-   * Gets lineage graph made from downstream IO Elements which is
-   * fetched from the persistence layer for the specified root element.
-   *
-   * @param rootIOElementName Value of the `name` attribute of the root IO Element.
-   * @return Graph containing all IO Elements downstream from the root IO Element.
-   */
-  protected def getLineageGraph(rootIOElementName: String): Future[Graph[IOElement, LDiEdge]] = {
-    neo4jDriver.readSession { implicit session =>
-      session.transact[Graph[IOElement, LDiEdge]] { implicit tx =>
-        for {
-          rawEdges <- LineageQueries.constructGetLineageRawEdgesQuery(rootIOElementName).query[RawEdge].list(tx)
-          rawIODetails <- LineageQueries.constructGetAllIODetailsQuery().query[(String, Value)].map(tx)
-          storages <- LineageQueries.constructGetAllIOStoragesQuery().query[(String, Storage)].map(tx)
-          rawStorageDetails <- LineageQueries.constructGetAllStorageDetailsQuery().query[(String, Value)].map(tx)
-          graph <- Future(buildLineageGraph(rawEdges, rawIODetails, storages, rawStorageDetails))
-        } yield graph
-      }
-    }
-  }
-
-  private def buildLineageGraph(
-      rawEdges: List[RawEdge],
-      rawIODetails: Map[String, Value],
-      storages: Map[String, Storage],
-      rawStorageDetails: Map[String, Value]
-  ): Graph[IOElement, LDiEdge] = {
-    val edges = rawEdges.map { rawEdge =>
-      val left = buildIOElement(rawEdge.left, rawIODetails, storages, rawStorageDetails)
-      val right = buildIOElement(rawEdge.right, rawIODetails, storages, rawStorageDetails)
-      LDiEdge(left, right)(rawEdge.properties)
-    }
-    Graph[IOElement, LDiEdge](edges: _*)
-  }
-
-  private def buildIOElement(
-      ioElement: IOElement,
-      rawIODetails: Map[String, Value],
-      storages: Map[String, Storage],
-      rawStorageDetails: Map[String, Value]
-  ): IOElement = {
-    ioElement.copy(
-      storage = storages.get(ioElement.name).map(s => s.copy(
-        details = extractDetailsFromGraphValues(rawStorageDetails, s.name))),
-      details = extractDetailsFromGraphValues(rawIODetails, ioElement.name))
-  }
-
-  private def extractDetailsFromGraphValues(values: Map[String, Value], parentName: String): Option[Map[String, String]] = {
-    import scala.jdk.CollectionConverters._
-    values.get(parentName).map(_.asMap[String](Values.ofString()).asScala.toMap)
-  }
-
-  private def createLineageGraphJsonDescriptor(): Descriptor[IOElement] = {
-    val ioDescriptor = new NodeDescriptor[IOElement](typeId = "IOs") {
-      def id(node: Any): String = node match {
-        case IOElement(name, owner, purpose, notes, details, storage, locationRelativePath) => name
-      }
-    }
-    new Descriptor[IOElement](
-      defaultNodeDescriptor = ioDescriptor,
-      defaultEdgeDescriptor = LDi.descriptor[IOElement, String]("lines"),
-      namedNodeDescriptors = Seq(ioDescriptor),
-      namedEdgeDescriptors = Seq(LDi.descriptor[IOElement, String]("lines"))
-    )
-  }
-
-  /**
-   * Gets formatted representation of the lineage graph made from downstream IO Elements which is
-   * fetched from the persistence layer for the specified root element.
-   *
+   * @param ioGraph Lineage graph made from downstream IO Elements.
    * @param rootIOElementName Value of the `name` attribute of the root IO Element.
    * @param outputType Desired format of output representation.
-   * @return Formatted representation of the graph containing all IO Elements downstream from the root IO Element.
-   *         Result presents the graph as a formatted tree of IO Elements.
+   * @return Graph formatted as a tree of IO Elements.
    */
-  def getLineageGraphFormatted(rootIOElementName: String, outputType: LineageGraphFormattedOutputType): Future[String] = {
-    for {
-      graph <- getLineageGraph(rootIOElementName)
-      resultJson <- Future(formatLineageGraph(graph, rootIOElementName, outputType))
-    } yield resultJson
-  }
-
-  private def formatLineageGraph(ioGraph: Graph[IOElement, LDiEdge], rootIOElementName: String, outputType: LineageGraphFormattedOutputType): String = {
+  def formatLineageGraph(ioGraph: Graph[IOElement, LDiEdge], rootIOElementName: String, outputType: LineageGraphFormattedOutputType): String = {
     implicit val c = outputConfig.downstream(outputType.name)
     ioGraph.nodes.find(_.toOuter.name == rootIOElementName).map { root =>
 
