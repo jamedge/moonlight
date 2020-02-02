@@ -27,6 +27,7 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.1.0" % "test",
     "org.mockito" % "mockito-all" % "1.9.5" % "test",
+    "org.pegdown" % "pegdown" % "1.4.2" % "test",
     "com.github.tomakehurst" % "wiremock-standalone" % "2.19.0" % "test",
 
     "com.softwaremill.macwire" %% "macros" % "2.3.3",
@@ -57,6 +58,7 @@ lazy val assemblySettings = Seq(
 lazy val apiSettings = Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-stream" % "2.6.1",
+    "com.typesafe.akka" %% "akka-stream-testkit" % "2.6.1",
     "com.typesafe.akka" %% "akka-http-core" % "10.1.11",
     "com.typesafe.akka" %% "akka-http" % "10.1.11",
     "com.typesafe.akka" %% "akka-http-testkit" % "10.1.11",
