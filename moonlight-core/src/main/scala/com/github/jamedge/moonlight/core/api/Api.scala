@@ -5,6 +5,7 @@ import org.slf4j.Logger
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Route
+import com.github.jamedge.moonlight.core.api.handlers.ExceptionHandlerBuilder
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
 import com.github.jamedge.moonlight.core.model._
@@ -26,48 +27,42 @@ class Api(
   val route =
     handleExceptions(ExceptionHandlerBuilder.build()(logger)) {
       post {
-        path("addLine") {
+        path("line" / "add") {
           entity(as[String]) { requestBody => addLine(requestBody) }
         }
       } ~
-        get {
-          path("status") {
-            complete("OK")
-          }
+      get {
+        path("status") {
+          complete("OK")
         } ~
-        get {
-          path("lineage" / "graph") {
-            parameters("root_io") { rootIOElementName =>
-              complete {
-                getLineageGraph(rootIOElementName).map { graphJson =>
-                  HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
-                }
+        path("lineage" / "graph") {
+          parameters("root_io") { rootIOElementName =>
+            complete {
+              getLineageGraph(rootIOElementName).map { graphJson =>
+                HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
               }
             }
           }
         } ~
-        get {
-          path("lineage" / "graph" / "md") { // TODO: distinguish this vs json output based on content type
-            parameters("root_io") { rootIOElementName =>
-              complete {
-                getLineageGraphDownstream(rootIOElementName, LineageGraphFormattedOutputType.Md).map { graphMd =>
-                  HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/html(UTF-8)`, graphMd))
-                }
+        path("lineage" / "graph" / "md") { // TODO: distinguish this vs json output based on content type
+          parameters("root_io") { rootIOElementName =>
+            complete {
+              getLineageGraphDownstream(rootIOElementName, LineageGraphFormattedOutputType.Md).map { graphMd =>
+                HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/html(UTF-8)`, graphMd))
               }
             }
           }
         } ~
-        get {
-          path("lineage" / "graph" / "json") {
-            parameters("root_io") { rootIOElementName =>
-              complete {
-                getLineageGraphDownstream(rootIOElementName, LineageGraphFormattedOutputType.Json).map { graphJson =>
-                  HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
-                }
+        path("lineage" / "graph" / "json") {
+          parameters("root_io") { rootIOElementName =>
+            complete {
+              getLineageGraphDownstream(rootIOElementName, LineageGraphFormattedOutputType.Json).map { graphJson =>
+                HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
               }
             }
           }
         }
+      }
     }
   logger.info("Route initialized.")
 
