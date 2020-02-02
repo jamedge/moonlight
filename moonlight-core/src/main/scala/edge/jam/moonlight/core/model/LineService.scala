@@ -98,7 +98,7 @@ class LineService(
   }
 
   private def extractDetailsFromGraphValues(values: Map[String, Value], parentName: String): Option[Map[String, String]] = {
-    import scala.collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     values.get(parentName).map(_.asMap[String](Values.ofString()).asScala.toMap)
   }
 
@@ -302,7 +302,7 @@ class LineService(
             N.Line(line),
             Some(R.HasDetails()),
             Some(N.Details(details)),
-            true).execute(tx)).getOrElse(Future())))
+            true).execute(tx)).getOrElse(Future.unit)))
   }
 
   private def createIOElements(implicit line: Line, tx: Transaction[Future]): Future[List[Unit]] = {
@@ -318,7 +318,7 @@ class LineService(
               N.IO(input),
               Some(R.HasDetails()),
               Some(N.Details(details)),
-              true).execute(tx)).getOrElse(Future())) ++
+              true).execute(tx)).getOrElse(Future.unit)) ++
           input.storage.map { storage =>
             List(
               constructCreateOrUpdateQuery(
@@ -330,7 +330,7 @@ class LineService(
                   N.Storage(storage),
                   Some(R.HasDetails()),
                   Some(N.Details(details)),
-                  true).execute(tx)).getOrElse(Future()))
+                  true).execute(tx)).getOrElse(Future.unit))
           }.getOrElse(List())
         io.outputs.flatMap { output =>
           List(
@@ -343,7 +343,7 @@ class LineService(
                 N.IO(output),
                 Some(R.HasDetails()),
                 Some(N.Details(details)),
-                true).execute(tx)).getOrElse(Future())) ++
+                true).execute(tx)).getOrElse(Future.unit)) ++
             output.storage.map { storage =>
               List(
                 constructCreateOrUpdateQuery(
@@ -355,7 +355,7 @@ class LineService(
                     N.Storage(storage),
                     Some(R.HasDetails()),
                     Some(N.Details(details)),
-                    true).execute(tx)).getOrElse(Future()))
+                    true).execute(tx)).getOrElse(Future.unit))
             }.getOrElse(List())
         }
       }
@@ -375,7 +375,7 @@ class LineService(
               N.Process(process),
               Some(R.HasDetails()),
               Some(N.Details(details)),
-              true).execute(tx)).getOrElse(Future())) ++
+              true).execute(tx)).getOrElse(Future.unit)) ++
           process.processingFramework.map { processingFramework =>
             List(
               constructCreateOrUpdateQuery(
@@ -387,7 +387,7 @@ class LineService(
                   N.ProcessingFramework(processingFramework),
                   Some(R.HasDetails()),
                   Some(N.Details(details)),
-                  true).execute(tx)).getOrElse(Future()))
+                  true).execute(tx)).getOrElse(Future.unit))
           }.getOrElse(List()) ++
         process.triggered.map { processingHistoryRecord =>
           List(
@@ -400,7 +400,7 @@ class LineService(
                 N.ProcessingHistory(processingHistoryRecord.processingHistory),
                 Some(R.HasDetails()),
                 Some(N.Details(details)),
-                true).execute(tx)).getOrElse(Future()),
+                true).execute(tx)).getOrElse(Future.unit),
             constructCreateOrUpdateQuery(
               N.ProcessingHistory(processingHistoryRecord.processingHistory),
               Some(R.HasProcessingHistoryRecord(processingHistoryRecord.fieldsMap() + ("relationshipType" -> "permanent"))),
@@ -423,7 +423,7 @@ class LineService(
             N.Metric(metric),
             Some(R.HasDetails()),
             Some(N.Details(details)),
-            true).execute(tx)).getOrElse(Future())) ++
+            true).execute(tx)).getOrElse(Future.unit)) ++
         metric.metricFramework.map { metricsFramework =>
           List(
             constructCreateOrUpdateQuery(
@@ -435,7 +435,7 @@ class LineService(
                 N.MetricsFramework(metricsFramework),
                 Some(R.HasDetails()),
                 Some(N.Details(details)),
-                true).execute(tx)).getOrElse(Future()))
+                true).execute(tx)).getOrElse(Future.unit))
         }.getOrElse(List())
     })
   }
@@ -452,7 +452,7 @@ class LineService(
             N.Alert(alert),
             Some(R.HasDetails()),
             Some(N.Details(details)),
-            true).execute(tx)).getOrElse(Future())) ++
+            true).execute(tx)).getOrElse(Future.unit)) ++
         alert.alertsFramework.map { alertsFramework =>
           List(
             constructCreateOrUpdateQuery(
@@ -464,7 +464,7 @@ class LineService(
                 N.AlertsFramework(alertsFramework),
                 Some(R.HasDetails()),
                 Some(N.Details(details)),
-                true).execute(tx)).getOrElse(Future()))
+                true).execute(tx)).getOrElse(Future.unit))
         }.getOrElse(List())
     })
   }
@@ -481,7 +481,7 @@ class LineService(
             N.Code(code),
             Some(R.HasDetails()),
             Some(N.Details(details)),
-            true).execute(tx)).getOrElse(Future()))
+            true).execute(tx)).getOrElse(Future.unit))
     }.getOrElse(List()))
   }
 
