@@ -3,7 +3,7 @@ package com.github.jamedge.moonlight.core.service.lineage
 import scala.concurrent.{ExecutionContext, Future}
 
 class LineageService(
-    persistenceLayer: PersistenceLayer,
+    persistenceLayer: LineagePersistenceLayer,
     graphFormatter: GraphFormatter
 )(implicit val executionContext: ExecutionContext) {
   /**

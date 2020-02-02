@@ -11,7 +11,7 @@ import neotypes.implicits.all._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class PersistenceLayer(
+class LineagePersistenceLayer(
     neo4jDriver: Id[Driver[Future]]
 )(implicit val executionContext: ExecutionContext)  {
   /**
