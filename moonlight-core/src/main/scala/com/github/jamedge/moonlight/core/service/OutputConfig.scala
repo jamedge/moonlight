@@ -1,4 +1,4 @@
-package com.github.jamedge.moonlight.core.model
+package com.github.jamedge.moonlight.core.service
 
 object OutputConfig {
   case class Output(downstream: Map[String, Downstream])
@@ -9,4 +9,3 @@ object OutputConfig {
   case class DownstreamElementView(prepend: String, enclosure: Enclosure)
   case class Enclosure(start: String, end: String)
 }
-

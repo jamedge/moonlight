@@ -8,13 +8,15 @@ import akka.http.scaladsl.server.Route
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
 import com.github.jamedge.moonlight.core.model._
+import com.github.jamedge.moonlight.core.service.{LineService, LineageGraphFormattedOutputType, LineageService}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class Api(
     logger: Logger,
     apiConfig: ApiConfig,
-    lineService: LineService
+    lineService: LineService,
+    lineageService: LineageService
 ) (implicit val executionContext: ExecutionContext, actorSystem: ActorSystem) {
   private implicit val formats = DefaultFormats
 
@@ -47,7 +49,7 @@ class Api(
           path("lineage" / "graph" / "md") { // TODO: distinguish this vs json output based on content type
             parameters("root_io") { rootIOElementName =>
               complete {
-                getLineageGraphDownstream(rootIOElementName, LineageGraphDownstreamOutputType.Md).map { graphMd =>
+                getLineageGraphDownstream(rootIOElementName, LineageGraphFormattedOutputType.Md).map { graphMd =>
                   HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/html(UTF-8)`, graphMd))
                 }
               }
@@ -58,7 +60,7 @@ class Api(
           path("lineage" / "graph" / "json") {
             parameters("root_io") { rootIOElementName =>
               complete {
-                getLineageGraphDownstream(rootIOElementName, LineageGraphDownstreamOutputType.Json).map { graphJson =>
+                getLineageGraphDownstream(rootIOElementName, LineageGraphFormattedOutputType.Json).map { graphJson =>
                   HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`application/json`, graphJson))
                 }
               }
@@ -79,11 +81,11 @@ class Api(
   }
 
   def getLineageGraph(rootIOElementName: String): Future[String] = {
-    lineService.getLineageGraphJson(rootIOElementName)
+    lineageService.getLineageGraphJson(rootIOElementName)
   }
 
-  def getLineageGraphDownstream(rootIOElementName: String, outputType: LineageGraphDownstreamOutputType): Future[String] = {
-    lineService.getLineageGraphDownstream(rootIOElementName, outputType)
+  def getLineageGraphDownstream(rootIOElementName: String, outputType: LineageGraphFormattedOutputType): Future[String] = {
+    lineageService.getLineageGraphFormatted(rootIOElementName, outputType)
   }
 
   def addLine(requestJson: String): Route = {

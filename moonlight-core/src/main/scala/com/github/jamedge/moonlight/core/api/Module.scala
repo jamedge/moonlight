@@ -2,10 +2,10 @@ package com.github.jamedge.moonlight.core.api
 
 import com.github.jamedge.moonlight.core.Context
 import com.softwaremill.macwire.wire
-import com.github.jamedge.moonlight.core.model.{LineService, OutputConfig}
+import com.github.jamedge.moonlight.core.service.{LineService, LineageService, OutputConfig}
 import neotypes.{Driver, GraphDatabase}
 import org.neo4j.driver.v1.AuthTokens
-import pureconfig.{ConfigSource, loadConfigOrThrow}
+import pureconfig.ConfigSource
 import shapeless._
 import pureconfig.generic.auto._
 
@@ -21,5 +21,6 @@ class Module(app: String) extends Context(app) {
   lazy val api: Api = wire[Api]
 
   lazy val lineService: LineService = wire[LineService]
+  lazy val lineageService: LineageService = wire[LineageService]
   lazy val outputConfig: OutputConfig.Output = ConfigSource.fromConfig(config).at("output").loadOrThrow[OutputConfig.Output]
 }

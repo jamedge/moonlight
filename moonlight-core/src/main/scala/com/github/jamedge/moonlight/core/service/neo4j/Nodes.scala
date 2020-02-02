@@ -1,7 +1,7 @@
-package com.github.jamedge.moonlight.core.model.neo4j
+package com.github.jamedge.moonlight.core.service.neo4j
 
 import com.github.jamedge.moonlight.core.model.IOElement
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
+import com.github.jamedge.moonlight.core.service.neo4j.GraphElements.{ElementClass, GraphElement}
 
 object Nodes {
   import com.github.jamedge.moonlight.core.model.{
