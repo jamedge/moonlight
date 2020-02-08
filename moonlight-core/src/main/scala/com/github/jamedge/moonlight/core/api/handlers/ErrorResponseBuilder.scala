@@ -83,8 +83,8 @@ object ErrorResponseBuilder {
   }
 
   def extractTraceId(httpMessage: HttpMessage): String = {
-    val ddHeader = httpMessage.getHeader("trace_id")
-    if (ddHeader.isPresent) ddHeader.get().value() else "0"
+    val traceIdHeader = httpMessage.getHeader("trace_id")
+    if (traceIdHeader.isPresent) traceIdHeader.get().value() else "0"
   }
 
   def buildErrorResponseJson(errorResponse: ErrorResponse): String = {
