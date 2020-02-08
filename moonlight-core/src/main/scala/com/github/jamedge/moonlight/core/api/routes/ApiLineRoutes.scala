@@ -22,28 +22,32 @@ class ApiLineRoutes(
   implicit val formats = DefaultFormats
 
   def routes: Route = {
-    post {
-      path("line" / "add") {
-        extractRequest { request =>
-          request.matchApiVersion(
-            Seq(VersionRouteMapping(ApiVersion.V1, addLine))
-          )
-        }
-      }
+    addLine
+  }
+
+  private def addLine: Route = {
+    extractRequest { request =>
+      request.matchApiVersion(
+        Seq(VersionRouteMapping(ApiVersion.V1, addLineImplementationV1))
+      )
     }
   }
 
-  def addLine: Route = {
-    entity(as[String]) { requestBody =>
-      val result = for {
-        line <- Try(read[Line](requestBody))
-        lineAdditionResult <- Try(lineService.addLine(line).map(r => "Line added/updated."))
-      } yield lineAdditionResult
-      result.map(complete(_)).recover {
-        case e@(_: MappingException | _: JsonParseException) =>
-          throw new ApiException(e, BadRequest, Some("Error during unmarshalling from request json."))
-        case e: Exception => throw e
-      }.get
+  private[routes] def addLineImplementationV1: Route = {
+    post {
+      path("line" / "add") {
+        entity(as[String]) { requestBody =>
+          val result = for {
+            line <- Try(read[Line](requestBody))
+            lineAdditionResult <- Try(lineService.addLine(line).map(r => "Line added/updated."))
+          } yield lineAdditionResult
+          result.map(complete(_)).recover {
+            case e@(_: MappingException | _: JsonParseException) =>
+              throw new ApiException(e, BadRequest, Some("Error during unmarshalling from request json."))
+            case e: Exception => throw e
+          }.get
+        }
+      }
     }
   }
 }
