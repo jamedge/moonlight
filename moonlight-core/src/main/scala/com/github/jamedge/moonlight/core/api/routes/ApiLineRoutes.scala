@@ -1,10 +1,11 @@
 package com.github.jamedge.moonlight.core.api.routes
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.StatusCodes.BadRequest
 import akka.http.scaladsl.server.{Directives, Route}
 import com.fasterxml.jackson.core.JsonParseException
-import com.github.jamedge.moonlight.core.api.ApiVersion
+import com.github.jamedge.moonlight.core.api.{ApiVersion, VersionMapping}
 import com.github.jamedge.moonlight.core.api.handlers.{ApiException, ErrorResponseBuilder}
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.service.line.LineService
@@ -24,11 +25,7 @@ class ApiLineRoutes(
     post {
       path("line" / "add") {
         extractRequest { request =>
-          val mediaType = request.entity.contentType.mediaType
-          mediaType.toString() match {
-            case ApiVersion.V1.contentTypeMediaTypeValue => addLine
-            case _ => ApiVersion.defaultErrorResponse(mediaType)
-          }
+          ApiVersion.mapVersion(request.entity.contentType.mediaType, Seq(VersionMapping(ApiVersion.V1, addLine)))
         }
       }
     }
