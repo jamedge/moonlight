@@ -24,7 +24,11 @@ class ApiLineRoutes(
     post {
       path("line" / "add") {
         extractRequest { request =>
-          ApiVersion.V1.checkMediaType(request.entity.contentType.mediaType, addLine)
+          val mediaType = request.entity.contentType.mediaType
+          mediaType.toString() match {
+            case ApiVersion.V1.contentTypeMediaTypeValue => addLine
+            case _ => ApiVersion.defaultErrorResponse(mediaType)
+          }
         }
       }
     }
