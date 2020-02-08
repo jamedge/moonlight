@@ -1,5 +1,7 @@
 # moonlight-core
 
+Core module containing data lineage REST API.
+
 ## Functionality
 
 This module provides REST API for storage and retrieval of lineage metadata.
@@ -38,7 +40,7 @@ For the usage of the endpoints consult the generated swagger documentation. (Sti
 ## Configuration
 
 For configuration Lightbend [Typesafe config](https://github.com/lightbend/config) is used.
-Next to this [PureConfig](https://github.com/pureconfig/pureconfig) library is used to make
+Next to it, [PureConfig](https://github.com/pureconfig/pureconfig) library is used to make
 loading of config runtime-safe by ingesting it to appropriate case classes that are created
 to mimic the structure of used config.
 
