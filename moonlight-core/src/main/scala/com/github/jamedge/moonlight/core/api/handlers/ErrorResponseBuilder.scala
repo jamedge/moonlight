@@ -19,12 +19,12 @@ case class ErrorResponse(
     path: String,
     time: String,
     traceId: String,
-    errors: Iterable[ErrorResponseDetails]
+    error: ErrorResponseDetails
 )
 case class ErrorResponseDetails(code: String = "INVALID_REQUEST_CODE", message: String)
 
 object ErrorResponseBuilder {
-  def buildErrorResponse(statusCode: StatusCode, errors: Iterable[ErrorResponseDetails]): Route = {
+  def buildErrorResponse(statusCode: StatusCode, error: ErrorResponseDetails): Route = {
     import akka.http.scaladsl.server.Directives._
     extractRequest { request =>
       extractUri { uri =>
@@ -35,7 +35,7 @@ object ErrorResponseBuilder {
             .now(ZoneId.of("UTC"))
             .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
           extractTraceId(request),
-          errors
+          error
         )
         val errorResponseJson = buildErrorResponseJson(errorResponse)
         complete(
@@ -78,7 +78,7 @@ object ErrorResponseBuilder {
   def buildErrorResponse(statusCode: StatusCode, message: String): Route = {
     ErrorResponseBuilder.buildErrorResponse(
       statusCode,
-      Seq(ErrorResponseDetails(statusCode.reason().replace(" ", "_").toUpperCase, message))
+      ErrorResponseDetails(statusCode.reason().replace(" ", "_").toUpperCase, message)
     )
   }
 

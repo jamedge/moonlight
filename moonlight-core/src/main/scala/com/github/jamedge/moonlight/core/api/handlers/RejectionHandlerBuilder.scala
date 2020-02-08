@@ -49,7 +49,7 @@ object RejectionHandlerBuilder {
             .now(ZoneId.of("UTC"))
             .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
           ErrorResponseBuilder.extractTraceId(response),
-          Seq(ErrorResponseDetails("BAD_REQUEST", message))
+          ErrorResponseDetails("BAD_REQUEST", message)
         )
         val errorResponseJson = ErrorResponseBuilder.buildErrorResponseJson(errorResponse)
         response.copy(entity = HttpEntity(ContentTypes.`application/json`, errorResponseJson))

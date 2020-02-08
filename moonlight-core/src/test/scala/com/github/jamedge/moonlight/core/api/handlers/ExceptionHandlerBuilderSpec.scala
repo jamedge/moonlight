@@ -22,18 +22,18 @@ class ExceptionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
       handleExceptions(subject) {
         get {
           path("test-exception") {
-            throw new NullPointerException("Nasty one :)")
+            throw new NullPointerException("Test exception...")
           } ~
           path("test-exception-parsing") {
             throw new ApiException(
-              new JsonParseException(null, "Parsing problems.."),
+              new JsonParseException(null, "Parsing problems exception..."),
               StatusCodes.BadRequest,
               Some("Error during unmarshalling from request json.")
             )
           } ~
             path("test-exception-parsing-default") {
               throw new ApiException(
-                new JsonParseException(null, "Parsing problems.."),
+                new JsonParseException(null, "Parsing problems default exception.."),
                 StatusCodes.BadRequest
               )
             }
@@ -54,10 +54,9 @@ class ExceptionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           errorResponse.status shouldBe "500"
           errorResponse.path shouldBe "/test-exception"
           errorResponse.traceId shouldBe "0"
-          errorResponse.errors should have size 1
-          errorResponse.errors should contain (ErrorResponseDetails(
+          errorResponse.error shouldBe ErrorResponseDetails(
             "INTERNAL_SERVER_ERROR",
-            "There was an internal server error. Check API logs for details."))
+            "There was an internal server error. Check API logs for details.")
         }
       }
       it ("by testing trowing of ApiException encapsulating JsonParseException") {
@@ -71,10 +70,9 @@ class ExceptionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           errorResponse.status shouldBe "400"
           errorResponse.path shouldBe "/test-exception-parsing"
           errorResponse.traceId shouldBe "0"
-          errorResponse.errors should have size 1
-          errorResponse.errors should contain(ErrorResponseDetails(
+          errorResponse.error shouldBe ErrorResponseDetails(
             "BAD_REQUEST",
-            "Error during unmarshalling from request json."))
+            "Error during unmarshalling from request json.")
         }
       }
       it ("by testing trowing of ApiException encapsulating JsonParseException with default message") {
@@ -88,10 +86,9 @@ class ExceptionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           errorResponse.status shouldBe "400"
           errorResponse.path shouldBe "/test-exception-parsing-default"
           errorResponse.traceId shouldBe "0"
-          errorResponse.errors should have size 1
-          errorResponse.errors should contain(ErrorResponseDetails(
+          errorResponse.error shouldBe ErrorResponseDetails(
             "BAD_REQUEST",
-            "The request contains bad syntax or cannot be fulfilled."))
+            "The request contains bad syntax or cannot be fulfilled.")
         }
       }
     }

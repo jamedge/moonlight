@@ -79,10 +79,9 @@ class RejectionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           errorResponse.status shouldBe "403"
           errorResponse.path shouldBe "/test-authorization"
           errorResponse.traceId shouldBe "0"
-          errorResponse.errors should have size 1
-          errorResponse.errors should contain (ErrorResponseDetails(
+          errorResponse.error shouldBe ErrorResponseDetails(
             "FORBIDDEN",
-            "The request was a legal request, but the server is refusing to respond to it."))
+            "The request was a legal request, but the server is refusing to respond to it.")
       }
     }
     it("should return correct 422 error response when param is missing") {
@@ -96,10 +95,9 @@ class RejectionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
         errorResponse.status shouldBe "422"
         errorResponse.path shouldBe "/test-parameter"
         errorResponse.traceId shouldBe "0"
-        errorResponse.errors should have size 1
-        errorResponse.errors should contain (ErrorResponseDetails(
+        errorResponse.error shouldBe ErrorResponseDetails(
           "UNPROCESSABLE_ENTITY",
-          "Parameter test_param is missing!"))
+          "Parameter test_param is missing!")
       }
     }
     it("should return correct 405 error response when method is not allowed") {
@@ -113,10 +111,9 @@ class RejectionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
         errorResponse.status shouldBe "405"
         errorResponse.path shouldBe "/test"
         errorResponse.traceId shouldBe "0"
-        errorResponse.errors should have size 1
-        errorResponse.errors should contain (ErrorResponseDetails(
+        errorResponse.error shouldBe ErrorResponseDetails(
           "METHOD_NOT_ALLOWED",
-          "Method not allowed! Supported: GET or POST!"))
+          "Method not allowed! Supported: GET or POST!")
       }
     }
     it("should return correct 404 error response when non-existent route is queried") {
@@ -130,10 +127,9 @@ class RejectionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
         errorResponse.status shouldBe "404"
         errorResponse.path shouldBe "/non-existent"
         errorResponse.traceId shouldBe "0"
-        errorResponse.errors should have size 1
-        errorResponse.errors should contain (ErrorResponseDetails(
+        errorResponse.error shouldBe ErrorResponseDetails(
           "NOT_FOUND",
-          "The requested resource could not be found but may be available again in the future."))
+          "The requested resource could not be found but may be available again in the future.")
       }
     }
   }
