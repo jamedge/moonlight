@@ -57,7 +57,7 @@ class ExceptionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           errorResponse.errors should have size 1
           errorResponse.errors should contain (ErrorResponseDetails(
             "INTERNAL_SERVER_ERROR",
-            "There was an internal server error."))
+            "There was an internal server error. Check API logs for details."))
         }
       }
       it ("by testing trowing of ApiException encapsulating JsonParseException") {

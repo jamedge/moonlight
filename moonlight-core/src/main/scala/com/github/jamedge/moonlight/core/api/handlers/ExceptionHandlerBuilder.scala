@@ -16,6 +16,7 @@ object ExceptionHandlerBuilder {
     case e: Exception =>
       ErrorResponseBuilder.logAndGenerateResponse(
         StatusCodes.InternalServerError,
+        "There was an internal server error. Check API logs for details.",
         logger.error,
         Some(buildLogMessage(e))
       )
