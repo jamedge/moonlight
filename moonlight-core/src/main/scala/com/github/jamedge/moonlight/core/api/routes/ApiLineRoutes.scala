@@ -24,20 +24,13 @@ class ApiLineRoutes(
     post {
       path("line" / "add") {
         extractRequest { request =>
-          val mediaType = request.entity.contentType.mediaType.toString()
-          mediaType match {
-            case ApiVersion.V1.contentTypeMediaTypeValue => addLineV1
-            case _ => ErrorResponseBuilder.buildErrorResponse(
-              BadRequest,
-                s"Content-Type header must be provided in a defined format 'application/moonlight.v<version_number>+json'." +
-                  s" Sent value '$mediaType' is not recognised or not valid.")
-          }
+          ApiVersion.V1.checkMediaType(request.entity.contentType.mediaType, addLine)
         }
       }
     }
   }
 
-  def addLineV1: Route = {
+  def addLine: Route = {
     entity(as[String]) { requestBody =>
       val result = for {
         line <- Try(read[Line](requestBody))
