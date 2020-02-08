@@ -6,7 +6,6 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.fasterxml.jackson.core.JsonParseException
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.read
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funspec.AnyFunSpec
 import org.slf4j.LoggerFactory
@@ -49,7 +48,7 @@ class ExceptionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           contentType shouldBe ContentTypes.`application/json`
 
           val errorResponseString = responseAs[String]
-          val errorResponse = read[ErrorResponse](errorResponseString)
+          val errorResponse = ErrorResponse.unmarshallErrorResponse(errorResponseString)
 
           errorResponse.status shouldBe "500"
           errorResponse.path shouldBe "/test-exception"
@@ -65,7 +64,7 @@ class ExceptionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           contentType shouldBe ContentTypes.`application/json`
 
           val errorResponseString = responseAs[String]
-          val errorResponse = read[ErrorResponse](errorResponseString)
+          val errorResponse = ErrorResponse.unmarshallErrorResponse(errorResponseString)
 
           errorResponse.status shouldBe "400"
           errorResponse.path shouldBe "/test-exception-parsing"
@@ -81,7 +80,7 @@ class ExceptionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           contentType shouldBe ContentTypes.`application/json`
 
           val errorResponseString = responseAs[String]
-          val errorResponse = read[ErrorResponse](errorResponseString)
+          val errorResponse = ErrorResponse.unmarshallErrorResponse(errorResponseString)
 
           errorResponse.status shouldBe "400"
           errorResponse.path shouldBe "/test-exception-parsing-default"

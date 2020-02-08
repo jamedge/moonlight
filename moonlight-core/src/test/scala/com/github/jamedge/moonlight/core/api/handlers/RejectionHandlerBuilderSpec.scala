@@ -7,7 +7,6 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives.Credentials
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization.read
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.funspec.AnyFunSpec
 import org.slf4j.LoggerFactory
@@ -74,7 +73,7 @@ class RejectionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
           contentType shouldBe ContentTypes.`application/json`
 
           val errorResponseString = responseAs[String]
-          val errorResponse = read[ErrorResponse](errorResponseString)
+          val errorResponse = ErrorResponse.unmarshallErrorResponse(errorResponseString)
 
           errorResponse.status shouldBe "403"
           errorResponse.path shouldBe "/test-authorization"
@@ -90,7 +89,7 @@ class RejectionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
         contentType shouldBe ContentTypes.`application/json`
 
         val errorResponseString = responseAs[String]
-        val errorResponse = read[ErrorResponse](errorResponseString)
+        val errorResponse = ErrorResponse.unmarshallErrorResponse(errorResponseString)
 
         errorResponse.status shouldBe "422"
         errorResponse.path shouldBe "/test-parameter"
@@ -106,7 +105,7 @@ class RejectionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
         contentType shouldBe ContentTypes.`application/json`
 
         val errorResponseString = responseAs[String]
-        val errorResponse = read[ErrorResponse](errorResponseString)
+        val errorResponse = ErrorResponse.unmarshallErrorResponse(errorResponseString)
 
         errorResponse.status shouldBe "405"
         errorResponse.path shouldBe "/test"
@@ -122,7 +121,7 @@ class RejectionHandlerBuilderSpec extends AnyFunSpec with Matchers with Scalates
         contentType shouldBe ContentTypes.`application/json`
 
         val errorResponseString = responseAs[String]
-        val errorResponse = read[ErrorResponse](errorResponseString)
+        val errorResponse = ErrorResponse.unmarshallErrorResponse(errorResponseString)
 
         errorResponse.status shouldBe "404"
         errorResponse.path shouldBe "/non-existent"
