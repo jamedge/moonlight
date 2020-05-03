@@ -25,8 +25,9 @@ lazy val commonSettings = Seq(
   Test / parallelExecution := false,
 
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "3.1.0" % "test",
-    "org.mockito" % "mockito-all" % "1.9.5" % "test",
+    "org.scalatest" %% "scalatest" % "3.1.1" % "test",
+    "org.scalatestplus" %% "scalatestplus-mockito" % "1.0.0-M2",
+    "org.mockito" % "mockito-core" % "3.3.3" % "test",
     "org.pegdown" % "pegdown" % "1.4.2" % "test",
     "com.github.tomakehurst" % "wiremock-standalone" % "2.19.0" % "test",
 
