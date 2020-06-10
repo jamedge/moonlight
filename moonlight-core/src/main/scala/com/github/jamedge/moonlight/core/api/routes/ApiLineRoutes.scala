@@ -6,13 +6,15 @@ import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
 import akka.http.scaladsl.model.{ContentType, HttpCharsets, HttpEntity, HttpResponse, MediaType, MediaTypes}
 import akka.http.scaladsl.model.StatusCodes.BadRequest
 import akka.http.scaladsl.server.{Directives, Route}
+import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
+import akka.stream.Materializer
 import com.fasterxml.jackson.core.JsonParseException
 import com.github.jamedge.moonlight.core.api.handlers.ApiException
-import com.github.jamedge.moonlight.core.model.Line
+import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Code, IO, IOElement, Line, LineV1, LineV2, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistory, ProcessingHistoryRecord, Storage}
 import com.github.jamedge.moonlight.core.service.line.LineService
 import org.json4s.{DefaultFormats, MappingException}
 import org.json4s.jackson.Serialization.read
-import spray.json.{ DefaultJsonProtocol, _ }
+import spray.json.{DefaultJsonProtocol, _}
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
@@ -29,8 +31,8 @@ object MediaVersionTypes {
 }
 
 trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
-  implicit val personJsonFormatV1: RootJsonFormat[SuccessResponseV1] = jsonFormat1(SuccessResponseV1)
-  implicit val personJsonFormatV2: RootJsonFormat[SuccessResponseV2] = jsonFormat2(SuccessResponseV2)
+  implicit val successResponseJsonFormatV1: RootJsonFormat[SuccessResponseV1] = jsonFormat1(SuccessResponseV1)
+  implicit val successResponseJsonFormatV2: RootJsonFormat[SuccessResponseV2] = jsonFormat2(SuccessResponseV2)
 
   implicit def successResponseMarshaller(implicit ec: ExecutionContext): ToResponseMarshaller[SuccessResponse] = Marshaller.oneOf(
     Marshaller.withFixedContentType(MediaTypes.`application/json`) { successResponse =>
@@ -46,6 +48,48 @@ trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
         HttpEntity(ContentType(MediaVersionTypes.`application/moonlight.v2+json`), SuccessResponseV2(successResponse.message, successResponse.smile).toJson.compactPrint))
     }
   )
+
+  implicit val storageJsonFormat = jsonFormat6(Storage)
+  implicit val processingFrameworkJsonFormat = jsonFormat6(ProcessingFramework)
+  implicit val processingHistoryJsonFormat = jsonFormat5(ProcessingHistory)
+  implicit val processingHistoryRecordJsonFormat = jsonFormat3(ProcessingHistoryRecord)
+  implicit val processJsonFormat = jsonFormat8(Process)
+  implicit val ioElementJsonFormat = jsonFormat7(IOElement)
+  implicit val ioJsonFormat = jsonFormat2(IO)
+  implicit val metricsFrameworkJsonFormat = jsonFormat6(MetricsFramework)
+  implicit val metricJsonFormat = jsonFormat7(Metric)
+  implicit val alertsFrameworkJsonFormat = jsonFormat6(AlertsFramework)
+  implicit val alertJsonFormat = jsonFormat7(Alert)
+  implicit val codeJsonFormat = jsonFormat8(Code)
+  implicit val lineJsonFormat = jsonFormat10(Line)
+  implicit val lineV1JsonFormat = jsonFormat10(LineV1)
+  implicit val lineV2JsonFormat = jsonFormat10(LineV2)
+
+  def lineJsonEntityUnmarshaller(implicit mat: Materializer): FromEntityUnmarshaller[Line] =
+    Unmarshaller.byteStringUnmarshaller.forContentTypes(MediaTypes.`application/json`).mapWithCharset { (data, charset) =>
+      val input: String = if (charset == HttpCharsets.`UTF-8`) data.utf8String else data.decodeString(charset.nioCharset.name)
+      val tmp = input.parseJson.convertTo[Line]
+      Line(tmp.name, tmp.owner, tmp.purpose, tmp.notes, tmp.details, tmp.io, tmp.processedBy, tmp.metrics, tmp.alerts, tmp.code)
+    }
+
+  def lineJsonV1EntityUnmarshaller(implicit mat: Materializer): FromEntityUnmarshaller[Line] =
+    Unmarshaller.byteStringUnmarshaller.forContentTypes(MediaVersionTypes.`application/moonlight.v1+json`).mapWithCharset { (data, charset) =>
+      val input: String = if (charset == HttpCharsets.`UTF-8`) data.utf8String else data.decodeString(charset.nioCharset.name)
+      val tmp = input.parseJson.convertTo[LineV1]
+      Line(tmp.name, tmp.owner, tmp.purpose, tmp.notes, tmp.details, tmp.io, tmp.processedBy, tmp.metrics, tmp.alerts, tmp.code)
+    }
+
+  def lineJsonV2EntityUnmarshaller(implicit mat: Materializer): FromEntityUnmarshaller[Line] =
+    Unmarshaller.byteStringUnmarshaller.forContentTypes(MediaVersionTypes.`application/moonlight.v2+json`).mapWithCharset { (data, charset) =>
+      val input: String = if (charset == HttpCharsets.`UTF-8`) data.utf8String else data.decodeString(charset.nioCharset.name)
+      val tmp = input.parseJson.convertTo[LineV2]
+      Line(tmp.name, tmp.owner, tmp.purpose, tmp.notes, tmp.details, tmp.io, tmp.processedBy, tmp.metrics, tmp.alerts, tmp.code)
+    }
+
+  implicit def lineUnmarshaller(implicit mat: Materializer): FromEntityUnmarshaller[Line] =
+    Unmarshaller.firstOf[HttpEntity, Line](
+      lineJsonEntityUnmarshaller, lineJsonV1EntityUnmarshaller, lineJsonV2EntityUnmarshaller
+    )
 }
 
 class ApiLineRoutes(
@@ -61,9 +105,9 @@ class ApiLineRoutes(
   private[routes] def addLine: Route = {
     path("line") {
       post {
-        entity(as[String]) { requestBody =>
+        entity(as[Line]) { line =>
           val result = for {
-            line <- Try(read[Line](requestBody))
+//            line <- Try(read[Line](requestBody))
             lineAdditionResult <- Try(lineService.addLine(line).map(_ =>
               SuccessResponse("Line added/updated.", "Of course :)")))
           } yield lineAdditionResult
