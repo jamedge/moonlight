@@ -13,32 +13,6 @@ case class Line(
     code: Option[Code]
 ) extends Metadata
 
-case class LineV1(
-    name: String,
-    owner: Option[String],
-    purpose: Option[String],
-    notes: Option[List[String]],
-    details: Option[Map[String, String]],
-    io: List[IO],
-    processedBy: List[Process],
-    metrics: List[Metric],
-    alerts: List[Alert],
-    code: Option[Code]
-) extends Metadata
-
-case class LineV2(
-    name: String,
-    owner: Option[String],
-    purpose: Option[String],
-    notes: Option[List[String]],
-    details: Option[Map[String, String]],
-    io: List[IO],
-    processedBy: List[Process],
-    metrics: List[Metric],
-    alerts: List[Alert],
-    code: Option[Code]
-) extends Metadata
-
 case class IO(
     inputs: List[IOElement],
     outputs: List[IOElement])
