@@ -1,52 +1,48 @@
 package com.github.jamedge.moonlight.core.api.routes
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.StatusCodes.BadRequest
+import akka.http.scaladsl.marshalling.ToResponseMarshaller
 import akka.http.scaladsl.server.{Directives, Route}
-import com.fasterxml.jackson.core.JsonParseException
-import com.github.jamedge.moonlight.core.api.{ApiVersion, VersionRouteMapping}
-import com.github.jamedge.moonlight.core.api.handlers.ApiException
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import akka.stream.Materializer
+import com.github.jamedge.moonlight.core.api.versioning.line.LineJsonSupport
+import com.github.jamedge.moonlight.core.api.versioning.responsemessage.ResponseMessageJsonSupport
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.service.line.LineService
-import org.json4s.{DefaultFormats, MappingException}
-import org.json4s.jackson.Serialization.read
-import com.github.jamedge.moonlight.core.api.ApiVersion.VersionMappingOps
 
 import scala.concurrent.ExecutionContext
-import scala.util.Try
+
+case class ResponseMessage(message: String)
+
+trait LineRoutesJsonSupport {
+  implicit def lineUnmarshaller(implicit matherializer: Materializer): FromEntityUnmarshaller[Line] =
+    LineJsonSupport.unmarshaller
+  implicit def lineMarshaller(implicit ec: ExecutionContext): ToResponseMarshaller[Line] =
+    LineJsonSupport.marshaller
+  implicit def ResponseMessageMarshaller(implicit ec: ExecutionContext): ToResponseMarshaller[ResponseMessage] =
+    ResponseMessageJsonSupport.marshaller
+}
 
 class ApiLineRoutes(
     lineService: LineService
-) (implicit val executionContext: ExecutionContext, actorSystem: ActorSystem) extends Directives {
-
-  implicit val formats = DefaultFormats
+) (implicit val executionContext: ExecutionContext, actorSystem: ActorSystem)
+  extends Directives with LineRoutesJsonSupport {
 
   def routes: Route = {
-    addLine
+    line
   }
 
-  private def addLine: Route = {
-    extractRequest { request =>
-      request.matchApiVersion(
-        Seq(VersionRouteMapping(ApiVersion.V1, addLineImplementationV1))
-      )
-    }
-  }
-
-  private[routes] def addLineImplementationV1: Route = {
-    post {
-      path("line" / "add") {
-        entity(as[String]) { requestBody =>
-          val result = for {
-            line <- Try(read[Line](requestBody))
-            lineAdditionResult <- Try(lineService.addLine(line).map(r => "Line added/updated."))
-          } yield lineAdditionResult
-          result.map(complete(_)).recover {
-            case e@(_: MappingException | _: JsonParseException) =>
-              throw new ApiException(e, BadRequest, Some("Error during unmarshalling from request json."))
-            case e: Exception => throw e
-          }.get
+  private[routes] def line: Route = {
+    path("line") {
+      post {
+        entity(as[Line]) { line =>
+          complete(lineService.addLine(line).map(_ => ResponseMessage("Line added/updated.")))
         }
+      }
+    } ~
+    path("line" / Segment) { lineName =>
+      get {
+        complete(ResponseMessage(s"Test pinging the line $lineName API successful!"))
       }
     }
   }
