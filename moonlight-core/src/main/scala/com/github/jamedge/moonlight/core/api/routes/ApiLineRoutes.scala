@@ -36,11 +36,13 @@ class ApiLineRoutes(
     path("line") {
       post {
         entity(as[Line]) { line =>
-          complete(lineService.addLine(line).map(_ => line))//ResponseMessage("Line added/updated.")))
+          complete(lineService.addLine(line).map(_ => ResponseMessage("Line added/updated.")))
         }
-      } ~
-      get { // TODO: move to path with path param for line name
-        complete(ResponseMessage("Test getting of line successful!"))
+      }
+    } ~
+    path("line" / Segment) { lineName =>
+      get {
+        complete(ResponseMessage(s"Test pinging the line $lineName API successful!"))
       }
     }
   }
