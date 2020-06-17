@@ -16,4 +16,14 @@ class LineService(
   def addLine(implicit line: Line): Future[Unit] = {
     persistenceLayer.addLine(line)
   }
+
+  /**
+   * Gets an ETL line from the Graph database.
+   *
+   * @param lineName Name of the line that needs to be pulled form the graph database.
+   * @return Future containing query result upon execution on neo4j db.
+   */
+  def getLine(lineName: String): Future[Line] = {
+    persistenceLayer.getLine(lineName)
+  }
 }

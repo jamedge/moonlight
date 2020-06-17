@@ -76,7 +76,7 @@ case class ProcessingFramework(
   }
 }
 
-case class ProcessingHistoryRecord(
+case class ProcessingHistoryRecord( // TODO: make it extend the light one or resove this in a nicer way (better)
     triggeredAt: String,
     triggeredBy: String,
     processingHistory: ProcessingHistory = ProcessingHistory(

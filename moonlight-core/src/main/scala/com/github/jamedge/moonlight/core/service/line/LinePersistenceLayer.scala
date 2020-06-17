@@ -2,10 +2,11 @@ package com.github.jamedge.moonlight.core.service.line
 
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
+import LineBuilder.RawLineDataRecord
 import com.github.jamedge.moonlight.core.model.neo4j.{LineQueries, Nodes => N, Relationships => R}
-import neotypes.implicits.all._
 import neotypes.{DeferredQuery, Driver, Transaction}
-import shapeless._
+import shapeless.Id
+import neotypes.implicits.all._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,6 +38,24 @@ class LinePersistenceLayer(
           a <- createAlertsElements
           c <- createCodeElements
         } yield (cd, l, io, pb, m, a, c)
+      }
+    }
+  }
+
+  /**
+   * Gets the line from the persistence layer for the specified line name.
+   * @param lineName Name of the line.
+   * @return Extracted line.
+   */
+  def getLine(lineName: String): Future[Line] = {
+    neo4jDriver.readSession { implicit session =>
+      session.transact[Line] { implicit tx =>
+        for {
+          lineData <- LineQueries.
+            constructGetLineDataQuery(lineName).
+            query[RawLineDataRecord].list(tx)
+          line <- Future(LineBuilder.buildLine(lineData))
+        } yield line
       }
     }
   }

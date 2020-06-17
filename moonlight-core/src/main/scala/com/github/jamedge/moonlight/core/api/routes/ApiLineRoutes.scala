@@ -42,7 +42,7 @@ class ApiLineRoutes(
     } ~
     path("line" / Segment) { lineName =>
       get {
-        complete(ResponseMessage(s"Test pinging the line $lineName API successful!"))
+        complete(lineService.getLine(lineName))
       }
     }
   }

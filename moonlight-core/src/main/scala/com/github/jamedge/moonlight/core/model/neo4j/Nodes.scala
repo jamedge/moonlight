@@ -5,7 +5,18 @@ import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass
 
 object Nodes {
 
-  import com.github.jamedge.moonlight.core.model.{Alert => ModelAlert, AlertsFramework => ModelAlertsFramework, Code => ModelCode, IOElement => ModelIOElement, Line => ModelLine, Metric => ModelMetric, MetricsFramework => ModelMetricsFramework, Process => ModelProcess, ProcessingFramework => ModelProcessingFramework, ProcessingHistory => ModelProcessingHistory, Storage => ModelStorage}
+  import com.github.jamedge.moonlight.core.model.{
+    Alert => ModelAlert,
+    AlertsFramework => ModelAlertsFramework,
+    Code => ModelCode,
+    IOElement => ModelIOElement,
+    Line => ModelLine,
+    Metric => ModelMetric,
+    MetricsFramework => ModelMetricsFramework,
+    Process => ModelProcess,
+    ProcessingFramework => ModelProcessingFramework,
+    ProcessingHistory => ModelProcessingHistory,
+    Storage => ModelStorage}
 
   case class Line(fieldPairs: Map[String, _], variablePrefix: String)
     extends GraphElement(ElementClass.Line, GraphElements.generateVariable(variablePrefix), fieldPairs)
