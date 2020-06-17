@@ -123,6 +123,7 @@ object LineQueries {
           afd {.*} AS alertFrameworkDetails,
           c AS code,
           cd {.*} AS codeDetails"""
-    //TODO: fix a bug which happens when user_data storage tries to be deleted
+    // TODO: separate this into smaller functions extracting one part each and generalise common parts
+    // TODO: fix a bug which happens when user_data storage tries to be deleted
   }
 }
