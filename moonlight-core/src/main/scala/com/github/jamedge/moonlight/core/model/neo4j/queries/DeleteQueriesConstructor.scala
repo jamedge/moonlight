@@ -1,4 +1,4 @@
-package com.github.jamedge.moonlight.core.model.neo4j.queryconstructors
+package com.github.jamedge.moonlight.core.model.neo4j.queries
 
 import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
 import neotypes.DeferredQueryBuilder

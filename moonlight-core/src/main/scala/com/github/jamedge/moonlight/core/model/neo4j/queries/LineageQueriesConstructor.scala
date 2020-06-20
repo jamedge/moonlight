@@ -1,4 +1,4 @@
-package com.github.jamedge.moonlight.core.model.neo4j.queryconstructors
+package com.github.jamedge.moonlight.core.model.neo4j.queries
 
 import neotypes.DeferredQueryBuilder
 
