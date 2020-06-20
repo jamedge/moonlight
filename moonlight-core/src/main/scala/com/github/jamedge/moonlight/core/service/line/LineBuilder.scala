@@ -1,9 +1,11 @@
 package com.github.jamedge.moonlight.core.service.line
 
-import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Code, IO, IOElement, Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord, Storage}
+import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Code, IO, IOElement, Line, Metadata, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord, Storage}
 import org.neo4j.driver.v1.Value
 
 object LineBuilder {
+
+  // TODO: Depricate these classes as soon as proper line building is completed
   case class ProcessingHistoryRecordLight(triggeredAt: String, triggeredBy: String)
   case class RawLineDataRecord(
       line: Line,								                              // line,
@@ -33,22 +35,8 @@ object LineBuilder {
       codeDetails: Value                     	                // code details
   )
 
-  def buildLine(rawLineDataRecords: List[RawLineDataRecord]): Line = {
-    println(rawLineDataRecords) // TODO: extract data from here and create a proper line
-    Line(
-      "test_name",
-      None,
-      None,
-      None,
-      None,
-      List(IO(
-        List(IOElement("ti", None, None, None, None, None, None)),
-        List(IOElement("to", None, None, None, None, None, None))
-      )),
-      List(),
-      List(),
-      List(),
-      None
-    )
+  // TODO: build up this function to create the whole line
+  def buildLine(line: Option[Line]): Line = {
+    line.getOrElse(Line("", None, None, None, None, List(), List(), List(), List(), None))
   }
 }

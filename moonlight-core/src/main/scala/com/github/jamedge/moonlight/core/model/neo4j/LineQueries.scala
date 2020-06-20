@@ -4,7 +4,7 @@ import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass
 import neotypes.DeferredQueryBuilder
 import neotypes.implicits.all._
 
-object LineQueries {
+object LineQueries extends BaseQueriesConstructor((name: String) => Nodes.Line(name, "l")) {
   def constructCreateOrUpdateQuery(
       node1: GraphElement,
       relationship: Option[GraphElement] = None,

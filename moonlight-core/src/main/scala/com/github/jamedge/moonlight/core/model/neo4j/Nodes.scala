@@ -30,6 +30,10 @@ object Nodes {
     def apply(anyObjectVariable: String): Line = {
       Line(ModelLine("", None, None, None, None, List(), List(), List(), List(), None), anyObjectVariable)
     }
+
+    def apply(name: String, anyObjectVariable: String): Line = {
+      Line(ModelLine(name, None, None, None, None, List(), List(), List(), List(), None), anyObjectVariable)
+    }
   }
 
   case class IO(fieldPairs: Map[String, _], variablePrefix: String)
@@ -44,6 +48,10 @@ object Nodes {
     def apply(anyObjectVariable: String): IO = {
       IO.apply(IOElement("", None, None, None, None, None, None), anyObjectVariable)
     }
+
+    def apply(name: String, anyObjectVariable: String): IO = {
+      IO.apply(IOElement(name, None, None, None, None, None, None), anyObjectVariable)
+    }
   }
 
   case class Storage(fieldsPairs: Map[String, _], variablePrefix: String)
@@ -57,6 +65,10 @@ object Nodes {
 
     def apply(anyObjectVariable: String): Storage = {
       Storage(ModelStorage("", None, None, None, None, None), anyObjectVariable)
+    }
+
+    def apply(name: String, anyObjectVariable: String): Storage = {
+      Storage(ModelStorage(name, None, None, None, None, None), anyObjectVariable)
     }
   }
 
@@ -75,6 +87,10 @@ object Nodes {
     def apply(anyObjectVariable: String): Process = {
       Process(ModelProcess("", None, None, None, None, None, None, None), anyObjectVariable)
     }
+
+    def apply(name: String, anyObjectVariable: String): Process = {
+      Process(ModelProcess(name, None, None, None, None, None, None, None), anyObjectVariable)
+    }
   }
 
   case class ProcessingFramework(fieldsPairs: Map[String, _], variablePrefix: String)
@@ -88,6 +104,10 @@ object Nodes {
 
     def apply(anyObjectVariable: String): ProcessingFramework = {
       ProcessingFramework(ModelProcessingFramework("", None, None, None, None, None), anyObjectVariable)
+    }
+
+    def apply(name: String, anyObjectVariable: String): ProcessingFramework = {
+      ProcessingFramework(ModelProcessingFramework(name, None, None, None, None, None), anyObjectVariable)
     }
   }
 
@@ -103,6 +123,10 @@ object Nodes {
     def apply(anyObjectVariable: String): ProcessingHistory = {
       ProcessingHistory(ModelProcessingHistory("", None, None, None, None), anyObjectVariable)
     }
+
+    def apply(name: String, anyObjectVariable: String): ProcessingHistory = {
+      ProcessingHistory(ModelProcessingHistory(name, None, None, None, None), anyObjectVariable)
+    }
   }
 
   case class Metric(fieldsPairs: Map[String, _], variablePrefix: String)
@@ -116,6 +140,10 @@ object Nodes {
 
     def apply(anyObjectVariable: String): Metric = {
       Metric(ModelMetric("", None, None, None, None, None, None), anyObjectVariable)
+    }
+
+    def apply(name: String, anyObjectVariable: String): Metric = {
+      Metric(ModelMetric(name, None, None, None, None, None, None), anyObjectVariable)
     }
   }
 
@@ -131,6 +159,10 @@ object Nodes {
     def apply(anyObjectVariable: String): MetricsFramework = {
       MetricsFramework(ModelMetricsFramework("", None, None, None, None, None), anyObjectVariable)
     }
+
+    def apply(name: String, anyObjectVariable: String): MetricsFramework = {
+      MetricsFramework(ModelMetricsFramework(name, None, None, None, None, None), anyObjectVariable)
+    }
   }
 
   case class Alert(fieldsPairs: Map[String, _], variablePrefix: String)
@@ -144,6 +176,10 @@ object Nodes {
 
     def apply(anyObjectVariable: String): Alert = {
       Alert(ModelAlert("", None, None, None, None, None, None), anyObjectVariable)
+    }
+
+    def apply(name: String, anyObjectVariable: String): Alert = {
+      Alert(ModelAlert(name, None, None, None, None, None, None), anyObjectVariable)
     }
   }
 
@@ -159,6 +195,10 @@ object Nodes {
     def apply(anyObjectVariable: String): AlertsFramework = {
       AlertsFramework(ModelAlertsFramework("", None, None, None, None, None), anyObjectVariable)
     }
+
+    def apply(name: String, anyObjectVariable: String): AlertsFramework = {
+      AlertsFramework(ModelAlertsFramework(name, None, None, None, None, None), anyObjectVariable)
+    }
   }
 
   case class Code(fieldsPairs: Map[String, _], variablePrefix: String)
@@ -172,6 +212,10 @@ object Nodes {
 
     def apply(anyObjectVariable: String): Code = {
       Code(ModelCode("", None, None, None, None, "", "", None), anyObjectVariable)
+    }
+
+    def apply(name: String, anyObjectVariable: String): Code = {
+      Code(ModelCode(name, None, None, None, None, "", "", None), anyObjectVariable)
     }
   }
 

@@ -2,7 +2,6 @@ package com.github.jamedge.moonlight.core.service.line
 
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
-import LineBuilder.RawLineDataRecord
 import com.github.jamedge.moonlight.core.model.neo4j.{LineQueries, Nodes => N, Relationships => R}
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
@@ -51,10 +50,11 @@ class LinePersistenceLayer(
     neo4jDriver.readSession { implicit session =>
       session.transact[Line] { implicit tx =>
         for {
-          lineData <- LineQueries.
-            constructGetLineDataQuery(lineName).
-            query[RawLineDataRecord].list(tx)
-          line <- Future(LineBuilder.buildLine(lineData))
+//          lineData <- LineQueries.
+//            constructGetLineDataQuery(lineName).
+//            query[RawLineDataRecord].list(tx)
+          base <- LineQueries.matchNode(lineName).query[Option[Line]].single(tx)
+          line <- Future(LineBuilder.buildLine(base))
         } yield line
       }
     }
