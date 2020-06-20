@@ -30,4 +30,6 @@ class BaseQueriesConstructor[T <: GraphElement](nodeFactory: String => T) {
   protected def snippetRelationshipFromLinesCondition(lineName: String, relationshipLabel: String): DeferredQueryBuilder = {
     c"WHERE" + snippetRelationshipFromLines(lineName, relationshipLabel)
   }
+
+
 }

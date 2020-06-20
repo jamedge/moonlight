@@ -2,7 +2,7 @@ package com.github.jamedge.moonlight.core.service.line
 
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
-import com.github.jamedge.moonlight.core.model.neo4j.{LineQueries, Nodes => N, Relationships => R}
+import com.github.jamedge.moonlight.core.model.neo4j.{LineQueriesConstructor, Nodes => N, Relationships => R}
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
 import neotypes.implicits.all._
@@ -53,7 +53,7 @@ class LinePersistenceLayer(
 //          lineData <- LineQueries.
 //            constructGetLineDataQuery(lineName).
 //            query[RawLineDataRecord].list(tx)
-          base <- LineQueries.matchNode(lineName).query[Option[Line]].single(tx)
+          base <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
           line <- Future(LineBuilder.buildLine(base))
         } yield line
       }
@@ -273,15 +273,15 @@ class LinePersistenceLayer(
       line:Line,
       startElement: GraphElement
   ): DeferredQuery[Unit] = {
-    LineQueries.constructRelationshipDeleteMarkingQuery("fromLines", line.name, startElement).query[Unit]
+    LineQueriesConstructor.prepareRelationshipsForDeletion("fromLines", line.name, startElement).query[Unit]
   }
 
   private def constructDeleteCleanedRelationships(): DeferredQuery[Unit] = {
-    LineQueries.constructDeleteCleanedRelationshipsQuery().query[Unit]
+    LineQueriesConstructor.deleteCleanedRelationships().query[Unit]
   }
 
   private def constructDeleteDetachedNodes(elementClass: ElementClass): DeferredQuery[Unit] = {
-    LineQueries.constructDeleteDetachedNodesQuery(elementClass).query[Unit]
+    LineQueriesConstructor.deleteDetachedNodesQuery(elementClass).query[Unit]
   }
 
   private def constructCreateOrUpdateQuery(
@@ -290,12 +290,12 @@ class LinePersistenceLayer(
       n2: Option[GraphElement] = None,
       createDuplicateNode2IfPathNotFound: Boolean = false,
   )(implicit line: Line): DeferredQuery[Unit] = {
-    LineQueries.constructCreateOrUpdateQuery(
+    LineQueriesConstructor.createOrUpdate(
       n1,
       r,
       n2,
       createDuplicateNode2IfPathNotFound,
       None,
-      r.map(LineQueries.constructRelationshipTaggingSnippet("fromLines", line.name, _))).query[Unit]
+      r.map(LineQueriesConstructor.snippetRelationshipTagging("fromLines", line.name, _))).query[Unit]
   }
 }

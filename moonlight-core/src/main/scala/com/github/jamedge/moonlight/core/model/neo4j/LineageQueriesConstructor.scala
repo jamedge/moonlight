@@ -3,7 +3,7 @@ package com.github.jamedge.moonlight.core.model.neo4j
 import neotypes.DeferredQueryBuilder
 import neotypes.implicits.all._
 
-object LineageQueries {
+object LineageQueriesConstructor {
    def constructGetLineageRawEdgesQuery(rootIOElementName: String): DeferredQueryBuilder = {
     c"""MATCH p = (i:IO {name: $rootIOElementName}) -[:HAS_OUTPUT *1..]-> (n:IO)
       WITH p
