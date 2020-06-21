@@ -1,7 +1,7 @@
 package com.github.jamedge.moonlight.core.service.line
 
 import com.github.jamedge.moonlight.core.model.Line
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement, NodeClass}
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement, Node, NodeClass, RelationshipRight}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.LineQueriesConstructor
 import com.github.jamedge.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 import neotypes.{DeferredQuery, Driver, Transaction}
@@ -274,9 +274,9 @@ class LinePersistenceLayer(
 
   private def constructRelationshipDeleteMarking(
       line:Line,
-      startElement: GraphElement
+      startNode: Node
   ): DeferredQuery[Unit] = {
-    LineQueriesConstructor.prepareRelationshipsForDeletion("fromLines", line.name, startElement).query[Unit]
+    LineQueriesConstructor.prepareRelationshipsForDeletion("fromLines", line.name, startNode).query[Unit]
   }
 
   private def constructDeleteCleanedRelationships(): DeferredQuery[Unit] = {
@@ -288,9 +288,9 @@ class LinePersistenceLayer(
   }
 
   private def constructCreateOrUpdateQuery(
-      n1: GraphElement,
-      r: Option[GraphElement] = None,
-      n2: Option[GraphElement] = None,
+      n1: Node,
+      r: Option[RelationshipRight] = None,
+      n2: Option[Node] = None,
       createDuplicateNode2IfPathNotFound: Boolean = false,
   )(implicit line: Line): DeferredQuery[Unit] = {
     LineQueriesConstructor.createOrUpdate(

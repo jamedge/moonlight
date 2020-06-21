@@ -174,6 +174,12 @@ object GraphElements {
     }
   }
 
+  abstract class Node(nodeClass: NodeClass, variable: String, fieldsPairs: Map[String, _])
+    extends GraphElement(nodeClass, variable, fieldsPairs)
+
+  abstract class RelationshipRight(relationshipRightClass: RelationshipRightClass, variable: String, fieldsPairs: Map[String, _])
+    extends GraphElement(relationshipRightClass, variable, fieldsPairs)
+
   sealed class ElementType(
       val openMark: String,
       val endMark: String)

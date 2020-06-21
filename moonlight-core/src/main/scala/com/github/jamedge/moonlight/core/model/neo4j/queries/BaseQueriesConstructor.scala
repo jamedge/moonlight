@@ -1,10 +1,10 @@
 package com.github.jamedge.moonlight.core.model.neo4j.queries
 
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.GraphElement
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{GraphElement, Node}
 import neotypes.DeferredQueryBuilder
 import neotypes.implicits.all._
 
-class BaseQueriesConstructor[T <: GraphElement](nodeFactory: String => T) {
+class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
   def matchNode(name: String): DeferredQueryBuilder = {
     matchNode(nodeFactory(name))
   }
