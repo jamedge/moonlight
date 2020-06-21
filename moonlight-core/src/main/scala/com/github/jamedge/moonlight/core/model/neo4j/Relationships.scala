@@ -1,6 +1,6 @@
 package com.github.jamedge.moonlight.core.model.neo4j
 
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement, RelationshipRight}
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.RelationshipRight
 
 object Relationships {
 

@@ -1,7 +1,8 @@
 package com.github.jamedge.moonlight.core.service.line
 
 import com.github.jamedge.moonlight.core.model.Line
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement, Node, NodeClass, RelationshipRight}
+import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, NodeClass}
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{Node, RelationshipRight}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.LineQueriesConstructor
 import com.github.jamedge.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 import neotypes.{DeferredQuery, Driver, Transaction}
