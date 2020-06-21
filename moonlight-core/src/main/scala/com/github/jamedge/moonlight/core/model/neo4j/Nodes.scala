@@ -1,7 +1,7 @@
 package com.github.jamedge.moonlight.core.model.neo4j
 
 import com.github.jamedge.moonlight.core.model.IOElement
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.Node
+import com.github.jamedge.moonlight.core.model.neo4j.Node
 
 object Nodes {
 
@@ -19,7 +19,7 @@ object Nodes {
     Storage => ModelStorage}
 
   case class Line(fieldPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.Line, GraphElements.generateVariable(variablePrefix), fieldPairs)
+    extends Node(ElementClass.Line, GraphElementUtils.generateVariable(variablePrefix), fieldPairs)
 
   object Line {
     def apply(from: ModelLine, variablePrefix: String = "l"): Line = {
@@ -37,7 +37,7 @@ object Nodes {
   }
 
   case class IO(fieldPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.IO, GraphElements.generateVariable(variablePrefix), fieldPairs)
+    extends Node(ElementClass.IO, GraphElementUtils.generateVariable(variablePrefix), fieldPairs)
 
   object IO {
     def apply(from: ModelIOElement, variablePrefix: String = "io"): IO = {
@@ -55,7 +55,7 @@ object Nodes {
   }
 
   case class Storage(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.Storage, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.Storage, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object Storage {
     def apply(from: ModelStorage, variablePrefix: String = "s"): Storage = {
@@ -73,10 +73,10 @@ object Nodes {
   }
 
   case class Details(fieldsPairs: Map[String, _], variablePrefix: String = "d")
-    extends Node(ElementClass.Details, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.Details, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   case class Process(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.Process, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.Process, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object Process {
     def apply(from: ModelProcess, variablePrefix: String = "p"): Process = {
@@ -94,7 +94,7 @@ object Nodes {
   }
 
   case class ProcessingFramework(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.ProcessingFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.ProcessingFramework, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object ProcessingFramework {
     def apply(from: ModelProcessingFramework, variablePrefix: String = "pf"): ProcessingFramework = {
@@ -112,7 +112,7 @@ object Nodes {
   }
 
   case class ProcessingHistory(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.ProcessingHistory, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.ProcessingHistory, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object ProcessingHistory {
     def apply(from: ModelProcessingHistory, variablePrefix: String = "ph"): ProcessingHistory = {
@@ -130,7 +130,7 @@ object Nodes {
   }
 
   case class Metric(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.Metric, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.Metric, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object Metric {
     def apply(from: ModelMetric, variablePrefix: String = "m"): Metric = {
@@ -148,7 +148,7 @@ object Nodes {
   }
 
   case class MetricsFramework(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.MetricsFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.MetricsFramework, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object MetricsFramework {
     def apply(from: ModelMetricsFramework, variablePrefix: String = "mf"): MetricsFramework = {
@@ -166,7 +166,7 @@ object Nodes {
   }
 
   case class Alert(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.Alert, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.Alert, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object Alert {
     def apply(from: ModelAlert, variablePrefix: String = "a"): Alert = {
@@ -184,7 +184,7 @@ object Nodes {
   }
 
   case class AlertsFramework(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.AlertsFramework, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.AlertsFramework, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object AlertsFramework {
     def apply(from: ModelAlertsFramework, variablePrefix: String = "af"): AlertsFramework = {
@@ -202,7 +202,7 @@ object Nodes {
   }
 
   case class Code(fieldsPairs: Map[String, _], variablePrefix: String)
-    extends Node(ElementClass.Code, GraphElements.generateVariable(variablePrefix), fieldsPairs)
+    extends Node(ElementClass.Code, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
   object Code {
     def apply(from: ModelCode, variablePrefix: String = "c"): Code = {

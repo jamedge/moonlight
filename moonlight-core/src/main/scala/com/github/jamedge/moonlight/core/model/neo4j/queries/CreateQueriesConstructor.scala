@@ -1,6 +1,6 @@
 package com.github.jamedge.moonlight.core.model.neo4j.queries
 
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{Node, RelationshipRight}
+import com.github.jamedge.moonlight.core.model.neo4j.{Node, RelationshipRight}
 import neotypes.DeferredQueryBuilder
 import neotypes.implicits.all._
 
