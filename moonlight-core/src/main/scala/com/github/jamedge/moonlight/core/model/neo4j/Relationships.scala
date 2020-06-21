@@ -1,7 +1,5 @@
 package com.github.jamedge.moonlight.core.model.neo4j
 
-import com.github.jamedge.moonlight.core.model.neo4j.RelationshipRight
-
 object Relationships {
 
   case class HasDetails(fieldsPairs: Map[String, _] = Map("relationshipType" -> "mutable"), variablePrefix: String = "hd")

@@ -1,7 +1,6 @@
 package com.github.jamedge.moonlight.core.model.neo4j
 
 import com.github.jamedge.moonlight.core.model.IOElement
-import com.github.jamedge.moonlight.core.model.neo4j.Node
 
 object Nodes {
 
