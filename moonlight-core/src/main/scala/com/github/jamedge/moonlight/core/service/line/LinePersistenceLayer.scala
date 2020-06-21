@@ -7,6 +7,7 @@ import com.github.jamedge.moonlight.core.model.neo4j.{Nodes => N, Relationships 
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
 import neotypes.implicits.all._
+import org.neo4j.driver.v1.Value
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -54,8 +55,9 @@ class LinePersistenceLayer(
 //          lineData <- LineQueries.
 //            constructGetLineDataQuery(lineName).
 //            query[RawLineDataRecord].list(tx)
-          base <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
-          line <- Future(LineBuilder.buildLine(base))
+          lineBase <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
+          lineDetails <- LineQueriesConstructor.matchDetails(lineName, lineName).query[Option[Value]].single(tx)
+          line <- Future(LineBuilder.buildLine(lineBase, lineDetails))
         } yield line
       }
     }

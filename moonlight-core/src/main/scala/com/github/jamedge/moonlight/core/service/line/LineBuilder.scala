@@ -1,7 +1,7 @@
 package com.github.jamedge.moonlight.core.service.line
 
 import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Code, IO, IOElement, Line, Metadata, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord, Storage}
-import org.neo4j.driver.v1.Value
+import org.neo4j.driver.v1.{Value, Values}
 
 object LineBuilder {
 
@@ -36,7 +36,19 @@ object LineBuilder {
   )
 
   // TODO: build up this function to create the whole line
-  def buildLine(line: Option[Line]): Line = {
-    line.getOrElse(Line("", None, None, None, None, List(), List(), List(), List(), None))
+  def buildLine(
+      line: Option[Line],
+      lineDetails: Option[Value]
+  ): Line = {
+    line.map{ l =>
+      l.copy(
+        details = extractDetails(lineDetails)
+      )
+    }.getOrElse(Line("", None, None, None, None, List(), List(), List(), List(), None))
+  }
+
+  private def extractDetails(detailsMap: Option[Value]): Option[Map[String, String]] = {
+    import scala.jdk.CollectionConverters._
+    detailsMap.map(_.asMap[String](Values.ofString()).asScala.toMap)
   }
 }
