@@ -1,7 +1,7 @@
 package com.github.jamedge.moonlight.core.service.line
 
 import com.github.jamedge.moonlight.core.model.Line
-import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement}
+import com.github.jamedge.moonlight.core.model.neo4j.GraphElements.{ElementClass, GraphElement, NodeClass}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.LineQueriesConstructor
 import com.github.jamedge.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 import neotypes.{DeferredQuery, Driver, Transaction}
@@ -283,8 +283,8 @@ class LinePersistenceLayer(
     LineQueriesConstructor.deleteCleanedRelationships().query[Unit]
   }
 
-  private def constructDeleteDetachedNodes(elementClass: ElementClass): DeferredQuery[Unit] = {
-    LineQueriesConstructor.deleteDetachedNodesQuery(elementClass).query[Unit]
+  private def constructDeleteDetachedNodes(nodeClass: NodeClass): DeferredQuery[Unit] = {
+    LineQueriesConstructor.deleteDetachedNodesQuery(nodeClass).query[Unit]
   }
 
   private def constructCreateOrUpdateQuery(
