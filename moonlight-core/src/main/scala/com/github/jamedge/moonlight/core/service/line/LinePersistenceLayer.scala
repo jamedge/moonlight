@@ -1,10 +1,8 @@
 package com.github.jamedge.moonlight.core.service.line
 
-import com.github.jamedge.moonlight.core.model.Line
-import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, NodeClass}
-import com.github.jamedge.moonlight.core.model.neo4j.{Node, RelationshipRight}
+import com.github.jamedge.moonlight.core.model.{Line, Process}
+import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight, Nodes => N, Relationships => R}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.LineQueriesConstructor
-import com.github.jamedge.moonlight.core.model.neo4j.{Nodes => N, Relationships => R}
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
 import neotypes.implicits.all._
@@ -53,12 +51,12 @@ class LinePersistenceLayer(
     neo4jDriver.readSession { implicit session =>
       session.transact[Line] { implicit tx =>
         for {
-//          lineData <- LineQueries.
-//            constructGetLineDataQuery(lineName).
-//            query[RawLineDataRecord].list(tx)
           lineBase <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
           lineDetails <- LineQueriesConstructor.matchDetails(lineName, lineName).query[Option[Value]].single(tx)
-          line <- Future(LineBuilder.buildLine(lineBase, lineDetails))
+          processedBy <- LineQueriesConstructor.matchConnectingNodes(
+            lineName, R.IsProcessedBy(), N.Process("p"), lineName
+          ).query[Process].list(tx)
+          line <- Future(LineBuilder.buildLine(lineBase, lineDetails, processedBy))
         } yield line
       }
     }

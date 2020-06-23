@@ -38,11 +38,13 @@ object LineBuilder {
   // TODO: build up this function to create the whole line
   def buildLine(
       line: Option[Line],
-      lineDetails: Option[Value]
+      lineDetails: Option[Value],
+      processedBy: List[Process]
   ): Line = {
     line.map{ l =>
       l.copy(
-        details = extractDetails(lineDetails)
+        details = extractDetails(lineDetails),
+        processedBy = processedBy
       )
     }.getOrElse(Line("", None, None, None, None, List(), List(), List(), List(), None))
   }
