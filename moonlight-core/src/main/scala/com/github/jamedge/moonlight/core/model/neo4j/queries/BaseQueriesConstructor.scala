@@ -18,42 +18,42 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
   }
 
   def matchDetails(sourceNode: T, lineName: String): DeferredQueryBuilder = {
-    matchConnectingNodes(sourceNode, List(Chain(Relationships.HasDetails(), Nodes.Details(), unstructured = true)), lineName)
+    matchConnectingChain(sourceNode, List(ChainLink(Relationships.HasDetails(), Nodes.Details(), unstructured = true)), lineName)
   }
 
-  def matchConnectingNodes(
+  def matchConnectingNode(
       sourceNodeName: String,
       relationship: RelationshipRight,
       destinationNode: Node,
       lineName: String
   ): DeferredQueryBuilder = {
-    matchConnectingNodes(nodeFactory(sourceNodeName), List(Chain(relationship, destinationNode)), lineName)
+    matchConnectingChain(nodeFactory(sourceNodeName), List(ChainLink(relationship, destinationNode)), lineName)
   }
 
-  def matchConnectingNodes(
+  def matchConnectingChain(
       sourceNodeName: String,
-      chainList: List[Chain],
+      chain: List[ChainLink],
       lineName: String
   ): DeferredQueryBuilder = {
-    matchConnectingNodes(nodeFactory(sourceNodeName), chainList, lineName)
+    matchConnectingChain(nodeFactory(sourceNodeName), chain, lineName)
   }
 
-  def matchConnectingNodes(
+  def matchConnectingChain(
       sourceNode: T,
-      chainList: List[Chain],
+      chain: List[ChainLink],
       lineName: String
   ): DeferredQueryBuilder = {
-    if (chainList.nonEmpty) {
+    if (chain.nonEmpty) {
       c"MATCH" + sourceNode.toSearchObject() +
-        chainList.foldLeft(c"") {
-          case (a: DeferredQueryBuilder, b: Chain) =>
+        chain.foldLeft(c"") {
+          case (a: DeferredQueryBuilder, b: ChainLink) =>
             a + b.relationship.toAnyObjectOfType() + b.destinationNode.toAnyObjectOfType()} +
-        chainList.tail.foldLeft(snippetRelationshipFromLinesCondition(lineName, trim(chainList.head.relationship.toVariable()))) {
-          case (a: DeferredQueryBuilder, b: Chain) =>
+        chain.tail.foldLeft(snippetRelationshipFromLinesCondition(lineName, trim(chain.head.relationship.toVariable()))) {
+          case (a: DeferredQueryBuilder, b: ChainLink) =>
             a + c"AND" + snippetRelationshipFromLines(lineName, trim(b.relationship.toVariable()))
         } +
-      c"RETURN" + chainList.tail.foldLeft(chainList.head.destinationNodeVariable) {
-        case (a: DeferredQueryBuilder, b: Chain) =>
+      c"RETURN" + chain.tail.foldLeft(chain.head.destinationNodeVariable) {
+        case (a: DeferredQueryBuilder, b: ChainLink) =>
           a + c"," + b.destinationNodeVariable
       }
     } else {
@@ -74,7 +74,7 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
   }
 }
 
-case class Chain(relationship: RelationshipRight, destinationNode: Node, unstructured: Boolean = false) {
+case class ChainLink(relationship: RelationshipRight, destinationNode: Node, unstructured: Boolean = false) {
   val destinationNodeVariable: DeferredQueryBuilder = if (unstructured) {
     c"" + s"${destinationNode.toVariable().query[String].query.trim} {.*}"
   } else {

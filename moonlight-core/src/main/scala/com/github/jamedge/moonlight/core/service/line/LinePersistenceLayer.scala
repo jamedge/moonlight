@@ -53,7 +53,7 @@ class LinePersistenceLayer(
         for {
           lineBase <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
           lineDetails <- LineQueriesConstructor.matchDetails(lineName, lineName).query[Option[Value]].single(tx)
-          processedBy <- LineQueriesConstructor.matchConnectingNodes(
+          processedBy <- LineQueriesConstructor.matchConnectingNode(
             lineName, R.IsProcessedBy(), N.Process("p"), lineName
           ).query[Process].list(tx)
           line <- Future(LineBuilder.buildLine(lineBase, lineDetails, processedBy))
