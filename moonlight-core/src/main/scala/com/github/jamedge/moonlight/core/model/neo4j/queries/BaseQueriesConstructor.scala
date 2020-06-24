@@ -74,6 +74,7 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
   }
 }
 
+// TODO: add a way to leave out chain part and/or to present just name of the node as string
 case class ChainLink(relationship: RelationshipRight, destinationNode: Node, unstructured: Boolean = false) {
   val destinationNodeVariable: DeferredQueryBuilder = if (unstructured) {
     c"" + s"${destinationNode.toVariable().query[String].query.trim} {.*}"

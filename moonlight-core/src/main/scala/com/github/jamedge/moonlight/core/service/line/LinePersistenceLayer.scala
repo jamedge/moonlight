@@ -59,14 +59,13 @@ class LinePersistenceLayer(
           processedByDetails <- LineQueriesConstructor.matchConnectingChain(
             lineName, List(
               ChainLink(R.IsProcessedBy(), N.Process("p")),
-              ChainLink(R.HasDetails(), N.Details()),
-            ), lineName
-          ).query[(Process, Value)].list(tx)
+              ChainLink(R.HasDetails(), N.Details(), unstructured = true), // TODO: examine how does it work /wt unstructured param (it seems it work correctly /wt it as well)
+            ), lineName).query[(Process, Value)].map(tx) // TODO: figure out what to do with more than 2 chains
           line <- Future(LineBuilder.buildLine(
             lineBase,
             lineDetails,
             processedBy,
-            processedByDetails
+            processedByDetails.map { case (p: Process, d: Value) => (p.name, d)}
           ))
         } yield line
       }
