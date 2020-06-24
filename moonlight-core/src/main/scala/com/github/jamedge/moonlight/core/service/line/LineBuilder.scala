@@ -39,12 +39,15 @@ object LineBuilder {
   def buildLine(
       line: Option[Line],
       lineDetails: Option[Value],
-      processedBy: List[Process]
+      processedBy: List[Process],
+      processedByDetails: List[(Process, Value)]
   ): Line = {
     line.map{ l =>
       l.copy(
         details = extractDetails(lineDetails),
-        processedBy = processedBy
+        processedBy = processedBy.map { pb =>
+          pb.copy(details = extractDetails(processedByDetails.filter(_._1.name == pb.name).map(_._2).headOption))
+        }
       )
     }.getOrElse(Line("", None, None, None, None, List(), List(), List(), List(), None))
   }
