@@ -74,6 +74,12 @@ object Nodes {
   case class Details(fieldsPairs: Map[String, _], variablePrefix: String = "d")
     extends Node(ElementClass.Details, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 
+  object Details {
+    def apply(): Details = {
+      Details(Map())
+    }
+  }
+
   case class Process(fieldsPairs: Map[String, _], variablePrefix: String)
     extends Node(ElementClass.Process, GraphElementUtils.generateVariable(variablePrefix), fieldsPairs)
 

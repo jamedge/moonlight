@@ -1,6 +1,6 @@
 package com.github.jamedge.moonlight.core.model.neo4j.queries
 
-import com.github.jamedge.moonlight.core.model.neo4j.{Node, RelationshipRight}
+import com.github.jamedge.moonlight.core.model.neo4j.{Node, Nodes, RelationshipRight, Relationships}
 import neotypes.DeferredQueryBuilder
 import neotypes.implicits.all._
 
@@ -18,9 +18,7 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
   }
 
   def matchDetails(sourceNode: T, lineName: String): DeferredQueryBuilder = {
-    c"MATCH" + sourceNode.toSearchObject()  + c"-[lhd:HAS_DETAILS]-> (d)" +
-      snippetRelationshipFromLinesCondition(lineName, "lhd") +
-      c"RETURN d {.*} AS details"
+    matchConnectingNodes(sourceNode, List(Chain(Relationships.HasDetails(), Nodes.Details(), unstructured = true)), lineName)
   }
 
   def matchConnectingNodes(
@@ -54,9 +52,9 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
           case (a: DeferredQueryBuilder, b: Chain) =>
             a + c"AND" + snippetRelationshipFromLines(lineName, trim(b.relationship.toVariable()))
         } +
-      c"RETURN" + chainList.tail.foldLeft(chainList.head.destinationNode.toVariable()) {
+      c"RETURN" + chainList.tail.foldLeft(chainList.head.destinationNodeVariable) {
         case (a: DeferredQueryBuilder, b: Chain) =>
-          a + c"," + b.destinationNode.toVariable()
+          a + c"," + b.destinationNodeVariable
       }
     } else {
       throw MatchingException("Input chain list must not be empty!")
@@ -76,5 +74,11 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
   }
 }
 
-case class Chain(relationship: RelationshipRight, destinationNode: Node)
+case class Chain(relationship: RelationshipRight, destinationNode: Node, unstructured: Boolean = false) {
+  val destinationNodeVariable: DeferredQueryBuilder = if (unstructured) {
+    c"" + s"${destinationNode.toVariable().query[String].query.trim} {.*}"
+  } else {
+    destinationNode.toVariable()
+  }
+}
 case class MatchingException(message: String) extends Exception(message)
