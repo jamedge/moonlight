@@ -52,9 +52,9 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
           case (a: DeferredQueryBuilder, b: ChainLink) =>
             a + c"AND" + snippetRelationshipFromLines(lineName, trim(b.relationship.toVariable()))
         } +
-      c"RETURN" + chain.tail.foldLeft(chain.head.destinationNodeVariable) {
+      c"RETURN" + chain.tail.foldLeft(if (chain.tail.nonEmpty) chain.head.destinationNodeVariableShouldShow else chain.head.destinationNodeVariable) {
         case (a: DeferredQueryBuilder, b: ChainLink) =>
-          a + c"," + b.destinationNodeVariable
+          a + (if (b.show) c"," + b.destinationNodeVariable else c"")
       }
     } else {
       throw MatchingException("Input chain list must not be empty!")
@@ -75,11 +75,17 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
 }
 
 // TODO: add a way to leave out chain part and/or to present just name of the node as string
-case class ChainLink(relationship: RelationshipRight, destinationNode: Node, unstructured: Boolean = false) {
+case class ChainLink(relationship: RelationshipRight, destinationNode: Node, show: Boolean = true, unstructured: Boolean = false) {
   val destinationNodeVariable: DeferredQueryBuilder = if (unstructured) {
-    c"" + s"${destinationNode.toVariable().query[String].query.trim} {.*}"
+      c"" + s"${destinationNode.toVariable().query[String].query.trim} {.*}"
+    } else {
+      destinationNode.toVariable()
+    }
+
+  val destinationNodeVariableShouldShow: DeferredQueryBuilder = if (show) {
+    destinationNodeVariable
   } else {
-    destinationNode.toVariable()
+    c""
   }
 }
 case class MatchingException(message: String) extends Exception(message)
