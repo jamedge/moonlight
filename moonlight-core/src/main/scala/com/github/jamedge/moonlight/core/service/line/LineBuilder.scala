@@ -40,13 +40,17 @@ object LineBuilder {
       line: Option[Line],
       lineDetails: Option[Value],
       processedBy: List[Process],
-      processedByDetails: Map[String, Value]
+      processedByDetails: Map[String, Value],
+      processingFrameworks: Map[String, ProcessingFramework]
   ): Line = {
     line.map{ l =>
       l.copy(
         details = extractDetails(lineDetails),
         processedBy = processedBy.map { pb =>
-          pb.copy(details = extractDetails(processedByDetails.get(pb.name)))
+          pb.copy(
+            details = extractDetails(processedByDetails.get(pb.name)),
+            processingFramework = processingFrameworks.get(pb.name)
+          )
         }
       )
     }.getOrElse(Line("", None, None, None, None, List(), List(), List(), List(), None))

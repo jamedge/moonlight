@@ -1,6 +1,6 @@
 package com.github.jamedge.moonlight.core.service.line
 
-import com.github.jamedge.moonlight.core.model.{Line, Process}
+import com.github.jamedge.moonlight.core.model.{Line, Process, ProcessingFramework}
 import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight, Nodes => N, Relationships => R}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQueriesConstructor}
 import neotypes.{DeferredQuery, Driver, Transaction}
@@ -61,11 +61,17 @@ class LinePersistenceLayer(
               ChainLink(R.IsProcessedBy(), N.Process("p")),
               ChainLink(R.HasDetails(), N.Details(), unstructured = true), // TODO: examine how does it work /wt unstructured param (it seems it work correctly /wt it as well)
             ), lineName).query[(Process, Value)].map(tx) // TODO: figure out what to do with more than 2 chains
+          processedByProcessingFramework <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.IsProcessedBy(), N.Process("p")),
+              ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
+            ), lineName).query[(Process, ProcessingFramework)].map(tx)
           line <- Future(LineBuilder.buildLine(
             lineBase,
             lineDetails,
             processedBy,
-            processedByDetails.map { case (p: Process, d: Value) => (p.name, d)}
+            processedByDetails.map { case (p: Process, d: Value) => (p.name, d)},
+            processedByProcessingFramework.map { case (p: Process, pf: ProcessingFramework) => (p.name, pf)}
           ))
         } yield line
       }
