@@ -61,17 +61,24 @@ class LinePersistenceLayer(
               ChainLink(R.IsProcessedBy(), N.Process("p")),
               ChainLink(R.HasDetails(), N.Details(), unstructured = true), // TODO: examine how does it work /wt unstructured param (it seems it work correctly /wt it as well)
             ), lineName).query[(Process, Value)].map(tx) // TODO: figure out what to do with more than 2 chains
-          processedByProcessingFramework <- LineQueriesConstructor.matchConnectingChain(
+          processingFrameworks <- LineQueriesConstructor.matchConnectingChain(
             lineName, List(
               ChainLink(R.IsProcessedBy(), N.Process("p")),
               ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
             ), lineName).query[(Process, ProcessingFramework)].map(tx)
+          processingFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.IsProcessedBy(), N.Process("p"), show = false),
+              ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
+              ChainLink(R.HasDetails(), N.Details(), unstructured = true),
+            ), lineName).query[(ProcessingFramework, Value)].map(tx)
           line <- Future(LineBuilder.buildLine(
             lineBase,
             lineDetails,
             processedBy,
             processedByDetails.map { case (p: Process, d: Value) => (p.name, d)},
-            processedByProcessingFramework.map { case (p: Process, pf: ProcessingFramework) => (p.name, pf)}
+            processingFrameworks.map { case (p: Process, pf: ProcessingFramework) => (p.name, pf)},
+            processingFrameworksDetails.map { case (p: ProcessingFramework, d: Value) => (p.name, d)}
           ))
         } yield line
       }

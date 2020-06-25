@@ -38,6 +38,7 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
     matchConnectingChain(nodeFactory(sourceNodeName), chain, lineName)
   }
 
+  // TODO: split this into snippet functions
   def matchConnectingChain(
       sourceNode: T,
       chain: List[ChainLink],
@@ -54,7 +55,7 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
         } +
       c"RETURN" + chain.tail.foldLeft(if (chain.tail.nonEmpty) chain.head.destinationNodeVariableShouldShow else chain.head.destinationNodeVariable) {
         case (a: DeferredQueryBuilder, b: ChainLink) =>
-          a + (if (b.show) c"," + b.destinationNodeVariable else c"")
+          a + (if (a.query[String].query.trim != "") c"," else c"") + b.destinationNodeVariableShouldShow
       }
     } else {
       throw MatchingException("Input chain list must not be empty!")
@@ -74,7 +75,7 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
   }
 }
 
-// TODO: add a way to leave out chain part and/or to present just name of the node as string
+// TODO: try to add a way to present just name of the node as string
 case class ChainLink(relationship: RelationshipRight, destinationNode: Node, show: Boolean = true, unstructured: Boolean = false) {
   val destinationNodeVariable: DeferredQueryBuilder = if (unstructured) {
       c"" + s"${destinationNode.toVariable().query[String].query.trim} {.*}"
