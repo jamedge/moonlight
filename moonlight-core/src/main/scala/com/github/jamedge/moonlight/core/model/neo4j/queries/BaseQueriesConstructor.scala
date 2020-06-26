@@ -53,9 +53,19 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
           case (a: DeferredQueryBuilder, b: ChainLink) =>
             a + c"AND" + snippetRelationshipFromLines(lineName, trim(b.relationship.value.toVariable()))
         } +
-      c"RETURN" + chain.tail.foldLeft(if (chain.tail.nonEmpty) chain.head.destinationNode.valueVariableShouldShow else chain.head.destinationNode.valueVariable) {
+      c"RETURN" + chain.tail.foldLeft { // First one needs to show the node, while relationship can be left out
+        if (chain.tail.nonEmpty) {
+          snippetRelationshipAndNodeVariablesShow(chain.head.relationship, chain.head.destinationNode)
+        } else {
+          chain.head.relationship.valueVariableShouldShow +
+            (if (chain.head.relationship.valueVariableShouldShow.query[String].query.trim != "") c"," else c"") +
+            chain.head.destinationNode.valueVariable
+        }
+      } {
         case (a: DeferredQueryBuilder, b: ChainLink) =>
-          a + (if (a.query[String].query.trim != "") c"," else c"") + b.destinationNode.valueVariableShouldShow
+          a +
+            (if (a.query[String].query.trim != "") c"," else c"") +
+            snippetRelationshipAndNodeVariablesShow(b.relationship, b.destinationNode)
       }
     } else {
       throw MatchingException("Input chain list must not be empty!")
@@ -72,6 +82,12 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
 
   private def trim(snippet: DeferredQueryBuilder): String = {
     snippet.query[String].query.trim
+  }
+
+  private def snippetRelationshipAndNodeVariablesShow(relationship: Present[RelationshipRight], node: Present[Node]): DeferredQueryBuilder = {
+    relationship.valueVariableShouldShow +
+      (if (relationship.valueVariableShouldShow.query[String].query.trim != "") c"," else c"") +
+      node.valueVariableShouldShow
   }
 }
 
