@@ -2,7 +2,7 @@ package com.github.jamedge.moonlight.core.service.line
 
 import com.github.jamedge.moonlight.core.model.{Line, Process, ProcessingFramework}
 import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight, Nodes => N, Relationships => R}
-import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQueriesConstructor}
+import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, DefaultNodePresent => DNP, DefaultRelationshipRightPresent => DRRP, LineQueriesConstructor}
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
 import neotypes.implicits.all._
@@ -47,6 +47,7 @@ class LinePersistenceLayer(
    * @param lineName Name of the line.
    * @return Extracted line.
    */
+  // TODO: break this into smaller methods after it's done with the whole line
   def getLine(lineName: String): Future[Line] = {
     neo4jDriver.readSession { implicit session =>
       session.transact[Line] { implicit tx =>
@@ -59,8 +60,8 @@ class LinePersistenceLayer(
           processedByDetails <- LineQueriesConstructor.matchConnectingChain(
             lineName, List(
               ChainLink(R.IsProcessedBy(), N.Process("p")),
-              ChainLink(R.HasDetails(), N.Details(), unstructured = true), // TODO: examine how does it work /wt unstructured param (it seems it work correctly /wt it as well)
-            ), lineName).query[(Process, Value)].map(tx) // TODO: figure out what to do with more than 2 chains
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)), // TODO: examine how does it work /wt unstructured param (it seems it work correctly /wt it as well)
+            ), lineName).query[(Process, Value)].map(tx)
           processingFrameworks <- LineQueriesConstructor.matchConnectingChain(
             lineName, List(
               ChainLink(R.IsProcessedBy(), N.Process("p")),
@@ -68,9 +69,9 @@ class LinePersistenceLayer(
             ), lineName).query[(Process, ProcessingFramework)].map(tx)
           processingFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
             lineName, List(
-              ChainLink(R.IsProcessedBy(), N.Process("p"), show = false),
+              ChainLink(R.IsProcessedBy(), DNP(N.Process("p"), show = false)),
               ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
-              ChainLink(R.HasDetails(), N.Details(), unstructured = true),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
             ), lineName).query[(ProcessingFramework, Value)].map(tx)
           line <- Future(LineBuilder.buildLine(
             lineBase,
