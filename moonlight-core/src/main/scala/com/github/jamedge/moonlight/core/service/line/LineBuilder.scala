@@ -39,6 +39,13 @@ object LineBuilder {
   def buildLine(
       line: Option[Line],
       lineDetails: Option[Value],
+      ioPairs: List[(IOElement, IOElement)],
+      inputsDetails: Map[String, Value],
+      inputsStorage: Map[String, Storage],
+      inputsStorageDetails: Map[String, Value],
+      outputsDetails: Map[String, Value],
+      outputsStorage: Map[String, Storage],
+      outputsStorageDetails: Map[String, Value],
       processedBy: List[Process],
       processedByDetails: Map[String, Value],
       processingFrameworks: Map[String, ProcessingFramework],
@@ -57,6 +64,22 @@ object LineBuilder {
     line.map{ l =>
       l.copy(
         details = extractDetails(lineDetails),
+        io = ioPairs.map { ioPair =>
+          IO(
+            inputs = List(ioPair._1.copy(
+              details = extractDetails(inputsDetails.get(ioPair._1.name)),
+              storage = inputsStorage.get(ioPair._1.name).map { is =>
+                is.copy(details = extractDetails(inputsStorageDetails.get(is.name)))
+              }
+            )),
+            outputs = List(ioPair._2.copy(
+              details = extractDetails(outputsDetails.get(ioPair._2.name)),
+              storage = outputsStorage.get(ioPair._2.name).map { os =>
+                os.copy(details = extractDetails(outputsStorageDetails.get(os.name)))
+              }
+            ))
+          )
+        },
         processedBy = processedBy.map { pb =>
           pb.copy(
             details = extractDetails(processedByDetails.get(pb.name)),

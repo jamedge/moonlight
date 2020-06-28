@@ -1,6 +1,6 @@
 package com.github.jamedge.moonlight.core.service.line
 
-import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Code, Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord}
+import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Code, IOElement, Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord, Storage}
 import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight, Nodes => N, Relationships => R}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQueriesConstructor, DefaultNodePresent => DNP, DefaultRelationshipRightPresent => DRRP}
 import com.github.jamedge.moonlight.core.service.line.LineBuilder.ProcessingHistoryRecordLight
@@ -55,6 +55,46 @@ class LinePersistenceLayer(
         for {
           lineBase <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
           lineDetails <- LineQueriesConstructor.matchDetails(lineName, lineName).query[Option[Value]].single(tx)
+          ioPairs <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasInput(), N.IO("i")),
+              ChainLink(R.HasOutput(), N.IO("o")),
+            ), lineName).query[(IOElement, IOElement)].list(tx)
+          inputsDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasInput(), N.IO("i")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(IOElement, Value)].map(tx)
+          inputsStorage <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasInput(), N.IO("i")),
+              ChainLink(R.HasStorage(), N.Storage("s")),
+            ), lineName).query[(IOElement, Storage)].map(tx)
+          inputsStorageDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
+              ChainLink(R.HasStorage(), N.Storage("s")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(Storage, Value)].map(tx)
+          outputsDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
+              ChainLink(R.HasOutput(), N.IO("o")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(IOElement, Value)].map(tx)
+          outputsStorage <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
+              ChainLink(R.HasOutput(), N.IO("o")),
+              ChainLink(R.HasStorage(), N.Storage("s")),
+            ), lineName).query[(IOElement, Storage)].map(tx)
+          outputsStorageDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
+              ChainLink(R.HasOutput(), DNP(N.IO("o"), show = false)),
+              ChainLink(R.HasStorage(), N.Storage("s")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(Storage, Value)].map(tx)
           processedBy <- LineQueriesConstructor.matchConnectingNode(
             lineName, R.IsProcessedBy(), N.Process("p"), lineName
           ).query[Process].list(tx)
@@ -123,6 +163,13 @@ class LinePersistenceLayer(
           line <- Future(LineBuilder.buildLine(
             lineBase,
             lineDetails,
+            ioPairs,
+            inputsDetails.map { case (i: IOElement, d: Value) => (i.name, d)},
+            inputsStorage.map { case (i: IOElement, s: Storage) => (i.name, s)},
+            inputsStorageDetails.map { case (s: Storage, d: Value) => (s.name, d)},
+            outputsDetails.map { case (i: IOElement, d: Value) => (i.name, d)},
+            outputsStorage.map { case (i: IOElement, s: Storage) => (i.name, s)},
+            outputsStorageDetails.map { case (s: Storage, d: Value) => (s.name, d)},
             processedBy,
             processedByDetails.map { case (p: Process, d: Value) => (p.name, d)},
             processingFrameworks.map { case (p: Process, pf: ProcessingFramework) => (p.name, pf)},
