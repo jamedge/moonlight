@@ -1,6 +1,6 @@
 package com.github.jamedge.moonlight.core.service.line
 
-import com.github.jamedge.moonlight.core.model.{Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord}
+import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord}
 import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight, Nodes => N, Relationships => R}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQueriesConstructor, DefaultNodePresent => DNP, DefaultRelationshipRightPresent => DRRP}
 import com.github.jamedge.moonlight.core.service.line.LineBuilder.ProcessingHistoryRecordLight
@@ -93,6 +93,25 @@ class LinePersistenceLayer(
               ChainLink(R.HasMetricsFramework(), N.MetricsFramework("mf")),
               ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
             ), lineName).query[(MetricsFramework, Value)].map(tx)
+          alerts <- LineQueriesConstructor.matchConnectingNode(
+            lineName, R.HasAlert(), N.Alert("a"), lineName
+          ).query[Alert].list(tx)
+          alertsDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasAlert(), N.Alert("a")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(Alert, Value)].map(tx)
+          alertsFrameworks <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasAlert(), N.Alert("a")),
+              ChainLink(R.HasAlertsFramework(), N.AlertsFramework("af")),
+            ), lineName).query[(Alert, AlertsFramework)].map(tx)
+          alertsFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasAlert(), DNP(N.Alert("a"), show = false)),
+              ChainLink(R.HasAlertsFramework(), N.AlertsFramework("af")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(AlertsFramework, Value)].map(tx)
           line <- Future(LineBuilder.buildLine(
             lineBase,
             lineDetails,
@@ -103,7 +122,11 @@ class LinePersistenceLayer(
             metrics,
             metricsDetails.map { case (m: Metric, d: Value) => (m.name, d)},
             metricsFrameworks.map { case (m: Metric, mf: MetricsFramework) => (m.name, mf)},
-            metricsFrameworksDetails.map { case (mf: MetricsFramework, d: Value) => (mf.name, d)}
+            metricsFrameworksDetails.map { case (mf: MetricsFramework, d: Value) => (mf.name, d)},
+            alerts,
+            alertsDetails.map { case (a: Alert, d: Value) => (a.name, d)},
+            alertsFrameworks.map { case (a: Alert, af: AlertsFramework) => (a.name, af)},
+            alertsFrameworksDetails.map { case (af: AlertsFramework, d: Value) => (af.name, d)}
           ))
         } yield line
       }

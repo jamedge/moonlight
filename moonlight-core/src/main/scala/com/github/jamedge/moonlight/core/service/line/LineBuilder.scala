@@ -47,6 +47,10 @@ object LineBuilder {
       metricsDetails: Map[String, Value],
       metricsFrameworks: Map[String, MetricsFramework],
       metricsFrameworksDetails: Map[String, Value],
+      alerts: List[Alert],
+      alertsDetails: Map[String, Value],
+      alertsFrameworks: Map[String, AlertsFramework],
+      alertsFrameworksDetails: Map[String, Value],
   ): Line = {
     line.map{ l =>
       l.copy(
@@ -64,6 +68,14 @@ object LineBuilder {
             details = extractDetails(metricsDetails.get(m.name)),
             metricFramework = metricsFrameworks.get(m.name).map { mf =>
               mf.copy(details = extractDetails(metricsFrameworksDetails.get(mf.name)))
+            }
+          )
+        },
+        alerts = alerts.map { a =>
+          a.copy(
+            details = extractDetails(alertsDetails.get(a.name)),
+            alertsFramework = alertsFrameworks.get(a.name).map { af =>
+              af.copy(details = extractDetails(alertsFrameworksDetails.get(af.name)))
             }
           )
         }
