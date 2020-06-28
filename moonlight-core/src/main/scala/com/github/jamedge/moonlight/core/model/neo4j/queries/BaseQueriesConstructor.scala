@@ -58,7 +58,7 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
           snippetRelationshipAndNodeVariablesShow(chain.head.relationship, chain.head.destinationNode)
         } else {
           chain.head.relationship.valueVariableShouldShow +
-            (if (chain.head.relationship.valueVariableShouldShow.query[String].query.trim != "") c"," else c"") +
+            (if (trim(chain.head.relationship.valueVariableShouldShow) != "") c"," else c"") +
             chain.head.destinationNode.valueVariable
         }
       } {
@@ -86,7 +86,7 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
 
   private def snippetRelationshipAndNodeVariablesShow(relationship: Present[RelationshipRight], node: Present[Node]): DeferredQueryBuilder = {
     relationship.valueVariableShouldShow +
-      (if (relationship.valueVariableShouldShow.query[String].query.trim != "") c"," else c"") +
+      (if (trim(relationship.valueVariableShouldShow) != "") c"," else c"") +
       node.valueVariableShouldShow
   }
 }

@@ -43,6 +43,10 @@ object LineBuilder {
       processedByDetails: Map[String, Value],
       processingFrameworks: Map[String, ProcessingFramework],
       processingFrameworksDetails: Map[String, Value],
+      metrics: List[Metric],
+      metricsDetails: Map[String, Value],
+      metricsFrameworks: Map[String, MetricsFramework],
+      metricsFrameworksDetails: Map[String, Value],
   ): Line = {
     line.map{ l =>
       l.copy(
@@ -52,6 +56,14 @@ object LineBuilder {
             details = extractDetails(processedByDetails.get(pb.name)),
             processingFramework = processingFrameworks.get(pb.name).map { pf =>
               pf.copy(details = extractDetails(processingFrameworksDetails.get(pf.name)))
+            }
+          )
+        },
+        metrics = metrics.map { m =>
+          m.copy(
+            details = extractDetails(metricsDetails.get(m.name)),
+            metricFramework = metricsFrameworks.get(m.name).map { mf =>
+              mf.copy(details = extractDetails(metricsFrameworksDetails.get(mf.name)))
             }
           )
         }

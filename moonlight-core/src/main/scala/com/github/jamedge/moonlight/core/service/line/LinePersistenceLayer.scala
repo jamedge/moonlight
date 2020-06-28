@@ -1,8 +1,9 @@
 package com.github.jamedge.moonlight.core.service.line
 
-import com.github.jamedge.moonlight.core.model.{Line, Process, ProcessingFramework}
+import com.github.jamedge.moonlight.core.model.{Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord}
 import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight, Nodes => N, Relationships => R}
-import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, DefaultNodePresent => DNP, DefaultRelationshipRightPresent => DRRP, LineQueriesConstructor}
+import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQueriesConstructor, DefaultNodePresent => DNP, DefaultRelationshipRightPresent => DRRP}
+import com.github.jamedge.moonlight.core.service.line.LineBuilder.ProcessingHistoryRecordLight
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
 import neotypes.implicits.all._
@@ -73,13 +74,36 @@ class LinePersistenceLayer(
               ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
               ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
             ), lineName).query[(ProcessingFramework, Value)].map(tx)
+          metrics <- LineQueriesConstructor.matchConnectingNode(
+            lineName, R.HasMetrics(), N.Metric("m"), lineName
+          ).query[Metric].list(tx)
+          metricsDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasMetrics(), N.Metric("m")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(Metric, Value)].map(tx)
+          metricsFrameworks <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasMetrics(), N.Metric("m")),
+              ChainLink(R.HasMetricsFramework(), N.MetricsFramework("mf")),
+            ), lineName).query[(Metric, MetricsFramework)].map(tx)
+          metricsFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasMetrics(), DNP(N.Metric("m"), show = false)),
+              ChainLink(R.HasMetricsFramework(), N.MetricsFramework("mf")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(MetricsFramework, Value)].map(tx)
           line <- Future(LineBuilder.buildLine(
             lineBase,
             lineDetails,
             processedBy,
             processedByDetails.map { case (p: Process, d: Value) => (p.name, d)},
             processingFrameworks.map { case (p: Process, pf: ProcessingFramework) => (p.name, pf)},
-            processingFrameworksDetails.map { case (p: ProcessingFramework, d: Value) => (p.name, d)}
+            processingFrameworksDetails.map { case (p: ProcessingFramework, d: Value) => (p.name, d)},
+            metrics,
+            metricsDetails.map { case (m: Metric, d: Value) => (m.name, d)},
+            metricsFrameworks.map { case (m: Metric, mf: MetricsFramework) => (m.name, mf)},
+            metricsFrameworksDetails.map { case (mf: MetricsFramework, d: Value) => (mf.name, d)}
           ))
         } yield line
       }
