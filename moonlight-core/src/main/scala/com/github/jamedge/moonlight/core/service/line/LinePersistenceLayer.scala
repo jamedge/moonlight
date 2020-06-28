@@ -1,6 +1,6 @@
 package com.github.jamedge.moonlight.core.service.line
 
-import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord}
+import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Code, Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord}
 import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight, Nodes => N, Relationships => R}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQueriesConstructor, DefaultNodePresent => DNP, DefaultRelationshipRightPresent => DRRP}
 import com.github.jamedge.moonlight.core.service.line.LineBuilder.ProcessingHistoryRecordLight
@@ -112,6 +112,14 @@ class LinePersistenceLayer(
               ChainLink(R.HasAlertsFramework(), N.AlertsFramework("af")),
               ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
             ), lineName).query[(AlertsFramework, Value)].map(tx)
+          code <- LineQueriesConstructor.matchConnectingNode(
+            lineName, R.HasCode(), N.Code("c"), lineName
+          ).query[Option[Code]].single(tx)
+          codeDetails <- LineQueriesConstructor.matchConnectingChain(
+            lineName, List(
+              ChainLink(R.HasCode(), N.Code("c")),
+              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+            ), lineName).query[(Code, Value)].map(tx)
           line <- Future(LineBuilder.buildLine(
             lineBase,
             lineDetails,
@@ -126,7 +134,9 @@ class LinePersistenceLayer(
             alerts,
             alertsDetails.map { case (a: Alert, d: Value) => (a.name, d)},
             alertsFrameworks.map { case (a: Alert, af: AlertsFramework) => (a.name, af)},
-            alertsFrameworksDetails.map { case (af: AlertsFramework, d: Value) => (af.name, d)}
+            alertsFrameworksDetails.map { case (af: AlertsFramework, d: Value) => (af.name, d)},
+            code,
+            codeDetails.map { case (c: Code, d: Value) => (c.name, d)}
           ))
         } yield line
       }

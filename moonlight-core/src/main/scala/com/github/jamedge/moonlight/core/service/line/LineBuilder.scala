@@ -51,6 +51,8 @@ object LineBuilder {
       alertsDetails: Map[String, Value],
       alertsFrameworks: Map[String, AlertsFramework],
       alertsFrameworksDetails: Map[String, Value],
+      code: Option[Code],
+      codeDetails: Map[String, Value]
   ): Line = {
     line.map{ l =>
       l.copy(
@@ -77,6 +79,11 @@ object LineBuilder {
             alertsFramework = alertsFrameworks.get(a.name).map { af =>
               af.copy(details = extractDetails(alertsFrameworksDetails.get(af.name)))
             }
+          )
+        },
+        code = code.map { c =>
+          c.copy(
+            details = extractDetails(codeDetails.get(c.name)),
           )
         }
       )
