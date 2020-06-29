@@ -64,21 +64,31 @@ object LineBuilder {
     line.map{ l =>
       l.copy(
         details = extractDetails(lineDetails),
-        io = ioPairs.map { ioPair =>
-          IO(
-            inputs = List(ioPair._1.copy(
-              details = extractDetails(inputsDetails.get(ioPair._1.name)),
-              storage = inputsStorage.get(ioPair._1.name).map { is =>
-                is.copy(details = extractDetails(inputsStorageDetails.get(is.name)))
-              }
-            )),
-            outputs = List(ioPair._2.copy(
-              details = extractDetails(outputsDetails.get(ioPair._2.name)),
-              storage = outputsStorage.get(ioPair._2.name).map { os =>
-                os.copy(details = extractDetails(outputsStorageDetails.get(os.name)))
-              }
-            ))
-          )
+        io = {
+          ioPairs.
+            groupBy { case (_, output: IOElement) => output }.
+            map[IOElement, List[IOElement]] { case (output: IOElement, pairs:List[(IOElement, IOElement)]) => (output, pairs.map(_._1))}.
+            groupBy { case (_, input: List[IOElement]) => input}.
+            toList.
+            map { case (inputs, pairs) => IO(
+                inputs = inputs.map { i =>
+                  i.copy(
+                    details = extractDetails(inputsDetails.get(i.name)),
+                    storage = inputsStorage.get(i.name).map { is =>
+                      is.copy(details = extractDetails(inputsStorageDetails.get(is.name)))
+                    }
+                  )
+                },
+                outputs = pairs.iterator.map(_._1).toList.map { o =>
+                  o.copy(
+                    details = extractDetails(outputsDetails.get(o.name)),
+                    storage = outputsStorage.get(o.name).map { os =>
+                      os.copy(details = extractDetails(outputsStorageDetails.get(os.name)))
+                    }
+                  )
+                }
+              )
+            }
         },
         processedBy = processedBy.map { pb =>
           pb.copy(
