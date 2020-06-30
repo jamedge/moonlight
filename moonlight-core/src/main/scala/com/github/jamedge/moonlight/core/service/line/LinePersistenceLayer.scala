@@ -3,7 +3,6 @@ package com.github.jamedge.moonlight.core.service.line
 import com.github.jamedge.moonlight.core.model.{Alert, AlertsFramework, Code, IOElement, Line, Metric, MetricsFramework, Process, ProcessingFramework, ProcessingHistoryRecord, Storage}
 import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight, Nodes => N, Relationships => R}
 import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQueriesConstructor, DefaultNodePresent => DNP, DefaultRelationshipRightPresent => DRRP}
-import com.github.jamedge.moonlight.core.service.line.LineBuilder.ProcessingHistoryRecordLight
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
 import neotypes.implicits.all._
