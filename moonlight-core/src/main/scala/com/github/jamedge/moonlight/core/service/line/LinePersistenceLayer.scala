@@ -64,26 +64,26 @@ class LinePersistenceLayer(
             lineBase,
             lineDetails,
             ioPairs,
-            inputsDetails.map { case (i: IOElement, d: Value) => (i.name, d)},
-            inputsStorage.map { case (i: IOElement, s: Storage) => (i.name, s)},
-            inputsStorageDetails.map { case (s: Storage, d: Value) => (s.name, d)},
-            outputsDetails.map { case (i: IOElement, d: Value) => (i.name, d)},
-            outputsStorage.map { case (i: IOElement, s: Storage) => (i.name, s)},
-            outputsStorageDetails.map { case (s: Storage, d: Value) => (s.name, d)},
+            inputsDetails,
+            inputsStorage,
+            inputsStorageDetails,
+            outputsDetails,
+            outputsStorage,
+            outputsStorageDetails,
             processedBy,
-            processedByDetails.map { case (p: Process, d: Value) => (p.name, d)},
-            processingFrameworks.map { case (p: Process, pf: ProcessingFramework) => (p.name, pf)},
-            processingFrameworksDetails.map { case (p: ProcessingFramework, d: Value) => (p.name, d)},
+            processedByDetails,
+            processingFrameworks,
+            processingFrameworksDetails,
             metrics,
-            metricsDetails.map { case (m: Metric, d: Value) => (m.name, d)},
-            metricsFrameworks.map { case (m: Metric, mf: MetricsFramework) => (m.name, mf)},
-            metricsFrameworksDetails.map { case (mf: MetricsFramework, d: Value) => (mf.name, d)},
+            metricsDetails,
+            metricsFrameworks,
+            metricsFrameworksDetails,
             alerts,
-            alertsDetails.map { case (a: Alert, d: Value) => (a.name, d)},
-            alertsFrameworks.map { case (a: Alert, af: AlertsFramework) => (a.name, af)},
-            alertsFrameworksDetails.map { case (af: AlertsFramework, d: Value) => (af.name, d)},
+            alertsDetails,
+            alertsFrameworks,
+            alertsFrameworksDetails,
             code,
-            codeDetails.map { case (c: Code, d: Value) => (c.name, d)}
+            codeDetails
           ))
         } yield line
       }
@@ -91,7 +91,7 @@ class LinePersistenceLayer(
   }
 
   private def matchInputsData(lineName: String)(implicit tx: Transaction[Future]):
-    Future[(List[(IOElement, IOElement)], Map[IOElement, Value], Map[IOElement, Storage], Map[Storage, Value])] = {
+    Future[(List[(IOElement, IOElement)], Map[String, Value], Map[String, Storage], Map[String, Value])] = {
     for {
       ioPairs <- LineQueriesConstructor.matchConnectingChain(
         lineName, List(
@@ -114,11 +114,15 @@ class LinePersistenceLayer(
           ChainLink(R.HasStorage(), N.Storage("s")),
           ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
         ), lineName).query[(Storage, Value)].map(tx)
-    } yield (ioPairs, inputsDetails, inputsStorage, inputsStorageDetails)
+    } yield (
+      ioPairs,
+      inputsDetails.map { case (i: IOElement, d: Value) => (i.name, d)},
+      inputsStorage.map { case (i: IOElement, s: Storage) => (i.name, s)},
+      inputsStorageDetails.map { case (s: Storage, d: Value) => (s.name, d)})
   }
 
   private def matchOutputsData(lineName: String)(implicit tx: Transaction[Future]):
-  Future[(Map[IOElement, Value], Map[IOElement, Storage], Map[Storage, Value])] = {
+  Future[(Map[String, Value], Map[String, Storage], Map[String, Value])] = {
     for {
       outputsDetails <- LineQueriesConstructor.matchConnectingChain(
         lineName, List(
@@ -139,11 +143,14 @@ class LinePersistenceLayer(
           ChainLink(R.HasStorage(), N.Storage("s")),
           ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
         ), lineName).query[(Storage, Value)].map(tx)
-    } yield (outputsDetails, outputsStorage, outputsStorageDetails)
+    } yield (
+      outputsDetails.map { case (i: IOElement, d: Value) => (i.name, d)},
+      outputsStorage.map { case (i: IOElement, s: Storage) => (i.name, s)},
+      outputsStorageDetails.map { case (s: Storage, d: Value) => (s.name, d)})
   }
 
   private def matchProcessData(lineName: String)(implicit tx: Transaction[Future]):
-  Future[(List[Process], Map[Process, Value], Map[Process, ProcessingFramework], Map[ProcessingFramework, Value])] = {
+  Future[(List[Process], Map[String, Value], Map[String, ProcessingFramework], Map[String, Value])] = {
     for {
       processedBy <- LineQueriesConstructor.matchConnectingNode(
         lineName, R.IsProcessedBy(), N.Process("p"), lineName
@@ -164,11 +171,15 @@ class LinePersistenceLayer(
           ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
           ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
         ), lineName).query[(ProcessingFramework, Value)].map(tx)
-    } yield (processedBy, processedByDetails, processingFrameworks, processingFrameworksDetails)
+    } yield (
+      processedBy,
+      processedByDetails.map { case (p: Process, d: Value) => (p.name, d)},
+      processingFrameworks.map { case (p: Process, pf: ProcessingFramework) => (p.name, pf)},
+      processingFrameworksDetails.map { case (p: ProcessingFramework, d: Value) => (p.name, d)})
   }
 
   private def matchMetricsData(lineName: String)(implicit tx: Transaction[Future]):
-  Future[(List[Metric], Map[Metric, Value], Map[Metric, MetricsFramework], Map[MetricsFramework, Value])] = {
+  Future[(List[Metric], Map[String, Value], Map[String, MetricsFramework], Map[String, Value])] = {
     for {
       metrics <- LineQueriesConstructor.matchConnectingNode(
         lineName, R.HasMetrics(), N.Metric("m"), lineName
@@ -189,11 +200,15 @@ class LinePersistenceLayer(
           ChainLink(R.HasMetricsFramework(), N.MetricsFramework("mf")),
           ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
         ), lineName).query[(MetricsFramework, Value)].map(tx)
-    } yield (metrics, metricsDetails, metricsFrameworks, metricsFrameworksDetails)
+    } yield (
+      metrics,
+      metricsDetails.map { case (m: Metric, d: Value) => (m.name, d)},
+      metricsFrameworks.map { case (m: Metric, mf: MetricsFramework) => (m.name, mf)},
+      metricsFrameworksDetails.map { case (mf: MetricsFramework, d: Value) => (mf.name, d)})
   }
 
   private def matchAlertsData(lineName: String)(implicit tx: Transaction[Future]):
-  Future[(List[Alert], Map[Alert, Value], Map[Alert, AlertsFramework], Map[AlertsFramework, Value])] = {
+  Future[(List[Alert], Map[String, Value], Map[String, AlertsFramework], Map[String, Value])] = {
     for {
       alerts <- LineQueriesConstructor.matchConnectingNode(
         lineName, R.HasAlert(), N.Alert("a"), lineName
@@ -214,11 +229,15 @@ class LinePersistenceLayer(
           ChainLink(R.HasAlertsFramework(), N.AlertsFramework("af")),
           ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
         ), lineName).query[(AlertsFramework, Value)].map(tx)
-    } yield (alerts, alertsDetails, alertsFrameworks, alertsFrameworksDetails)
+    } yield (
+      alerts,
+      alertsDetails.map { case (a: Alert, d: Value) => (a.name, d)},
+      alertsFrameworks.map { case (a: Alert, af: AlertsFramework) => (a.name, af)},
+      alertsFrameworksDetails.map { case (af: AlertsFramework, d: Value) => (af.name, d)})
   }
 
   private def matchCodeData(lineName: String)(implicit tx: Transaction[Future]):
-  Future[(Option[Code], Map[Code, Value])] = {
+  Future[(Option[Code], Map[String, Value])] = {
     for {
       code <- LineQueriesConstructor.matchConnectingNode(
         lineName, R.HasCode(), N.Code("c"), lineName
@@ -228,7 +247,9 @@ class LinePersistenceLayer(
           ChainLink(R.HasCode(), N.Code("c")),
           ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
         ), lineName).query[(Code, Value)].map(tx)
-    } yield (code, codeDetails)
+    } yield (
+      code,
+      codeDetails.map { case (c: Code, d: Value) => (c.name, d)})
   }
 
   private def cleanupDownstream(implicit line:Line, tx: Transaction[Future]): Future[List[Unit]] = {
