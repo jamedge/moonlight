@@ -54,111 +54,12 @@ class LinePersistenceLayer(
         for {
           lineBase <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
           lineDetails <- LineQueriesConstructor.matchDetails(lineName, lineName).query[Option[Value]].single(tx)
-          ioPairs <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasInput(), N.IO("i")),
-              ChainLink(R.HasOutput(), N.IO("o")),
-            ), lineName).query[(IOElement, IOElement)].list(tx)
-          inputsDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasInput(), N.IO("i")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(IOElement, Value)].map(tx)
-          inputsStorage <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasInput(), N.IO("i")),
-              ChainLink(R.HasStorage(), N.Storage("s")),
-            ), lineName).query[(IOElement, Storage)].map(tx)
-          inputsStorageDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
-              ChainLink(R.HasStorage(), N.Storage("s")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(Storage, Value)].map(tx)
-          outputsDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
-              ChainLink(R.HasOutput(), N.IO("o")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(IOElement, Value)].map(tx)
-          outputsStorage <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
-              ChainLink(R.HasOutput(), N.IO("o")),
-              ChainLink(R.HasStorage(), N.Storage("s")),
-            ), lineName).query[(IOElement, Storage)].map(tx)
-          outputsStorageDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
-              ChainLink(R.HasOutput(), DNP(N.IO("o"), show = false)),
-              ChainLink(R.HasStorage(), N.Storage("s")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(Storage, Value)].map(tx)
-          processedBy <- LineQueriesConstructor.matchConnectingNode(
-            lineName, R.IsProcessedBy(), N.Process("p"), lineName
-          ).query[Process].list(tx)
-          processedByDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.IsProcessedBy(), N.Process("p")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)), // TODO: examine how does it work /wt unstructured param (it seems it work correctly /wt it as well)
-            ), lineName).query[(Process, Value)].map(tx)
-          processingFrameworks <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.IsProcessedBy(), N.Process("p")),
-              ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
-            ), lineName).query[(Process, ProcessingFramework)].map(tx)
-          processingFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.IsProcessedBy(), DNP(N.Process("p"), show = false)),
-              ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(ProcessingFramework, Value)].map(tx)
-          metrics <- LineQueriesConstructor.matchConnectingNode(
-            lineName, R.HasMetrics(), N.Metric("m"), lineName
-          ).query[Metric].list(tx)
-          metricsDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasMetrics(), N.Metric("m")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(Metric, Value)].map(tx)
-          metricsFrameworks <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasMetrics(), N.Metric("m")),
-              ChainLink(R.HasMetricsFramework(), N.MetricsFramework("mf")),
-            ), lineName).query[(Metric, MetricsFramework)].map(tx)
-          metricsFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasMetrics(), DNP(N.Metric("m"), show = false)),
-              ChainLink(R.HasMetricsFramework(), N.MetricsFramework("mf")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(MetricsFramework, Value)].map(tx)
-          alerts <- LineQueriesConstructor.matchConnectingNode(
-            lineName, R.HasAlert(), N.Alert("a"), lineName
-          ).query[Alert].list(tx)
-          alertsDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasAlert(), N.Alert("a")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(Alert, Value)].map(tx)
-          alertsFrameworks <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasAlert(), N.Alert("a")),
-              ChainLink(R.HasAlertsFramework(), N.AlertsFramework("af")),
-            ), lineName).query[(Alert, AlertsFramework)].map(tx)
-          alertsFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasAlert(), DNP(N.Alert("a"), show = false)),
-              ChainLink(R.HasAlertsFramework(), N.AlertsFramework("af")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(AlertsFramework, Value)].map(tx)
-          code <- LineQueriesConstructor.matchConnectingNode(
-            lineName, R.HasCode(), N.Code("c"), lineName
-          ).query[Option[Code]].single(tx)
-          codeDetails <- LineQueriesConstructor.matchConnectingChain(
-            lineName, List(
-              ChainLink(R.HasCode(), N.Code("c")),
-              ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
-            ), lineName).query[(Code, Value)].map(tx)
+          (ioPairs, inputsDetails, inputsStorage, inputsStorageDetails) <- matchInputsData(lineName)
+          (outputsDetails, outputsStorage, outputsStorageDetails) <- matchOutputsData(lineName)
+          (processedBy, processedByDetails, processingFrameworks, processingFrameworksDetails) <- matchProcessData(lineName)
+          (metrics, metricsDetails, metricsFrameworks, metricsFrameworksDetails) <- matchMetricsData(lineName)
+          (alerts, alertsDetails, alertsFrameworks, alertsFrameworksDetails) <- matchAlertsData(lineName)
+          (code, codeDetails) <- matchCodeData(lineName)
           line <- Future(LineBuilder.buildLine(
             lineBase,
             lineDetails,
@@ -187,6 +88,147 @@ class LinePersistenceLayer(
         } yield line
       }
     }
+  }
+
+  private def matchInputsData(lineName: String)(implicit tx: Transaction[Future]):
+    Future[(List[(IOElement, IOElement)], Map[IOElement, Value], Map[IOElement, Storage], Map[Storage, Value])] = {
+    for {
+      ioPairs <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasInput(), N.IO("i")),
+          ChainLink(R.HasOutput(), N.IO("o")),
+        ), lineName).query[(IOElement, IOElement)].list(tx)
+      inputsDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasInput(), N.IO("i")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(IOElement, Value)].map(tx)
+      inputsStorage <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasInput(), N.IO("i")),
+          ChainLink(R.HasStorage(), N.Storage("s")),
+        ), lineName).query[(IOElement, Storage)].map(tx)
+      inputsStorageDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
+          ChainLink(R.HasStorage(), N.Storage("s")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(Storage, Value)].map(tx)
+    } yield (ioPairs, inputsDetails, inputsStorage, inputsStorageDetails)
+  }
+
+  private def matchOutputsData(lineName: String)(implicit tx: Transaction[Future]):
+  Future[(Map[IOElement, Value], Map[IOElement, Storage], Map[Storage, Value])] = {
+    for {
+      outputsDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
+          ChainLink(R.HasOutput(), N.IO("o")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(IOElement, Value)].map(tx)
+      outputsStorage <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
+          ChainLink(R.HasOutput(), N.IO("o")),
+          ChainLink(R.HasStorage(), N.Storage("s")),
+        ), lineName).query[(IOElement, Storage)].map(tx)
+      outputsStorageDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasInput(), DNP(N.IO("i"), show = false)),
+          ChainLink(R.HasOutput(), DNP(N.IO("o"), show = false)),
+          ChainLink(R.HasStorage(), N.Storage("s")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(Storage, Value)].map(tx)
+    } yield (outputsDetails, outputsStorage, outputsStorageDetails)
+  }
+
+  private def matchProcessData(lineName: String)(implicit tx: Transaction[Future]):
+  Future[(List[Process], Map[Process, Value], Map[Process, ProcessingFramework], Map[ProcessingFramework, Value])] = {
+    for {
+      processedBy <- LineQueriesConstructor.matchConnectingNode(
+        lineName, R.IsProcessedBy(), N.Process("p"), lineName
+      ).query[Process].list(tx)
+      processedByDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.IsProcessedBy(), N.Process("p")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(Process, Value)].map(tx)
+      processingFrameworks <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.IsProcessedBy(), N.Process("p")),
+          ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
+        ), lineName).query[(Process, ProcessingFramework)].map(tx)
+      processingFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.IsProcessedBy(), DNP(N.Process("p"), show = false)),
+          ChainLink(R.HasProcessingFramework(), N.ProcessingFramework("pf")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(ProcessingFramework, Value)].map(tx)
+    } yield (processedBy, processedByDetails, processingFrameworks, processingFrameworksDetails)
+  }
+
+  private def matchMetricsData(lineName: String)(implicit tx: Transaction[Future]):
+  Future[(List[Metric], Map[Metric, Value], Map[Metric, MetricsFramework], Map[MetricsFramework, Value])] = {
+    for {
+      metrics <- LineQueriesConstructor.matchConnectingNode(
+        lineName, R.HasMetrics(), N.Metric("m"), lineName
+      ).query[Metric].list(tx)
+      metricsDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasMetrics(), N.Metric("m")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(Metric, Value)].map(tx)
+      metricsFrameworks <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasMetrics(), N.Metric("m")),
+          ChainLink(R.HasMetricsFramework(), N.MetricsFramework("mf")),
+        ), lineName).query[(Metric, MetricsFramework)].map(tx)
+      metricsFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasMetrics(), DNP(N.Metric("m"), show = false)),
+          ChainLink(R.HasMetricsFramework(), N.MetricsFramework("mf")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(MetricsFramework, Value)].map(tx)
+    } yield (metrics, metricsDetails, metricsFrameworks, metricsFrameworksDetails)
+  }
+
+  private def matchAlertsData(lineName: String)(implicit tx: Transaction[Future]):
+  Future[(List[Alert], Map[Alert, Value], Map[Alert, AlertsFramework], Map[AlertsFramework, Value])] = {
+    for {
+      alerts <- LineQueriesConstructor.matchConnectingNode(
+        lineName, R.HasAlert(), N.Alert("a"), lineName
+      ).query[Alert].list(tx)
+      alertsDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasAlert(), N.Alert("a")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(Alert, Value)].map(tx)
+      alertsFrameworks <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasAlert(), N.Alert("a")),
+          ChainLink(R.HasAlertsFramework(), N.AlertsFramework("af")),
+        ), lineName).query[(Alert, AlertsFramework)].map(tx)
+      alertsFrameworksDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasAlert(), DNP(N.Alert("a"), show = false)),
+          ChainLink(R.HasAlertsFramework(), N.AlertsFramework("af")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(AlertsFramework, Value)].map(tx)
+    } yield (alerts, alertsDetails, alertsFrameworks, alertsFrameworksDetails)
+  }
+
+  private def matchCodeData(lineName: String)(implicit tx: Transaction[Future]):
+  Future[(Option[Code], Map[Code, Value])] = {
+    for {
+      code <- LineQueriesConstructor.matchConnectingNode(
+        lineName, R.HasCode(), N.Code("c"), lineName
+      ).query[Option[Code]].single(tx)
+      codeDetails <- LineQueriesConstructor.matchConnectingChain(
+        lineName, List(
+          ChainLink(R.HasCode(), N.Code("c")),
+          ChainLink(R.HasDetails(), DNP(N.Details(), unstructured = true)),
+        ), lineName).query[(Code, Value)].map(tx)
+    } yield (code, codeDetails)
   }
 
   private def cleanupDownstream(implicit line:Line, tx: Transaction[Future]): Future[List[Unit]] = {
