@@ -47,7 +47,6 @@ class LinePersistenceLayer(
    * @param lineName Name of the line.
    * @return Extracted line.
    */
-  // TODO: break this into smaller methods after it's done with the whole line
   def getLine(lineName: String): Future[Line] = {
     neo4jDriver.readSession { implicit session =>
       session.transact[Line] { implicit tx =>

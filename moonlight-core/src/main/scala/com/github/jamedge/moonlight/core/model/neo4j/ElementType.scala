@@ -11,4 +11,3 @@ object ElementType {
   case object RelationshipRight extends ElementType("-[", "]->")
   case object RelationshipBoth extends ElementType("<-[", "]->")
 }
-
