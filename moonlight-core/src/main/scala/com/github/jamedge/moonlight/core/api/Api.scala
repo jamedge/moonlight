@@ -47,6 +47,9 @@ object Api {
   val module = new Module("moonlight-core")
 
   def main(args: Array[String]): Unit = {
+    sys.addShutdownHook({
+      module.terminate()
+    })
     module.api.init()
   }
 }
