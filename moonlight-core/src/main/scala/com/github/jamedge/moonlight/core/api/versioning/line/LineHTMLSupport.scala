@@ -27,7 +27,7 @@ object LineHTMLSupport extends HTMLSupport[Line] {
     Marshaller.withOpenCharset(MediaTypes.`text/html`) { case (line, charset) =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaTypes.`text/html`, charset),
-        lineMDGenerator.generateMd(line))) //TODO: produce html here.. Try to generate Markdown first and then convert to html
+        generateLineHTML(line)))
     }
   }
 
@@ -39,7 +39,18 @@ object LineHTMLSupport extends HTMLSupport[Line] {
     Marshaller.withFixedContentType(MediaVersionTypes.`text/moonlight.v1+html`) { line =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaVersionTypes.`text/moonlight.v1+html`),
-        lineMDGenerator.generateMd(line))) //TODO: produce html here.. Try to generate Markdown first and then convert to html
+        generateLineHTML(line)))
     }
+  }
+
+  private def generateLineHTML(line: Line)(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: LineHTMLGenerator): String = {
+    val result = for {
+      lineMD <- lineMDGenerator.generateMd(line)
+      lineHTML <- lineHTMLGenerator.generateHTML(lineMD)
+    } yield lineHTML
+    result.getOrElse("ERROR!") //TODO: add proper exception handling
   }
 }
