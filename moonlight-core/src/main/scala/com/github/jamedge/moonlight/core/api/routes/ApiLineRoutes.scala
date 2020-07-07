@@ -5,7 +5,7 @@ import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.stream.Materializer
-import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLSupport, LineJsonSupport}
+import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLGenerator, LineHTMLSupport, LineJsonSupport, LineMDGenerator}
 import com.github.jamedge.moonlight.core.api.versioning.responsemessage.ResponseMessageJsonSupport
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.service.line.LineService
@@ -17,7 +17,11 @@ case class ResponseMessage(message: String)
 trait LineRoutesSupport {
   implicit def lineUnmarshaller(implicit matherializer: Materializer): FromEntityUnmarshaller[Line] =
     LineJsonSupport.unmarshaller
-  implicit def lineMarshaller(implicit ec: ExecutionContext): ToResponseMarshaller[Line] =
+  implicit def lineMarshaller(
+      implicit ec: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: LineHTMLGenerator
+  ): ToResponseMarshaller[Line] =
     Marshaller.oneOf(
       LineJsonSupport.marshaller,
       LineHTMLSupport.marshaller)
@@ -27,7 +31,12 @@ trait LineRoutesSupport {
 
 class ApiLineRoutes(
     lineService: LineService
-) (implicit val executionContext: ExecutionContext, actorSystem: ActorSystem)
+) (
+    implicit val executionContext: ExecutionContext,
+    actorSystem: ActorSystem,
+    lineMDGenerator: LineMDGenerator,
+    lineHTMLGenerator: LineHTMLGenerator
+)
   extends Directives with LineRoutesSupport {
 
   def routes: Route = {

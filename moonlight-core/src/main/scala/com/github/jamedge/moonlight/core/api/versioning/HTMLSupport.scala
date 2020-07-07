@@ -1,6 +1,7 @@
 package com.github.jamedge.moonlight.core.api.versioning
 
 import akka.http.scaladsl.marshalling.ToResponseMarshaller
+import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLGenerator, LineMDGenerator}
 
 import scala.concurrent.ExecutionContext
 
@@ -10,5 +11,9 @@ trait HTMLSupport[T <: Object] {
    * @param executionContext Implicit execution context.
    * @return Resulting marshaller.
    */
-  implicit def marshaller(implicit executionContext: ExecutionContext): ToResponseMarshaller[T]
+  implicit def marshaller(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: LineHTMLGenerator
+  ): ToResponseMarshaller[T]
 }

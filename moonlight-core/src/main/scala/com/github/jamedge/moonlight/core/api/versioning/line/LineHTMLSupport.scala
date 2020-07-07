@@ -8,26 +8,38 @@ import com.github.jamedge.moonlight.core.model.Line
 import scala.concurrent.ExecutionContext
 
 object LineHTMLSupport extends HTMLSupport[Line] {
-  override implicit def marshaller(implicit executionContext: ExecutionContext): ToResponseMarshaller[Line] = {
+  override implicit def marshaller(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: LineHTMLGenerator
+  ): ToResponseMarshaller[Line] = {
     Marshaller.oneOf(
       htmlEntityMarshaller,
       htmlV1EntityMarshaller
     )
   }
 
-  private def htmlEntityMarshaller(implicit executionContext: ExecutionContext): ToResponseMarshaller[Line] = {
+  private def htmlEntityMarshaller(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: LineHTMLGenerator
+  ): ToResponseMarshaller[Line] = {
     Marshaller.withOpenCharset(MediaTypes.`text/html`) { case (line, charset) =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaTypes.`text/html`, charset),
-        line.toString)) //TODO: produce html here.. Try to generate Markdown first and then convert to html
+        lineMDGenerator.generateMd(line))) //TODO: produce html here.. Try to generate Markdown first and then convert to html
     }
   }
 
-  private def htmlV1EntityMarshaller(implicit executionContext: ExecutionContext): ToResponseMarshaller[Line] = {
+  private def htmlV1EntityMarshaller(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: LineHTMLGenerator
+  ): ToResponseMarshaller[Line] = {
     Marshaller.withFixedContentType(MediaVersionTypes.`text/moonlight.v1+html`) { line =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaVersionTypes.`text/moonlight.v1+html`),
-        line.toString)) //TODO: produce html here.. Try to generate Markdown first and then convert to html
+        lineMDGenerator.generateMd(line))) //TODO: produce html here.. Try to generate Markdown first and then convert to html
     }
   }
 }
