@@ -4,7 +4,6 @@ import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import com.github.jamedge.moonlight.core.api.versioning.{HTMLSupport, MediaVersionTypes}
 import com.github.jamedge.moonlight.core.model.Line
-import org.json4s.jackson.Serialization.write
 
 import scala.concurrent.ExecutionContext
 

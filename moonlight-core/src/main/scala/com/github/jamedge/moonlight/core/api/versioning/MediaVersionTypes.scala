@@ -8,6 +8,8 @@ object MediaVersionTypes {
   def customTextMediaType(subType: String) =
     MediaType.customWithFixedCharset("text", subType, HttpCharsets.`UTF-8`)
 
-  val `application/moonlight.v1+json`: MediaType.WithFixedCharset = customApplicationMediaType("moonlight.v1+json")
-  val `text/moonlight.v1+html`: MediaType.WithFixedCharset = customTextMediaType("moonlight.v1+html")
+  val `application/moonlight.v1+json`: MediaType.WithFixedCharset =
+    customApplicationMediaType("moonlight.v1+json")
+  val `text/moonlight.v1+html`: MediaType.WithFixedCharset =
+    customTextMediaType("moonlight.v1+html")
 }
