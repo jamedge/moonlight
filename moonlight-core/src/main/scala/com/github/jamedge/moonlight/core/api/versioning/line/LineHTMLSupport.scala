@@ -51,6 +51,8 @@ object LineHTMLSupport extends HTMLSupport[Line] {
       lineMD <- lineMDGenerator.generateMd(line)
       lineHTML <- lineHTMLGenerator.generateHTML(lineMD)
     } yield lineHTML
-    result.getOrElse("ERROR!") //TODO: add proper exception handling
+    result.getOrElse(throw new LineHTMLGenerationException("Error generating line HTML!"))
   }
 }
+
+case class LineHTMLGenerationException(message: String) extends Exception(message)
