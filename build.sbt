@@ -115,5 +115,6 @@ lazy val `moonlight-core` = project.in(file("moonlight-core")).
     "org.neo4j.driver" % "neo4j-java-driver" % "1.7.5",
     "com.dimafeng" %% "neotypes" % "0.13.0",
     "org.scala-graph" %% "graph-core" % "1.13.2",
-    "org.scala-graph" %% "graph-json" % "1.13.0"
+    "org.scala-graph" %% "graph-json" % "1.13.0",
+    "com.vladsch.flexmark" % "flexmark-all" % "0.50.50"
   ))
