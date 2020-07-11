@@ -10,8 +10,8 @@ trait DeleteQueriesConstructor {
       matchNode: Node,
       relationshipToDelete: RelationshipRight,
       nodeToDelete: Node): DeferredQueryBuilder = {
-    c"MATCH" + matchNode.toObject() + relationshipToDelete.toSearchObject() + nodeToDelete.toSearchObject() +
-      c"DELETE" + relationshipToDelete.toVariable() + "," + nodeToDelete.toVariable()
+    c"MATCH" + matchNode.toObject("mn") + relationshipToDelete.toSearchObject() + nodeToDelete.toSearchObject("nd") +
+      c"DELETE" + relationshipToDelete.toVariable() + "," + nodeToDelete.toVariable("nd")
   }
 
   def deleteDetachedNodesQuery(nodeClass: NodeClass): DeferredQueryBuilder = {

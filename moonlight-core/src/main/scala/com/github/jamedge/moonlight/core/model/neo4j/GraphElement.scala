@@ -16,8 +16,8 @@ abstract class GraphElement(
    * It contains variable, type and all defined fields.
    * e.g. (l:Line {name: "test", owner: "John Doe"})
    */
-  def toObject(): DeferredQueryBuilder = {
-    constructObject(fields())
+  def toObject(variableSuffixOverride: String = ""): DeferredQueryBuilder = {
+    constructObject(fields(), variableSuffixOverride)
   }
 
   /**
@@ -25,71 +25,57 @@ abstract class GraphElement(
    * It contains variable, type and name parameter if defined.
    * e.g. (l:Line {name: "test"}) or (l:Line) if name field doesn't exist
    */
-  def toSearchObject(): DeferredQueryBuilder = {
+  def toSearchObject(variableSuffixOverride: String = ""): DeferredQueryBuilder = {
     fieldsPairs.get("name").map { name =>
-      constructObject(constructFields(Map("name" -> name)))
-    }.getOrElse(toAnyObjectOfType())
-  }
-
-  /**
-   * Gets search object of a graph element. Used to find it by given field name and value.
-   * It contains variable, type and value of the provided parameter.
-   * e.g. (l:Line {name: "test"}) or (l:Line) if name is not defined
-   */
-  def toSearchObjectSpecified(name: String, value: String): DeferredQueryBuilder = {
-    constructAnyClassObject(constructFields(Map(name -> value)))
-  }
-
-  /**
-   * Gets search object of a graph element. Used to find it by given fields map of names and values.
-   * It contains variable, type and values of the provided parameter.
-   * e.g. (r:HasOutput {isDelete: "true", fromLines: []}) or (r:HasOutput) if fields map is not defined
-   */
-  def toSearchObjectSpecified(fieldsMap: Map[String, _]): DeferredQueryBuilder = {
-    constructAnyClassObject(constructFields(fieldsMap))
+      constructObject(constructFields(Map("name" -> name)), variableSuffixOverride)
+    }.getOrElse(toAnyObjectOfType(variableSuffixOverride))
   }
 
   /**
    * Gets object of a graph element with just its type. Used to find all objects of that type.
    * e.g. (l:Line)
    */
-  def toAnyObjectOfType(): DeferredQueryBuilder = {
-    constructObject(c"")
+  def toAnyObjectOfType(variableSuffixOverride: String = ""): DeferredQueryBuilder = {
+    constructObject(c"", variableSuffixOverride)
   }
 
   /**
    * Gets variable of a graph element.
    * e.g. l
    */
-  def toVariable(): DeferredQueryBuilder = {
-    c"" + variable
+  def toVariable(variableSuffixOverride: String = ""): DeferredQueryBuilder = {
+    c"" + s"$variable$variableSuffixOverride"
   }
 
   /**
    * Gets variable enclosed in and object type of a graph element.
    * e.g. (l)
    */
-  def toVariableEnclosed(): DeferredQueryBuilder = {
-    c"" + s"${elementClass.elementType.openMark}$variable${elementClass.elementType.endMark}"
+  def toVariableEnclosed(variableSuffixOverride: String = ""): DeferredQueryBuilder = {
+    c"" + s"${elementClass.elementType.openMark}$variable$variableSuffixOverride${elementClass.elementType.endMark}"
   }
 
   /**
    * Gets variable enclosed in and object type of a graph element.
    * e.g. (l*1..4)
    */
-  def toVariableEnclosedWithCardinality(cardinalityFrom: Option[Int], cardinalityTo: Option[Int]): DeferredQueryBuilder = {
+  def toVariableEnclosedWithCardinality(
+      cardinalityFrom: Option[Int],
+      cardinalityTo: Option[Int],
+      variableSuffixOverride: String = ""
+  ): DeferredQueryBuilder = {
     val from = cardinalityFrom.map(f => s"$f..").getOrElse("..")
     val fromAndTo = cardinalityTo.map(t => s"$from$t").getOrElse(from)
-    c"" + s"${elementClass.elementType.openMark}$variable*$fromAndTo${elementClass.elementType.endMark}"
+    c"" + s"${elementClass.elementType.openMark}$variable$variableSuffixOverride*$fromAndTo${elementClass.elementType.endMark}"
   }
 
   /**
    * Gets variable with the specified field.
    * e.g. l.name
    */
-  def toVariableWithField(fieldName: String): DeferredQueryBuilder = {
+  def toVariableWithField(fieldName: String, variableSuffixOverride: String = ""): DeferredQueryBuilder = {
     if (fieldsPairs.contains(fieldName)) {
-      c"" + s"$variable.$fieldName"
+      c"" + s"$variable$variableSuffixOverride.$fieldName"
     } else {
       throw new IllegalAccessException(s"Field name $fieldName of the ${elementClass.name} doesn't exist!")
     }
@@ -99,8 +85,8 @@ abstract class GraphElement(
    * Gets variable with the specified field even if the field is not defined.
    * e.g. l.name
    */
-  def toVariableWithNewField(fieldName: String): DeferredQueryBuilder = {
-    c"" + s"$variable.$fieldName"
+  def toVariableWithNewField(fieldName: String, variableSuffixOverride: String = ""): DeferredQueryBuilder = {
+    c"" + s"$variable$variableSuffixOverride.$fieldName"
   }
 
   /**
@@ -111,14 +97,14 @@ abstract class GraphElement(
     constructFields(fieldsPairs)
   }
 
-  private def constructObject(pairs: DeferredQueryBuilder): DeferredQueryBuilder = {
+  private def constructObject(pairs: DeferredQueryBuilder, variableSuffixOverride: String = ""): DeferredQueryBuilder = {
     c"" +
-      s"${elementClass.elementType.openMark}$variable:${elementClass.name}" +
+      s"${elementClass.elementType.openMark}$variable$variableSuffixOverride:${elementClass.name}" +
       pairs +
       s"${elementClass.elementType.endMark}"
   }
 
-  private def constructAnyClassObject(pairs: DeferredQueryBuilder): DeferredQueryBuilder = {
+  private def constructAnyClassObject(pairs: DeferredQueryBuilder, variableSuffixOverride: String = ""): DeferredQueryBuilder = {
     c"" +
       s"${elementClass.elementType.openMark}$variable" +
       pairs +
