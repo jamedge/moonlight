@@ -39,7 +39,11 @@ object GraphElementUtils {
 
   def generateVariable(prefix: String): String = {
     if (prefix != "") {
-      s"${prefix}_${java.util.UUID.randomUUID.toString.replace("-", "")}"
+      // TODO: think of another way how to make variables in a query uniquely assigned to a query element with same value each time
+      // Commented the line below to make use of Neo4j caching functionality thus drastically improving query performance
+      // The uniqueness of names for graph element variables is left for not to the developer to override in queries with new override parameters in GraphElement
+//      s"${prefix}_${java.util.UUID.randomUUID.toString.replace("-", "")}"
+      prefix
     } else {
       ""
     }

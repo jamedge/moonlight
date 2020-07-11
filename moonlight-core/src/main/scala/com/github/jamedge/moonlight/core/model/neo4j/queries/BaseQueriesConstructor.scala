@@ -41,11 +41,11 @@ class BaseQueriesConstructor[T <: Node](nodeFactory: String => T) {
   // TODO: split this into snippet functions
   def matchConnectingChain(
       sourceNode: T,
-      chain: List[ChainLink],
+      chain: List[ChainLink], // TODO: without control on each graph element having unique variable it's up to calling method to make them distinct. Think of another way to overcome this without a big overhaul of this method
       lineName: String
   ): DeferredQueryBuilder = {
     if (chain.nonEmpty) {
-      c"MATCH" + sourceNode.toSearchObject() +
+      c"MATCH" + sourceNode.toSearchObject("sn") +
         chain.foldLeft(c"") {
           case (a: DeferredQueryBuilder, b: ChainLink) =>
             a + b.relationship.value.toAnyObjectOfType() + b.destinationNode.value.toAnyObjectOfType()} +
