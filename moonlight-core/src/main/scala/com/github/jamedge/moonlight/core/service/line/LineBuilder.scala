@@ -29,7 +29,7 @@ object LineBuilder {
       alertsFrameworksDetails: Map[String, Value],
       code: Option[Code],
       codeDetails: Map[String, Value]
-  ): Line = {
+  ): Option[Line] = {
     line.map{ l =>
       l.copy(
         details = extractDetails(lineDetails),
@@ -89,7 +89,7 @@ object LineBuilder {
           )
         }
       )
-    }.getOrElse(Line("", None, None, None, None, List(), List(), List(), List(), None))
+    }
   }
 
   private def extractDetails(detailsMap: Option[Value]): Option[Map[String, String]] = {
