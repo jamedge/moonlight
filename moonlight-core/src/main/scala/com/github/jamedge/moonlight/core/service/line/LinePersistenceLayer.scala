@@ -47,9 +47,9 @@ class LinePersistenceLayer(
    * @param lineName Name of the line.
    * @return Extracted line.
    */
-  def getLine(lineName: String): Future[Line] = {
+  def getLine(lineName: String): Future[Option[Line]] = {
     neo4jDriver.readSession { implicit session =>
-      session.transact[Line] { implicit tx =>
+      session.transact[Option[Line]] { implicit tx =>
         for {
           lineBase <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
           lineDetails <- LineQueriesConstructor.matchDetails(lineName, lineName).query[Option[Value]].single(tx)

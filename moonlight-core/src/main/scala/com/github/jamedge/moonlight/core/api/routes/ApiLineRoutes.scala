@@ -2,9 +2,11 @@ package com.github.jamedge.moonlight.core.api.routes
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.stream.Materializer
+import com.github.jamedge.moonlight.core.api.handlers.ApiException
 import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLGenerator, LineHTMLSupport, LineJsonSupport, LineMDGenerator}
 import com.github.jamedge.moonlight.core.api.versioning.responsemessage.ResponseMessageJsonSupport
 import com.github.jamedge.moonlight.core.model.Line
@@ -53,7 +55,9 @@ class ApiLineRoutes(
     } ~
     path("line" / Segment) { lineName =>
       get {
-        complete(lineService.getLine(lineName))
+        complete(lineService.getLine(lineName).map(_.getOrElse {
+          val message = s"""Line with name "$lineName" doesn't exist."""
+          throw new ApiException(new Exception(message), StatusCodes.BadRequest, Some(message))}))
       }
     }
   }
