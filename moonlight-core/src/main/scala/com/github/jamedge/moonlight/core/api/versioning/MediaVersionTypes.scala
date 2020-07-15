@@ -12,4 +12,6 @@ object MediaVersionTypes {
     customApplicationMediaType("moonlight.v1+json")
   val `text/moonlight.v1+html`: MediaType.WithFixedCharset =
     customTextMediaType("moonlight.v1+html")
+  val `text/moonlight.v1+markdown`: MediaType.WithFixedCharset =
+    customTextMediaType("moonlight.v1+markdown")
 }

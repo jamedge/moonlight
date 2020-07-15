@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.stream.Materializer
 import com.github.jamedge.moonlight.core.api.handlers.ApiException
-import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLGenerator, LineHTMLSupport, LineJsonSupport, LineMDGenerator}
+import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLGenerator, LineHTMLSupport, LineJsonSupport, LineMDGenerator, LineMDSupport}
 import com.github.jamedge.moonlight.core.api.versioning.responsemessage.ResponseMessageJsonSupport
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.service.line.LineService
@@ -26,7 +26,9 @@ trait LineRoutesSupport {
   ): ToResponseMarshaller[Line] =
     Marshaller.oneOf(
       LineJsonSupport.marshaller,
-      LineHTMLSupport.marshaller)
+      LineHTMLSupport.marshaller,
+      LineMDSupport.marshaller
+    )
   implicit def ResponseMessageMarshaller(implicit ec: ExecutionContext): ToResponseMarshaller[ResponseMessage] =
     ResponseMessageJsonSupport.marshaller
 }
