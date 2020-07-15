@@ -9,6 +9,8 @@ trait HTMLSupport[T <: Object] {
   /**
    * Base marshaller for the object of class <T>. Override it before usage.
    * @param executionContext Implicit execution context.
+   * @param lineMDGenerator Generator that generates markdown out of line.
+   * @param lineHTMLGenerator Generator that generates html out of markdown.
    * @return Resulting marshaller.
    */
   implicit def marshaller(
