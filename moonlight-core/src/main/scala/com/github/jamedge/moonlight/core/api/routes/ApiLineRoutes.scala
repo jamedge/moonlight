@@ -40,8 +40,7 @@ class ApiLineRoutes(
     actorSystem: ActorSystem,
     lineMDGenerator: LineMDGenerator,
     lineHTMLGenerator: LineHTMLGenerator
-)
-  extends Directives with LineRoutesSupport {
+) extends Directives with LineRoutesSupport {
 
   def routes: Route = {
     line
