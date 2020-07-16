@@ -25,7 +25,9 @@ object LineMDSupport extends MDSupport[Line] {
     Marshaller.withOpenCharset(MediaTypes.`text/markdown`) { case (line, charset) =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaTypes.`text/markdown`, charset),
-        lineMDGenerator.generateMd(line).getOrElse(throw new LineMDGenerationException("Error generating line MD!"))))
+        lineMDGenerator.
+          generateMd(LineV1.toLineV1(line)).
+          getOrElse(throw new LineMDGenerationException("Error generating line MD!"))))
     }
   }
 
@@ -37,7 +39,7 @@ object LineMDSupport extends MDSupport[Line] {
       HttpResponse(entity = HttpEntity(
         ContentType(MediaVersionTypes.`text/moonlight.v1+markdown`),
         lineMDGenerator.
-          generateMdV1(LineV1.toLineV1(line)).
+          generateMd(LineV1.toLineV1(line)).
           getOrElse(throw new LineMDGenerationException("Error generating line MD!"))))
     }
   }
