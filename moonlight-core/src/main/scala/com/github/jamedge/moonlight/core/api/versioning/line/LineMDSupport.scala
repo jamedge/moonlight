@@ -36,7 +36,9 @@ object LineMDSupport extends MDSupport[Line] {
     Marshaller.withFixedContentType(MediaVersionTypes.`text/moonlight.v1+markdown`) { line =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaVersionTypes.`text/moonlight.v1+markdown`),
-        lineMDGenerator.generateMd(line).getOrElse(throw new LineMDGenerationException("Error generating line MD!"))))
+        lineMDGenerator.
+          generateMdV1(LineV1.toLineV1(line)).
+          getOrElse(throw new LineMDGenerationException("Error generating line MD!"))))
     }
   }
 }

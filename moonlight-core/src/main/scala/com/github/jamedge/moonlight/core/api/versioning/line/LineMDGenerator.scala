@@ -27,6 +27,28 @@ class LineMDGenerator {
     }
   }
 
+  def generateMdV1(line: LineV1): Try[String] = {
+    Try {
+      val naString = "<NA>"
+      val result =
+        s"""Property name|Property value
+           |-------------|--------------
+           |Name|**${line.name}**
+           |Owner|${line.owner.getOrElse(naString)}
+           |Purpose|${line.purpose.getOrElse(naString)}
+           |Notes|${line.notes.getOrElse(List()).map(n => s"_${n}_").mkString(", ")}
+           |Inputs|${line.io.flatMap(io => generateIOCaptions(io.inputs)).mkString(", ")}
+           |Outputs|${line.io.flatMap(io => generateIOCaptions(io.outputs)).mkString(", ")}
+           |Processed by|${generateProcessCaptions(line.processedBy).mkString(", ")}
+           |Metrics|${generateMetricsCaptions(line.metrics).mkString(", ")}
+           |Alerts|${generateAlertsCaptions(line.alerts).mkString(", ")}
+           |Code path|${line.code.map(c => s"[${c.name}](${c.remotePath})").getOrElse(naString)}
+           |Execution command entry point|${line.code.map(c => generateExecutionCommand(c)).getOrElse(naString)}
+          """.stripMargin
+      result
+    }
+  }
+
   private def generateIOCaptions(ioElements: List[IOElement]): List[String] = {
     ioElements.map { i =>
       i.storage.map { s =>
