@@ -23,7 +23,7 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
               lineageGraphResponse.graph,
               lineageGraphResponse.rootNode,
               LineageGraphFormattedOutputType.Md)).
-          getOrElse(throw LineageHTMLGenerationException("Error generating line HTML!"))))
+          getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))))
     }
   }
 
@@ -41,7 +41,7 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
               lineageGraphResponse.graph,
               lineageGraphResponse.rootNode,
               LineageGraphFormattedOutputType.Md)).
-          getOrElse(throw LineageHTMLGenerationException("Error generating line HTML!"))))
+          getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))))
   }
 
   implicit def marshaller(
