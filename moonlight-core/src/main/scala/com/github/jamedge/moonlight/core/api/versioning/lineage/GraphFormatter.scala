@@ -1,4 +1,4 @@
-package com.github.jamedge.moonlight.core.service.lineage
+package com.github.jamedge.moonlight.core.api.versioning.lineage
 
 import com.github.jamedge.moonlight.core.model.IOElement
 import scalax.collection.Graph

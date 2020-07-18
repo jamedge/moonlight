@@ -7,7 +7,8 @@ import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.stream.Materializer
 import com.github.jamedge.moonlight.core.api.handlers.ApiException
-import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLGenerator, LineHTMLSupport, LineJsonSupport, LineMDGenerator, LineMDSupport}
+import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
+import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLSupport, LineJsonSupport, LineMDGenerator, LineMDSupport}
 import com.github.jamedge.moonlight.core.api.versioning.responsemessage.ResponseMessageJsonSupport
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.service.line.LineService
@@ -22,7 +23,7 @@ trait LineRoutesSupport {
   implicit def lineMarshaller(
       implicit ec: ExecutionContext,
       lineMDGenerator: LineMDGenerator,
-      lineHTMLGenerator: LineHTMLGenerator
+      htmlGenerator: HTMLGenerator
   ): ToResponseMarshaller[Line] =
     Marshaller.oneOf(
       LineJsonSupport.marshaller,
@@ -39,7 +40,7 @@ class ApiLineRoutes(
     implicit val executionContext: ExecutionContext,
     actorSystem: ActorSystem,
     lineMDGenerator: LineMDGenerator,
-    lineHTMLGenerator: LineHTMLGenerator
+    htmlGenerator: HTMLGenerator
 ) extends Directives with LineRoutesSupport {
 
   def routes: Route = {
