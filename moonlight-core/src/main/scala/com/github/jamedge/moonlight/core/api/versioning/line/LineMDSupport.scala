@@ -27,7 +27,7 @@ object LineMDSupport extends MDSupport[Line] {
         ContentType(MediaTypes.`text/markdown`, charset),
         lineMDGenerator.
           generateMd(LineV1.toLineV1(line)).
-          getOrElse(throw new LineMDGenerationException("Error generating line MD!"))))
+          getOrElse(throw LineMDGenerationException("Error generating line MD!"))))
     }
   }
 
@@ -40,7 +40,7 @@ object LineMDSupport extends MDSupport[Line] {
         ContentType(MediaVersionTypes.`text/moonlight.v1+markdown`),
         lineMDGenerator.
           generateMd(LineV1.toLineV1(line)).
-          getOrElse(throw new LineMDGenerationException("Error generating line MD!"))))
+          getOrElse(throw LineMDGenerationException("Error generating line MD!"))))
     }
   }
 }

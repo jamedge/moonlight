@@ -1,4 +1,4 @@
-package com.github.jamedge.moonlight.core.service.lineage
+package com.github.jamedge.moonlight.core.api.versioning.lineage
 
 object OutputConfig {
   case class Output(downstream: Map[String, Downstream])
