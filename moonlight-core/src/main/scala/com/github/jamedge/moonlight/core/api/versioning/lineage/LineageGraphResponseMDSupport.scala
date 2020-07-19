@@ -3,7 +3,7 @@ package com.github.jamedge.moonlight.core.api.versioning.lineage
 import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import com.github.jamedge.moonlight.core.api.routes.LineageGraphResponse
-import com.github.jamedge.moonlight.core.api.versioning.{HTMLGenerator, JsonSupport, MediaVersionTypes}
+import com.github.jamedge.moonlight.core.api.versioning.{HTMLGenerator, MediaVersionTypes}
 
 import scala.concurrent.ExecutionContext
 
