@@ -44,7 +44,7 @@ class ApiLineageRoutes(
   def routes: Route = {
     path("lineage" / "graph") {
       get {
-        parameters("root_io") { rootIOElementName =>
+        parameters("root_io") { rootIOElementName => // TODO: use path params here
           complete(lineageService.getLineageGraph(rootIOElementName).map(graph =>
             LineageGraphResponse(rootIOElementName, graph)))
         }
@@ -52,7 +52,7 @@ class ApiLineageRoutes(
     } ~
       path("lineage" / "graph" / "basic") {
         get {
-          parameters("root_io") { rootIOElementName =>
+          parameters("root_io") { rootIOElementName => // TODO: use path params here
             import scalax.collection.io.json._
             complete {
               lineageService.getLineageGraph(rootIOElementName).map { graph =>

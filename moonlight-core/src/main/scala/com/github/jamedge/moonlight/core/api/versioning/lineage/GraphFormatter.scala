@@ -1,11 +1,13 @@
 package com.github.jamedge.moonlight.core.api.versioning.lineage
 
+import com.github.jamedge.moonlight.core.api.ApiConfig
 import com.github.jamedge.moonlight.core.model.IOElement
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
 
 class GraphFormatter(
-    outputConfig: OutputConfig.Output
+    outputConfig: OutputConfig.Output,
+    apiConfig: ApiConfig
 ) {
   /**
    * Transforms the lineage graph made from downstream IO Elements and the specified root element
@@ -18,6 +20,7 @@ class GraphFormatter(
    */
   def formatLineageGraph(ioGraph: Graph[IOElement, LDiEdge], rootIOElementName: String, outputType: LineageGraphFormattedOutputType): String = {
     implicit val c = outputConfig.downstream(outputType.name)
+    implicit val ot = outputType
     ioGraph.nodes.find(_.toOuter.name == rootIOElementName).map { root =>
 
       case class Accumulator(resultString: String, previousNodes: List[ioGraph.NodeT], previousNode: ioGraph.NodeT, level: Int)
@@ -106,13 +109,20 @@ class GraphFormatter(
       currentNode: ioGraph.NodeT,
       root: ioGraph.NodeT,
       headingPreviousNode: ioGraph.NodeT
-  )(implicit config: OutputConfig.Downstream): String = {
+  )(implicit config: OutputConfig.Downstream, outputType: LineageGraphFormattedOutputType): String = {
     val openString = if (currentNode eq root) {
       config.nodes.root.lines.prepend + config.nodes.root.lines.enclosure.start
     } else {
       config.nodes.children.element.lines.prepend + config.nodes.children.element.lines.enclosure.start
     }
-    val linesString = currentNode.connectionsWith(headingPreviousNode).flatMap(_.toOuter.label.asInstanceOf[List[String]]).mkString(", ")
+    val linesString = currentNode.
+      connectionsWith(headingPreviousNode).
+      flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
+        if (outputType == LineageGraphFormattedOutputType.Md)
+          s"[${lineName}](http://${apiConfig.server.host}:${apiConfig.server.port}/line/$lineName)" // TODO: consider of alternative link for md generation while keepping this one for HTML gen
+        else lineName
+      )).
+      mkString(", ")
     val closeString = if (currentNode eq root) {
       config.nodes.root.lines.enclosure.end
     } else {
