@@ -1,10 +1,13 @@
 package com.github.jamedge.moonlight.core.api.versioning.line
 
+import com.github.jamedge.moonlight.core.api.ApiConfig
 import com.github.jamedge.moonlight.core.model.{Alert, Code, IOElement, Line, Metric, Process}
 
 import scala.util.Try
 
-class LineMDGenerator {
+class LineMDGenerator(
+    apiConfig: ApiConfig
+) {
   def generateMd(line: LineV1): Try[String] = {
     Try {
       val naString = "<NA>"
@@ -29,19 +32,33 @@ class LineMDGenerator {
 
   private def generateIOCaptions(ioElements: List[IOElement]): List[String] = {
     ioElements.map { i =>
-      i.storage.map { s =>
-        s"[**${s.name}**: ${i.name}]" +
-          s"${s.locationPath.map(lp => s"($lp${if (lp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
-          s"${i.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${i.name})")}"
-      }.getOrElse(s"[${i.name}](#${i.locationRelativePath.getOrElse(i.name)})")
+      val inputLink = generateIOLink(i)
+      val lineageLink = generateLineageLink(i)
+      s"$inputLink [$lineageLink]"
     }
+  }
+
+  private def generateIOLink(ioElement: IOElement): String = {
+    ioElement.storage.map { s =>
+      s"[**${s.name}**: ${ioElement.name}]" +
+        s"${s.locationPath.map(lp => s"(#$lp${if (lp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
+        s"${ioElement.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${ioElement.name})")}"
+    }.getOrElse(generateDefaultIOLink(ioElement))
+  }
+
+  private def generateDefaultIOLink(ioElement: IOElement): String = {
+    s"[${ioElement.name}](#${ioElement.locationRelativePath.getOrElse(ioElement.name)})"
+  }
+
+  private def generateLineageLink(ioElement: IOElement): String = {
+    s"[->](http://${apiConfig.server.host}:${apiConfig.server.port}/lineage/graph?root_io=${ioElement.name})"
   }
 
   private def generateProcessCaptions(processes: List[Process]): List[String] = {
     processes.map { p =>
       p.processingFramework.map { pf =>
         s"[**${pf.name}**: ${p.name}]" +
-          s"${pf.locationPath.map(fp => s"($fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
+          s"${pf.locationPath.map(fp => s"(#$fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
           s"${p.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${p.name})")}"
       }.getOrElse(s"[${p.name}](#${p.locationRelativePath.getOrElse(p.name)})")
     }
@@ -51,7 +68,7 @@ class LineMDGenerator {
     metrics.map { m =>
       m.metricFramework.map { mf =>
         s"[**${mf.name}**: ${m.name}]" +
-          s"${mf.locationPath.map(fp => s"($fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
+          s"${mf.locationPath.map(fp => s"(#$fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
           s"${m.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${m.name})")}"
       }.getOrElse(s"[${m.name}](#${m.locationRelativePath.getOrElse(m.name)})")
     }
@@ -61,7 +78,7 @@ class LineMDGenerator {
     alerts.map { a =>
       a.alertsFramework.map { af =>
         s"[**${af.name}**: ${a.name}]" +
-          s"${af.locationPath.map(fp => s"($fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
+          s"${af.locationPath.map(fp => s"(#$fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
           s"${a.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${a.name})")}"
       }.getOrElse(s"[${a.name}](#${a.locationRelativePath.getOrElse(a.name)})")
     }
