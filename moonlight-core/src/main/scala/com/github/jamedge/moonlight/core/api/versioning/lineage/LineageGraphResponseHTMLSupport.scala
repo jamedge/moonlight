@@ -22,7 +22,7 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
             formatLineageGraph(
               lineageGraphResponse.graph,
               lineageGraphResponse.rootNode,
-              LineageGraphFormattedOutputType.Md)).
+              LineageGraphFormattedOutputType.Md)). // TODO: move HTML generation to the `formatLineageGraph` based on the output type
           getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))))
     }
   }

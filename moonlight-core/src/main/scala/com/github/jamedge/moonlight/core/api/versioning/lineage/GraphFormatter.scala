@@ -119,7 +119,7 @@ class GraphFormatter(
       connectionsWith(headingPreviousNode).
       flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
         if (outputType == LineageGraphFormattedOutputType.Md)
-          s"[${lineName}](http://${apiConfig.server.host}:${apiConfig.server.port}/line/$lineName)"
+          s"[${lineName}](http://${apiConfig.server.host}:${apiConfig.server.port}/line/$lineName)" // TODO: consider of alternative link for md generation while keepping this one for HTML gen
         else lineName
       )).
       mkString(", ")
