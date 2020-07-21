@@ -51,7 +51,7 @@ class LineMDGenerator(
   }
 
   private def generateLineageLink(ioElement: IOElement): String = {
-    s"[->](http://${apiConfig.server.host}:${apiConfig.server.port}/lineage/graph?root_io=${ioElement.name})"
+    s"[->](http://${apiConfig.server.host}:${apiConfig.server.port}/lineage/graph/${ioElement.name})"
   }
 
   private def generateProcessCaptions(processes: List[Process]): List[String] = {

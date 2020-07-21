@@ -42,24 +42,20 @@ class ApiLineageRoutes(
   implicit val formats = DefaultFormats
 
   def routes: Route = {
-    path("lineage" / "graph") {
+    path("lineage" / "graph" / Segment) { rootIOElementName =>
       get {
-        parameters("root_io") { rootIOElementName => // TODO: use path params here
-          complete(lineageService.getLineageGraph(rootIOElementName).map(graph =>
-            LineageGraphResponse(rootIOElementName, graph)))
-        }
+        complete(lineageService.getLineageGraph(rootIOElementName).map(graph =>
+          LineageGraphResponse(rootIOElementName, graph)))
       }
     } ~
-      path("lineage" / "graph" / "basic") {
+      path("lineage" / "graph_source" / Segment) { rootIOElementName =>
         get {
-          parameters("root_io") { rootIOElementName => // TODO: use path params here
-            import scalax.collection.io.json._
-            complete {
-              lineageService.getLineageGraph(rootIOElementName).map { graph =>
-                HttpResponse(entity = HttpEntity(
-                  ContentType(MediaTypes.`application/json`),
-                  graph.toJson(GraphBuilder.createLineageGraphJsonDescriptor())))
-              }
+          import scalax.collection.io.json._
+          complete {
+            lineageService.getLineageGraph(rootIOElementName).map { graph =>
+              HttpResponse(entity = HttpEntity(
+                ContentType(MediaTypes.`application/json`),
+                graph.toJson(GraphBuilder.createLineageGraphJsonDescriptor())))
             }
           }
         }
