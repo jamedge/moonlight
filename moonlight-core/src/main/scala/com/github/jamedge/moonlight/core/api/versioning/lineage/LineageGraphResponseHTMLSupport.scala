@@ -17,13 +17,11 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
     Marshaller.withOpenCharset(MediaTypes.`text/html`) { case (lineageGraphResponse, charset) =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaTypes.`text/html`, charset),
-        htmlGenerator.generateHTML(
-          graphFormatter.
-            formatLineageGraph(
-              lineageGraphResponse.graph,
-              lineageGraphResponse.rootNode,
-              LineageGraphFormattedOutputType.Md)). // TODO: move HTML generation to the `formatLineageGraph` based on the output type
-          getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))))
+        graphFormatter.
+          formatLineageGraph(
+            lineageGraphResponse.graph,
+            lineageGraphResponse.rootNode,
+            LineageGraphFormattedOutputType.HTML)))
     }
   }
 
@@ -35,13 +33,11 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
     HttpResponse(entity = HttpEntity(
       ContentType(
         MediaVersionTypes.`text/moonlight.v1+html`),
-        htmlGenerator.generateHTML(
-          graphFormatter.
-            formatLineageGraph(
-              lineageGraphResponse.graph,
-              lineageGraphResponse.rootNode,
-              LineageGraphFormattedOutputType.Md)).
-          getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))))
+        graphFormatter.
+          formatLineageGraph(
+            lineageGraphResponse.graph,
+            lineageGraphResponse.rootNode,
+            LineageGraphFormattedOutputType.HTML)))
   }
 
   implicit def marshaller(
@@ -56,4 +52,3 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
   }
 }
 
-case class LineageHTMLGenerationException(message: String) extends Exception(message)
