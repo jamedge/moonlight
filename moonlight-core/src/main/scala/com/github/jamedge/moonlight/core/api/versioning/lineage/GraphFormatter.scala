@@ -24,9 +24,28 @@ class GraphFormatter(
   def formatLineageGraph(ioGraph: Graph[IOElement, LDiEdge], rootIOElementName: String, outputType: LineageGraphFormattedOutputType): String = {
     implicit val c = outputConfig.downstream(if (outputType.name == "html") "md" else outputType.name)
     implicit val ot = outputType
-    val lineage = ioGraph.nodes.find(_.toOuter.name == rootIOElementName).map { root =>
 
-      case class Accumulator(resultString: String, previousNodes: List[ioGraph.NodeT], previousNode: ioGraph.NodeT, level: Int)
+    val lineage = formatLineageGraph(ioGraph, rootIOElementName).getOrElse(c.emptyMessage)
+
+    if (outputType == HTML) {
+      htmlGenerator.
+        generateHTML(lineage).
+        getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))
+    } else lineage
+  }
+
+  private def formatLineageGraph(
+      ioGraph: Graph[IOElement, LDiEdge],
+      rootIOElementName: String
+  )(implicit outputConfig: OutputConfig.Downstream, outputType: LineageGraphFormattedOutputType): Option[String] = {
+    ioGraph.nodes.find(_.toOuter.name == rootIOElementName).map { root =>
+
+      case class Accumulator(
+          resultString: String,
+          previousNodes: List[ioGraph.NodeT],
+          previousNode: ioGraph.NodeT,
+          level: Int)
+
       val emptyElement = IOElement("", None, None, None, None, None, None)
       val emptyAccumulator = Accumulator("", List(ioGraph.Node(emptyElement)), ioGraph.Node(emptyElement), 0)
 
@@ -59,14 +78,7 @@ class GraphFormatter(
         }
       }
       result.resultString
-    }.getOrElse(c.emptyMessage)
-    val result: String =
-      if (outputType == HTML) {
-        htmlGenerator.
-          generateHTML(lineage).
-          getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))
-      } else lineage
-    result
+    }
   }
 
   private def downstreamCaptionMainEnclosureOpen(ioGraph: Graph[IOElement, LDiEdge])(
