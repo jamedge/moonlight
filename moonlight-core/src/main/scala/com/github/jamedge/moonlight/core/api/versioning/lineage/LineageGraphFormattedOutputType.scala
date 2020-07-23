@@ -1,7 +1,8 @@
 package com.github.jamedge.moonlight.core.api.versioning.lineage
 
 sealed class LineageGraphFormattedOutputType(val name: String)
-object LineageGraphFormattedOutputType { // TODO: add and use HTML output type
+object LineageGraphFormattedOutputType {
   case object Json extends LineageGraphFormattedOutputType("json")
   case object Md extends LineageGraphFormattedOutputType("md")
+  case object HTML extends LineageGraphFormattedOutputType("html")
 }

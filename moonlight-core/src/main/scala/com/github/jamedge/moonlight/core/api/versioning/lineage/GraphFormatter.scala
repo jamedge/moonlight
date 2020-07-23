@@ -1,13 +1,16 @@
 package com.github.jamedge.moonlight.core.api.versioning.lineage
 
 import com.github.jamedge.moonlight.core.api.ApiConfig
+import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
+import com.github.jamedge.moonlight.core.api.versioning.lineage.LineageGraphFormattedOutputType.{HTML, Md}
 import com.github.jamedge.moonlight.core.model.IOElement
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
 
 class GraphFormatter(
     outputConfig: OutputConfig.Output,
-    apiConfig: ApiConfig
+    apiConfig: ApiConfig,
+    htmlGenerator: HTMLGenerator
 ) {
   /**
    * Transforms the lineage graph made from downstream IO Elements and the specified root element
@@ -19,11 +22,30 @@ class GraphFormatter(
    * @return Graph formatted as a tree of IO Elements.
    */
   def formatLineageGraph(ioGraph: Graph[IOElement, LDiEdge], rootIOElementName: String, outputType: LineageGraphFormattedOutputType): String = {
-    implicit val c = outputConfig.downstream(outputType.name)
+    implicit val c = outputConfig.downstream(if (outputType.name == "html") "md" else outputType.name)
     implicit val ot = outputType
+
+    val lineage = formatLineageGraph(ioGraph, rootIOElementName).getOrElse(c.emptyMessage)
+
+    if (outputType == HTML) {
+      htmlGenerator.
+        generateHTML(lineage).
+        getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))
+    } else lineage
+  }
+
+  private def formatLineageGraph(
+      ioGraph: Graph[IOElement, LDiEdge],
+      rootIOElementName: String
+  )(implicit outputConfig: OutputConfig.Downstream, outputType: LineageGraphFormattedOutputType): Option[String] = {
     ioGraph.nodes.find(_.toOuter.name == rootIOElementName).map { root =>
 
-      case class Accumulator(resultString: String, previousNodes: List[ioGraph.NodeT], previousNode: ioGraph.NodeT, level: Int)
+      case class Accumulator(
+          resultString: String,
+          previousNodes: List[ioGraph.NodeT],
+          previousNode: ioGraph.NodeT,
+          level: Int)
+
       val emptyElement = IOElement("", None, None, None, None, None, None)
       val emptyAccumulator = Accumulator("", List(ioGraph.Node(emptyElement)), ioGraph.Node(emptyElement), 0)
 
@@ -56,7 +78,7 @@ class GraphFormatter(
         }
       }
       result.resultString
-    }.getOrElse(c.emptyMessage)
+    }
   }
 
   private def downstreamCaptionMainEnclosureOpen(ioGraph: Graph[IOElement, LDiEdge])(
@@ -118,9 +140,10 @@ class GraphFormatter(
     val linesString = currentNode.
       connectionsWith(headingPreviousNode).
       flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
-        if (outputType == LineageGraphFormattedOutputType.Md)
-          s"[${lineName}](http://${apiConfig.server.host}:${apiConfig.server.port}/line/$lineName)" // TODO: consider of alternative link for md generation while keepping this one for HTML gen
-        else lineName
+        if (outputType == LineageGraphFormattedOutputType.HTML)
+          s"[${lineName}](http://${apiConfig.server.host}:${apiConfig.server.port}/line/$lineName)"
+        else if (outputType == LineageGraphFormattedOutputType.Md)
+          s"[${lineName}](#line/$lineName)"
       )).
       mkString(", ")
     val closeString = if (currentNode eq root) {
@@ -150,3 +173,5 @@ class GraphFormatter(
     config.nodes.children.shell.enclosure.end
   }
 }
+
+case class LineageHTMLGenerationException(message: String) extends Exception(message)
