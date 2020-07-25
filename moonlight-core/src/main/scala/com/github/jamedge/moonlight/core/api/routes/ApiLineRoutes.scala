@@ -12,8 +12,9 @@ import com.github.jamedge.moonlight.core.api.versioning.line.{LineHTMLSupport, L
 import com.github.jamedge.moonlight.core.api.versioning.responsemessage.ResponseMessageJsonSupport
 import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.service.line.LineService
+import scala.concurrent.duration._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
 
 case class ResponseMessage(message: String)
 
@@ -44,7 +45,8 @@ class ApiLineRoutes(
 ) extends Directives with LineRoutesSupport {
 
   def routes: Route = {
-    line
+    line ~
+    lines
   }
 
   private[routes] def line: Route = {
@@ -60,6 +62,14 @@ class ApiLineRoutes(
         complete(lineService.getLine(lineName).map(_.getOrElse {
           val message = s"""Line with name "$lineName" doesn't exist."""
           throw new ApiException(new Exception(message), StatusCodes.BadRequest, Some(message))}))
+      }
+    }
+  }
+
+  private[routes] def lines: Route = {
+    path("lines") {
+      get {
+        complete(Await.result(lineService.getLines, 60.seconds).toString) // TODO: add marshaller for List[Line]
       }
     }
   }

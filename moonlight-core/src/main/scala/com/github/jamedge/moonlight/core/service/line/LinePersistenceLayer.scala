@@ -6,7 +6,7 @@ import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQue
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
 import neotypes.implicits.all._
-import org.neo4j.driver.v1.Value
+import org.neo4j.driver.v1.{Session, Value}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,6 +43,21 @@ class LinePersistenceLayer(
   }
 
   /**
+   * Gets all lines from the persistence layer for the specified line name.
+   * @return Extracted lines.
+   */
+  def getLines: Future[List[Line]] = {
+    neo4jDriver.readSession { implicit session =>
+      session.transact[List[Line]] { implicit tx =>
+        for {
+          lineNames <- LineQueriesConstructor.constructGetAllLineNames().query[String].list(tx)
+          lines <- Future.sequence(lineNames.map(buildLine)).map(_.filter(_.isDefined).map(_.get))
+        } yield lines
+      }
+    }
+  }
+
+  /**
    * Gets the line from the persistence layer for the specified line name.
    * @param lineName Name of the line.
    * @return Extracted line.
@@ -50,43 +65,47 @@ class LinePersistenceLayer(
   def getLine(lineName: String): Future[Option[Line]] = {
     neo4jDriver.readSession { implicit session =>
       session.transact[Option[Line]] { implicit tx =>
-        for {
-          lineBase <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
-          lineDetails <- LineQueriesConstructor.matchDetails(lineName, lineName).query[Option[Value]].single(tx)
-          (ioPairs, inputsDetails, inputsStorage, inputsStorageDetails) <- matchInputsData(lineName)
-          (outputsDetails, outputsStorage, outputsStorageDetails) <- matchOutputsData(lineName)
-          (processedBy, processedByDetails, processingFrameworks, processingFrameworksDetails) <- matchProcessData(lineName)
-          (metrics, metricsDetails, metricsFrameworks, metricsFrameworksDetails) <- matchMetricsData(lineName)
-          (alerts, alertsDetails, alertsFrameworks, alertsFrameworksDetails) <- matchAlertsData(lineName)
-          (code, codeDetails) <- matchCodeData(lineName)
-          line <- Future(LineBuilder.buildLine(
-            lineBase,
-            lineDetails,
-            ioPairs,
-            inputsDetails,
-            inputsStorage,
-            inputsStorageDetails,
-            outputsDetails,
-            outputsStorage,
-            outputsStorageDetails,
-            processedBy,
-            processedByDetails,
-            processingFrameworks,
-            processingFrameworksDetails,
-            metrics,
-            metricsDetails,
-            metricsFrameworks,
-            metricsFrameworksDetails,
-            alerts,
-            alertsDetails,
-            alertsFrameworks,
-            alertsFrameworksDetails,
-            code,
-            codeDetails
-          ))
-        } yield line
+        buildLine(lineName)
       }
     }
+  }
+
+  private def buildLine(lineName: String)(implicit tx: Transaction[Future]): Future[Option[Line]] = {
+    for {
+      lineBase <- LineQueriesConstructor.matchNode(lineName).query[Option[Line]].single(tx)
+      lineDetails <- LineQueriesConstructor.matchDetails(lineName, lineName).query[Option[Value]].single(tx)
+      (ioPairs, inputsDetails, inputsStorage, inputsStorageDetails) <- matchInputsData(lineName)
+      (outputsDetails, outputsStorage, outputsStorageDetails) <- matchOutputsData(lineName)
+      (processedBy, processedByDetails, processingFrameworks, processingFrameworksDetails) <- matchProcessData(lineName)
+      (metrics, metricsDetails, metricsFrameworks, metricsFrameworksDetails) <- matchMetricsData(lineName)
+      (alerts, alertsDetails, alertsFrameworks, alertsFrameworksDetails) <- matchAlertsData(lineName)
+      (code, codeDetails) <- matchCodeData(lineName)
+      line <- Future(LineBuilder.buildLine(
+        lineBase,
+        lineDetails,
+        ioPairs,
+        inputsDetails,
+        inputsStorage,
+        inputsStorageDetails,
+        outputsDetails,
+        outputsStorage,
+        outputsStorageDetails,
+        processedBy,
+        processedByDetails,
+        processingFrameworks,
+        processingFrameworksDetails,
+        metrics,
+        metricsDetails,
+        metricsFrameworks,
+        metricsFrameworksDetails,
+        alerts,
+        alertsDetails,
+        alertsFrameworks,
+        alertsFrameworksDetails,
+        code,
+        codeDetails
+      ))
+    } yield line
   }
 
   private def matchInputsData(lineName: String)(implicit tx: Transaction[Future]):
