@@ -31,6 +31,14 @@ trait LineRoutesSupport {
       LineHTMLSupport.marshaller,
       LineMDSupport.marshaller
     )
+  implicit def linesMarshaller(
+      implicit ec: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      htmlGenerator: HTMLGenerator
+  ): ToResponseMarshaller[List[Line]] =
+    Marshaller.oneOf(
+      LineJsonSupport.marshallerLines
+    )
   implicit def ResponseMessageMarshaller(implicit ec: ExecutionContext): ToResponseMarshaller[ResponseMessage] =
     ResponseMessageJsonSupport.marshaller
 }
@@ -69,7 +77,7 @@ class ApiLineRoutes(
   private[routes] def lines: Route = {
     path("lines") {
       get {
-        complete(Await.result(lineService.getLines, 60.seconds).toString) // TODO: add marshaller for List[Line]
+        complete(lineService.getLines) // TODO: add MD and HTML marshallers for List[Line]
       }
     }
   }
