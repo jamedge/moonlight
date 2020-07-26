@@ -47,7 +47,7 @@ class ApiLineRoutes(
   private[routes] def lines: Route = {
     path("lines") {
       get {
-        complete(lineService.getLines) // TODO: add MD and HTML marshallers for List[Line]
+        complete(lineService.getLines)
       }
     }
   }

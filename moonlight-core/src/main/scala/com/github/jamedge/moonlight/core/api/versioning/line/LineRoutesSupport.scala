@@ -31,7 +31,9 @@ trait LineRoutesSupport {
       htmlGenerator: HTMLGenerator
   ): ToResponseMarshaller[List[Line]] =
     Marshaller.oneOf(
-      LineJsonSupport.marshallerLines
+      LineJsonSupport.marshallerLines,
+      LineMDSupport.marshallerLines,
+      LineHTMLSupport.marshallerLines
     )
 
   implicit def ResponseMessageMarshaller(implicit ec: ExecutionContext): ToResponseMarshaller[ResponseMessage] =
