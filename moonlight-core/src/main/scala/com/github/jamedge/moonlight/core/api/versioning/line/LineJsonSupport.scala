@@ -58,4 +58,29 @@ object LineJsonSupport extends JsonSupport[Line] {
       jsonV1EntityMarshaller
     )
   }
+
+  private def jsonEntityMarshallerLines(implicit executionContext: ExecutionContext): ToResponseMarshaller[List[Line]] = {
+    Marshaller.withFixedContentType(MediaTypes.`application/json`) { lines =>
+      HttpResponse(entity = HttpEntity(
+        ContentType(
+          MediaTypes.`application/json`),
+        write(lines.map(LineV1.toLineV1))))
+    }
+  }
+
+  private def jsonV1EntityMarshallerLines(implicit executionContext: ExecutionContext): ToResponseMarshaller[List[Line]] = {
+    Marshaller.withFixedContentType(MediaVersionTypes.`application/moonlight.v1+json`) { lines =>
+      HttpResponse(entity = HttpEntity(
+        ContentType(
+          MediaVersionTypes.`application/moonlight.v1+json`),
+        write(lines.map(LineV1.toLineV1))))
+    }
+  }
+
+  implicit def marshallerLines(implicit ec: ExecutionContext): ToResponseMarshaller[List[Line]] = {
+    Marshaller.oneOf(
+      jsonEntityMarshallerLines,
+      jsonV1EntityMarshallerLines
+    )
+  }
 }

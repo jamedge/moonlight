@@ -43,6 +43,42 @@ object LineMDSupport extends MDSupport[Line] {
           getOrElse(throw LineMDGenerationException("Error generating line MD!"))))
     }
   }
+
+  private def mdEntityMarshallerLines(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator
+  ): ToResponseMarshaller[List[Line]] = {
+    Marshaller.withOpenCharset(MediaTypes.`text/markdown`) { case (lines, charset) =>
+      HttpResponse(entity = HttpEntity(
+        ContentType(MediaTypes.`text/markdown`, charset),
+        lines.map(line => lineMDGenerator.
+          generateMd(LineV1.toLineV1(line)).
+          getOrElse(throw LineMDGenerationException("Error generating line MD!"))).mkString("<br>")))
+    }
+  }
+
+  private def mdV1EntityMarshallerLines(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator
+  ): ToResponseMarshaller[List[Line]] = {
+    Marshaller.withFixedContentType(MediaVersionTypes.`text/moonlight.v1+markdown`) { lines =>
+      HttpResponse(entity = HttpEntity(
+        ContentType(MediaVersionTypes.`text/moonlight.v1+markdown`),
+        lines.map(line => lineMDGenerator.
+          generateMd(LineV1.toLineV1(line)).
+          getOrElse(throw LineMDGenerationException("Error generating line MD!"))).mkString("\n\n")))
+    }
+  }
+
+  implicit def marshallerLines(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator
+  ): ToResponseMarshaller[List[Line]] = {
+    Marshaller.oneOf(
+      mdEntityMarshallerLines,
+      mdV1EntityMarshallerLines
+    )
+  }
 }
 
 case class LineMDGenerationException(message: String) extends Exception(message)

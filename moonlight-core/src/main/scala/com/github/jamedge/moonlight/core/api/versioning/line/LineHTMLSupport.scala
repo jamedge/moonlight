@@ -43,6 +43,41 @@ object LineHTMLSupport extends HTMLSupport[Line] {
     }
   }
 
+  implicit def marshallerLines(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: HTMLGenerator
+  ): ToResponseMarshaller[List[Line]] = {
+    Marshaller.oneOf(
+      htmlEntityMarshallerLines,
+      htmlV1EntityMarshallerLines
+    )
+  }
+
+  private def htmlEntityMarshallerLines(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: HTMLGenerator
+  ): ToResponseMarshaller[List[Line]] = {
+    Marshaller.withOpenCharset(MediaTypes.`text/html`) { case (lines, charset) =>
+      HttpResponse(entity = HttpEntity(
+        ContentType(MediaTypes.`text/html`, charset),
+        lines.map(line => generateLineHTML(LineV1.toLineV1(line))).mkString("<br>")))
+    }
+  }
+
+  private def htmlV1EntityMarshallerLines(
+      implicit executionContext: ExecutionContext,
+      lineMDGenerator: LineMDGenerator,
+      lineHTMLGenerator: HTMLGenerator
+  ): ToResponseMarshaller[List[Line]] = {
+    Marshaller.withFixedContentType(MediaVersionTypes.`text/moonlight.v1+html`) { lines =>
+      HttpResponse(entity = HttpEntity(
+        ContentType(MediaVersionTypes.`text/moonlight.v1+html`),
+        lines.map(line => generateLineHTML(LineV1.toLineV1(line))).mkString("<br>")))
+    }
+  }
+
   private def generateLineHTML(line: LineV1)(
       implicit executionContext: ExecutionContext,
       lineMDGenerator: LineMDGenerator,
