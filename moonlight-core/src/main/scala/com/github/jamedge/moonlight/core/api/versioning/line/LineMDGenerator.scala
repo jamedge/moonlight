@@ -10,23 +10,31 @@ class LineMDGenerator(
 ) {
   def generateMd(line: LineV1): Try[String] = {
     Try {
-      val naString = "<NA>"
       val result =
         s"""Property name|Property value
            |-------------|--------------
-           |Name|**${line.name}**
-           |Owner|${line.owner.getOrElse(naString)}
-           |Purpose|${line.purpose.getOrElse(naString)}
-           |Notes|${line.notes.getOrElse(List()).map(n => s"_${n}_").mkString(", ")}
-           |Inputs|${line.io.flatMap(io => generateIOCaptions(io.inputs)).mkString(", ")}
-           |Outputs|${line.io.flatMap(io => generateIOCaptions(io.outputs)).mkString(", ")}
-           |Processed by|${generateProcessCaptions(line.processedBy).mkString(", ")}
-           |Metrics|${generateMetricsCaptions(line.metrics).mkString(", ")}
-           |Alerts|${generateAlertsCaptions(line.alerts).mkString(", ")}
-           |Code path|${line.code.map(c => s"[${c.name}](${c.remotePath})").getOrElse(naString)}
-           |Execution command entry point|${line.code.map(c => generateExecutionCommand(c)).getOrElse(naString)}
-          """.stripMargin
-      result
+           |Name|**${line.name}**\n""" +
+           line.owner.map("|Owner|" + _ + "\n").getOrElse("") +
+           line.purpose.map("|Purpose|" + _ + "\n").getOrElse("") +
+           (line.notes.map(("|Notes|", _)).getOrElse(("", List())) match {
+                case (c, l) => c + l.map(n => s"_${n}_").mkString(", ") + "\n"}) +
+           s"|Inputs|${line.io.flatMap(io => generateIOCaptions(io.inputs)).mkString(", ")}\n" +
+           s"|Outputs|${line.io.flatMap(io => generateIOCaptions(io.outputs)).mkString(", ")}\n" +
+           generateListCaption(generateProcessCaptions(line.processedBy), "Processed by") +
+           generateListCaption(generateMetricsCaptions(line.metrics), "Metrics") +
+           generateListCaption(generateAlertsCaptions(line.alerts), "Alerts") +
+           generateListCaption(generateProcessCaptions(line.processedBy), "Processed by") +
+           line.code.map(c => s"|Code path|[${c.name}](${c.remotePath})\n").getOrElse("") +
+           line.code.map(c => s"|Execution command entry point|${generateExecutionCommand(c)}").getOrElse("")
+      result.stripMargin
+    }
+  }
+
+  private def generateListCaption(list: List[String], name: String): String = {
+    if (list.isEmpty) {
+      ""
+    } else {
+      s"|$name|${list.mkString(", ")}\n"
     }
   }
 
