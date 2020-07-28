@@ -6,7 +6,7 @@ import com.github.jamedge.moonlight.core.model.neo4j.queries.{ChainLink, LineQue
 import neotypes.{DeferredQuery, Driver, Transaction}
 import shapeless.Id
 import neotypes.implicits.all._
-import org.neo4j.driver.v1.{Session, Value}
+import org.neo4j.driver.v1.Value
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -283,7 +283,8 @@ class LinePersistenceLayer(
       constructDeleteDetachedNodes(ElementClass.MetricsFramework).execute(tx),
       constructDeleteDetachedNodes(ElementClass.Process).execute(tx),
       constructDeleteDetachedNodes(ElementClass.ProcessingFramework).execute(tx),
-      constructDeleteDetachedNodes(ElementClass.Code).execute(tx)
+      constructDeleteDetachedNodes(ElementClass.Code).execute(tx),
+      constructDeleteDetachedNodes(ElementClass.Line).execute(tx)
     ))
   }
 
