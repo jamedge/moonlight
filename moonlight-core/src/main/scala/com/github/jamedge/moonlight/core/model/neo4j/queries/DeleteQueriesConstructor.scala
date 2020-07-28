@@ -1,7 +1,6 @@
 package com.github.jamedge.moonlight.core.model.neo4j.queries
 
-import com.github.jamedge.moonlight.core.model.neo4j.NodeClass
-import com.github.jamedge.moonlight.core.model.neo4j.{Node, RelationshipRight}
+import com.github.jamedge.moonlight.core.model.neo4j.{ElementClass, Node, NodeClass, RelationshipRight}
 import neotypes.DeferredQueryBuilder
 import neotypes.implicits.all._
 
@@ -15,7 +14,7 @@ trait DeleteQueriesConstructor {
   }
 
   def deleteDetachedNodesQuery(nodeClass: NodeClass): DeferredQueryBuilder = {
-    c"MATCH" + s"(i:${nodeClass.name})" + c"WHERE NOT (i) <-- () DELETE i"
+    c"MATCH" + s"(i:${nodeClass.name})" + s"WHERE NOT (i) ${ if (nodeClass == ElementClass.Line) "-->" else "<--" } () DELETE i"
   }
 
   def deleteCleanedRelationships(): DeferredQueryBuilder = {
