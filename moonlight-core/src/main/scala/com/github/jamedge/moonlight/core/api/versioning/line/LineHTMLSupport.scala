@@ -78,7 +78,15 @@ object LineHTMLSupport extends HTMLSupport[Line] {
     }
   }
 
-  private def generateLineHTML(line: LineV1)(
+  /**
+   * Generates HTML representation of the provided line.
+   * @param line Provided line.
+   * @param executionContext Execution context.
+   * @param lineMDGenerator Line markdown generator.
+   * @param lineHTMLGenerator Line HTML generator.
+   * @return Generated html representation of the line.
+   */
+  def generateLineHTML(line: LineV1)(
       implicit executionContext: ExecutionContext,
       lineMDGenerator: LineMDGenerator,
       lineHTMLGenerator: HTMLGenerator): String = {
