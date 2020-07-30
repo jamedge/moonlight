@@ -1,7 +1,7 @@
 package com.github.jamedge.moonlight.core.api
 
 import com.github.jamedge.moonlight.core.Context
-import com.github.jamedge.moonlight.core.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiStatusRoutes}
+import com.github.jamedge.moonlight.core.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiReportRoutes, ApiStatusRoutes}
 import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.core.api.versioning.line.LineMDGenerator
 import com.github.jamedge.moonlight.core.api.versioning.lineage.{GraphFormatter, OutputConfig}
@@ -28,6 +28,7 @@ class Module(app: String) extends Context(app) {
   lazy val apiStatusRoutes: ApiStatusRoutes = wire[ApiStatusRoutes]
   lazy val apiLineRoutes: ApiLineRoutes = wire[ApiLineRoutes]
   lazy val apiLineageRoutes: ApiLineageRoutes = wire[ApiLineageRoutes]
+  lazy val apiReportRoutes: ApiReportRoutes = wire[ApiReportRoutes]
 
   lazy val lineService: LineService = wire[LineService]
   lazy val linePersistenceLayer: LinePersistenceLayer = wire[LinePersistenceLayer]

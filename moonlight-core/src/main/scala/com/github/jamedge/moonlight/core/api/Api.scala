@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.{Directives, RejectionHandler, RouteConcatenati
 import com.github.jamedge.moonlight.core.api.handlers.{ExceptionHandlerBuilder, RejectionHandlerBuilder}
 import org.json4s.DefaultFormats
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives.cors
-import com.github.jamedge.moonlight.core.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiStatusRoutes}
+import com.github.jamedge.moonlight.core.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiReportRoutes, ApiStatusRoutes}
 
 import scala.concurrent.ExecutionContext
 
@@ -16,7 +16,8 @@ class Api(
     apiConfig: ApiConfig,
     apiStatusRoutes: ApiStatusRoutes,
     apiLineRoutes: ApiLineRoutes,
-    apiLineageRoutes: ApiLineageRoutes
+    apiLineageRoutes: ApiLineageRoutes,
+    apiReportRoutes: ApiReportRoutes
 )(implicit val executionContext: ExecutionContext, actorSystem: ActorSystem)
   extends Directives with RouteConcatenation with DefaultFormats {
 
@@ -26,7 +27,8 @@ class Api(
     handleExceptions(ExceptionHandlerBuilder.build()(logger)) {
       apiStatusRoutes.route ~
       apiLineRoutes.routes ~
-      apiLineageRoutes.routes
+      apiLineageRoutes.routes ~
+      apiReportRoutes.routes
     }
   }
 
