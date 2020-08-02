@@ -4,17 +4,19 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, MediaTypes, StatusCodes}
 import akka.http.scaladsl.server.{Directives, MalformedHeaderRejection, Route}
+import com.github.jamedge.moonlight.core.api.ApiConfig
 import com.github.jamedge.moonlight.core.api.handlers.ApiException
 import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.core.api.versioning.line.LineHTMLSupport.generateLineHTML
 import com.github.jamedge.moonlight.core.api.versioning.line.{LineMDGenerator, LineRoutesSupport, LineV1}
 import com.github.jamedge.moonlight.core.service.line.LineService
 
-import scala.concurrent.duration.Duration.Inf
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class ApiReportRoutes(
-    lineService: LineService
+    lineService: LineService,
+    apiConfig: ApiConfig
 ) (
     implicit val executionContext: ExecutionContext,
     actorSystem: ActorSystem,
@@ -30,10 +32,12 @@ class ApiReportRoutes(
     path("report") {
       get {
         headerValueByType[Accept]() { accept =>
-          if (accept.mediaRanges.exists(_.matches(MediaTypes.`text/html`))) {
+          if (accept.mediaRanges.exists(_.matches(MediaTypes.`text/html`))) { // TODO: add separate report in Markdown
             complete(HttpResponse(
               StatusCodes.OK,
-              entity = HttpEntity(ContentTypes.`text/html(UTF-8)`, Await.result(getLinesHtml(), Inf)) // TODO: make this duration configurable
+              entity = HttpEntity(
+                ContentTypes.`text/html(UTF-8)`,
+                Await.result(getLinesHtml(), apiConfig.routesLoadTimeoutsMs.report.milliseconds))
             ))
           } else {
             reject(MalformedHeaderRejection("Accept", s"Provided value: ${accept.value()}. Supported values: 'text/html'.", None))
