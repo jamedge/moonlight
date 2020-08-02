@@ -27,7 +27,7 @@ object LineHTMLSupport extends HTMLSupport[Line] {
     Marshaller.withOpenCharset(MediaTypes.`text/html`) { case (line, charset) =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaTypes.`text/html`, charset),
-        generateLineHTML(LineV1.toLineV1(line))))
+        generateLineHTML(LineV1.trim(line))))
     }
   }
 
@@ -39,7 +39,7 @@ object LineHTMLSupport extends HTMLSupport[Line] {
     Marshaller.withFixedContentType(MediaVersionTypes.`text/moonlight.v1+html`) { line =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaVersionTypes.`text/moonlight.v1+html`),
-        generateLineHTML(LineV1.toLineV1(line))))
+        generateLineHTML(LineV1.trim(line))))
     }
   }
 
@@ -62,7 +62,7 @@ object LineHTMLSupport extends HTMLSupport[Line] {
     Marshaller.withOpenCharset(MediaTypes.`text/html`) { case (lines, charset) =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaTypes.`text/html`, charset),
-        lines.map(line => generateLineHTML(LineV1.toLineV1(line))).mkString("<br>")))
+        lines.map(line => generateLineHTML(LineV1.trim(line))).mkString("<br>")))
     }
   }
 
@@ -74,11 +74,19 @@ object LineHTMLSupport extends HTMLSupport[Line] {
     Marshaller.withFixedContentType(MediaVersionTypes.`text/moonlight.v1+html`) { lines =>
       HttpResponse(entity = HttpEntity(
         ContentType(MediaVersionTypes.`text/moonlight.v1+html`),
-        lines.map(line => generateLineHTML(LineV1.toLineV1(line))).mkString("<br>")))
+        lines.map(line => generateLineHTML(LineV1.trim(line))).mkString("<br>")))
     }
   }
 
-  private def generateLineHTML(line: LineV1)(
+  /**
+   * Generates HTML representation of the provided line.
+   * @param line Provided line.
+   * @param executionContext Execution context.
+   * @param lineMDGenerator Line markdown generator.
+   * @param lineHTMLGenerator Line HTML generator.
+   * @return Generated html representation of the line.
+   */
+  def generateLineHTML(line: Line)(
       implicit executionContext: ExecutionContext,
       lineMDGenerator: LineMDGenerator,
       lineHTMLGenerator: HTMLGenerator): String = {
@@ -86,7 +94,7 @@ object LineHTMLSupport extends HTMLSupport[Line] {
       lineMD <- lineMDGenerator.generateMd(line)
       lineHTML <- lineHTMLGenerator.generateHTML(lineMD)
     } yield lineHTML
-    result.getOrElse(throw new LineHTMLGenerationException("Error generating line HTML!"))
+    result.getOrElse(throw LineHTMLGenerationException("Error generating line HTML!"))
   }
 }
 

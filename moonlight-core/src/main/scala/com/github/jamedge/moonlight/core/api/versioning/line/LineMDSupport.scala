@@ -26,7 +26,7 @@ object LineMDSupport extends MDSupport[Line] {
       HttpResponse(entity = HttpEntity(
         ContentType(MediaTypes.`text/markdown`, charset),
         lineMDGenerator.
-          generateMd(LineV1.toLineV1(line)).
+          generateMd(line).
           getOrElse(throw LineMDGenerationException("Error generating line MD!"))))
     }
   }
@@ -39,7 +39,7 @@ object LineMDSupport extends MDSupport[Line] {
       HttpResponse(entity = HttpEntity(
         ContentType(MediaVersionTypes.`text/moonlight.v1+markdown`),
         lineMDGenerator.
-          generateMd(LineV1.toLineV1(line)).
+          generateMd(LineV1.trim(line)).
           getOrElse(throw LineMDGenerationException("Error generating line MD!"))))
     }
   }
@@ -52,7 +52,7 @@ object LineMDSupport extends MDSupport[Line] {
       HttpResponse(entity = HttpEntity(
         ContentType(MediaTypes.`text/markdown`, charset),
         lines.map(line => lineMDGenerator.
-          generateMd(LineV1.toLineV1(line)).
+          generateMd(line).
           getOrElse(throw LineMDGenerationException("Error generating line MD!"))).mkString("<br>")))
     }
   }
@@ -65,7 +65,7 @@ object LineMDSupport extends MDSupport[Line] {
       HttpResponse(entity = HttpEntity(
         ContentType(MediaVersionTypes.`text/moonlight.v1+markdown`),
         lines.map(line => lineMDGenerator.
-          generateMd(LineV1.toLineV1(line)).
+          generateMd(LineV1.trim(line)).
           getOrElse(throw LineMDGenerationException("Error generating line MD!"))).mkString("\n\n")))
     }
   }

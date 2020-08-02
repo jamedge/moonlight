@@ -8,10 +8,11 @@ import scala.util.Try
 class LineMDGenerator(
     apiConfig: ApiConfig
 ) {
-  def generateMd(line: LineV1): Try[String] = {
+  def generateMd(line: Line): Try[String] = {
     Try {
       val result =
-        s"""Property name|Property value
+        s"""## ${line.name}
+           |Property name|Property value
            |-------------|--------------
            |Name|**${line.name}**\n""" +
            line.owner.map("|Owner|" + _ + "\n").getOrElse("") +

@@ -43,4 +43,8 @@ object LineV1 {
       lineV1.alerts,
       lineV1.code)
   }
+
+  def trim(line: Line): Line = {
+    fromLineV1(toLineV1(line))
+  }
 }
