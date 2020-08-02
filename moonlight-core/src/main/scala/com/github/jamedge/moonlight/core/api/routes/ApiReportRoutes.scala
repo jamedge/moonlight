@@ -59,7 +59,10 @@ class ApiReportRoutes(
   }
 
   private def generateHeaderHtml: String = {
-    "<p>List of all entered lines to the database:</p>"
+    """
+      |<h1>Lines report</h1>
+      |<p>The list of all lines entered to the database is presented below.</p>
+    """.stripMargin
   }
 
   private def generateFooterHtml: String = {
