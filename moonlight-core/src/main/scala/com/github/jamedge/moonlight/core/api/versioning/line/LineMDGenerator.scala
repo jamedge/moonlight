@@ -8,7 +8,7 @@ import scala.util.Try
 class LineMDGenerator(
     apiConfig: ApiConfig
 ) {
-  def generateMd(line: LineV1): Try[String] = {
+  def generateMd(line: Line): Try[String] = {
     Try {
       val result =
         s"""Property name|Property value

@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.{Directives, MalformedHeaderRejection, Route}
 import com.github.jamedge.moonlight.core.api.ApiConfig
 import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.core.api.versioning.line.LineHTMLSupport.generateLineHTML
-import com.github.jamedge.moonlight.core.api.versioning.line.{LineMDGenerator, LineRoutesSupport, LineV1}
+import com.github.jamedge.moonlight.core.api.versioning.line.{LineMDGenerator, LineRoutesSupport}
 import com.github.jamedge.moonlight.core.service.line.LineService
 
 import scala.concurrent.duration._
@@ -51,7 +51,7 @@ class ApiReportRoutes(
   private def getLinesHtml(): Future[String] = {
     for {
       lines <- lineService.getLines
-      bodyString <- Future(lines.map(line => generateLineHTML(LineV1.toLineV1(line))).mkString("<br>"))
+      bodyString <- Future(lines.map(line => generateLineHTML(line)).mkString("<br>"))
       headerString <- Future(generateHeaderHtml)
       footerString <- Future(generateFooterHtml)
       htmlString <- Future(headerString + bodyString + footerString) // TODO: think about table of contents
