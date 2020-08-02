@@ -11,7 +11,8 @@ class LineMDGenerator(
   def generateMd(line: Line): Try[String] = {
     Try {
       val result =
-        s"""Property name|Property value
+        s"""## ${line.name}
+           |Property name|Property value
            |-------------|--------------
            |Name|**${line.name}**\n""" +
            line.owner.map("|Owner|" + _ + "\n").getOrElse("") +
