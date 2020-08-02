@@ -1,8 +1,9 @@
 package com.github.jamedge.moonlight.core.api.routes
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, StatusCodes}
-import akka.http.scaladsl.server.{Directives, Route}
+import akka.http.scaladsl.model.headers.Accept
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse, MediaRanges, MediaTypes, StatusCodes}
+import akka.http.scaladsl.server.{Directives, MalformedHeaderRejection, Route}
 import com.github.jamedge.moonlight.core.api.handlers.ApiException
 import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.core.api.versioning.line.LineHTMLSupport.generateLineHTML
@@ -28,14 +29,14 @@ class ApiReportRoutes(
   private[routes] def report: Route = {
     path("report") {
       get {
-        headerValueByName("Accept") { acceptValue =>
-          if (acceptValue == "text/html" | acceptValue == "*/*") { // TODO: think about the markdown
+        headerValueByType[Accept]() { accept =>
+          if (accept.mediaRanges.exists(_.matches(MediaTypes.`text/html`))) {
             complete(HttpResponse(
               StatusCodes.OK,
               entity = HttpEntity(ContentTypes.`text/html(UTF-8)`, Await.result(getLinesHtml(), Inf)) // TODO: make this duration configurable
             ))
           } else {
-            throw UnsupportedAcceptException(acceptValue)
+            throw UnsupportedAcceptException(accept.value())
           }
         }
       }
