@@ -20,7 +20,7 @@ class HTMLGeneratorSpec extends AnyFunSpec with Matchers{
 
   val testHtml: String =
     """
-      |<h2>test-line</h2>
+      |<h2><a href="#test-line" id="test-line" name="test-line" class="anchor">test-line</a></h2>
       |<table>
       |<thead>
       |<tr><th>Property name</th><th>Property value</th></tr>

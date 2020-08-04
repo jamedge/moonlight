@@ -18,7 +18,7 @@ class HTMLGenerator {
 
     options.set[util.Collection[Extension]](
       Parser.EXTENSIONS,
-      util.Arrays.asList(TablesExtension.create, StrikethroughExtension.create))
+      util.Arrays.asList(TablesExtension.create(), StrikethroughExtension.create(), AnchorLinkExtension.create()))
     options.set(AnchorLinkExtension.ANCHORLINKS_WRAP_TEXT, new java.lang.Boolean(true))
     options.set(AnchorLinkExtension.ANCHORLINKS_SET_ID, new java.lang.Boolean(true))
     options.set(AnchorLinkExtension.ANCHORLINKS_ANCHOR_CLASS, new java.lang.String("anchor"))
