@@ -102,7 +102,18 @@ def dockerSettings(exposePort: Option[Int] = None) = Seq(
   }
 )
 
+lazy val `moonlight-data-model` = project.in(file("moonlight-data-model")).
+  enablePlugins(DockerPlugin).
+  settings(commonSettings).
+  settings(libraryDependencies ++= Seq(
+    "org.neo4j.driver" % "neo4j-java-driver" % "1.7.5",
+    "com.dimafeng" %% "neotypes" % "0.13.0",
+    "org.scala-graph" %% "graph-core" % "1.13.2",
+    "org.scala-graph" %% "graph-json" % "1.13.0"
+  ))
+
 lazy val `moonlight-core` = project.in(file("moonlight-core")).
+  dependsOn(`moonlight-data-model` % "test->test;compile->compile").
   enablePlugins(DockerPlugin).
   settings(commonSettings).
   settings(assemblySettings).
@@ -112,8 +123,6 @@ lazy val `moonlight-core` = project.in(file("moonlight-core")).
     mainClass in assembly := Some("com.github.jamedge.moonlight.core.api.Api")
   ).
   settings(libraryDependencies ++= Seq(
-    "org.neo4j.driver" % "neo4j-java-driver" % "1.7.5",
-    "com.dimafeng" %% "neotypes" % "0.13.0",
     "org.scala-graph" %% "graph-core" % "1.13.2",
     "org.scala-graph" %% "graph-json" % "1.13.0",
     "com.vladsch.flexmark" % "flexmark-all" % "0.62.2"

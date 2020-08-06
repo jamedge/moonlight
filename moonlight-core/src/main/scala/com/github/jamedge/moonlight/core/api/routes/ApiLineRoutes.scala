@@ -6,12 +6,10 @@ import akka.http.scaladsl.server.{Directives, Route}
 import com.github.jamedge.moonlight.core.api.handlers.ApiException
 import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.core.api.versioning.line.{LineMDGenerator, LineRoutesSupport}
-import com.github.jamedge.moonlight.core.model.Line
 import com.github.jamedge.moonlight.core.service.line.LineService
+import com.github.jamedge.moonlight.core.model.Line
 
 import scala.concurrent.ExecutionContext
-
-case class ResponseMessage(message: String)
 
 class ApiLineRoutes(
     lineService: LineService
