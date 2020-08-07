@@ -28,7 +28,7 @@ understand how data is moving through their pipelines and to find and remove pro
 
 This is a multi module project, which consists out of several projects:
 1. `moonlight-core` - Core module which provides REST API for storage and retrieval of lineage metadata
-2. `moonlight-data-model` - Contains data access layer and case classes for DTOs
+2. `moonlight-data-model` - Contains data access layer, case classes for DTOs and core data services
 3. TODO: `moonlight-client` - Scala Library for easy usage of the API
 
 For more information of each of the modules check their `README.md` file.
