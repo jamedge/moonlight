@@ -1,6 +1,5 @@
 package com.github.jamedge.moonlight.core.service.lineage
 
-import com.github.jamedge.moonlight.core.api.versioning.lineage.{GraphFormatter, LineageGraphFormattedOutputType}
 import com.github.jamedge.moonlight.core.model.IOElement
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
@@ -8,8 +7,7 @@ import scalax.collection.edge.LDiEdge
 import scala.concurrent.{ExecutionContext, Future}
 
 class LineageService(
-    persistenceLayer: LineagePersistenceLayer,
-    graphFormatter: GraphFormatter
+    persistenceLayer: LineagePersistenceLayer
 )(implicit val executionContext: ExecutionContext) {
   /**
    * Gets lineage graph made from downstream IO Elements which is

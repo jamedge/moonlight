@@ -1,6 +1,5 @@
 package com.github.jamedge.moonlight.core.api
 
-import com.github.jamedge.moonlight.core.Context
 import com.github.jamedge.moonlight.core.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiReportRoutes, ApiStatusRoutes}
 import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.core.api.versioning.line.LineMDGenerator
@@ -16,7 +15,7 @@ import pureconfig.generic.auto._
 
 import scala.concurrent.Future
 
-class Module(app: String) extends Context(app) {
+class Module(app: String) extends ApiContext(app) {
   lazy val dbConfig: DbConfig = ConfigSource.fromConfig(config).at("db").loadOrThrow[DbConfig]
   val neo4jDriver: Id[Driver[Future]] = GraphDatabase.
     driver[Future](dbConfig.neo4j.uri,

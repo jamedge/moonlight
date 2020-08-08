@@ -1,17 +1,12 @@
-package com.github.jamedge.moonlight.core
+package com.github.jamedge.moonlight.core.api
 
 import akka.actor.ActorSystem
-import com.typesafe.config.ConfigFactory
-import org.slf4j.LoggerFactory
+import com.github.jamedge.moonlight.core.Context
 
-import scala.concurrent.{Await, ExecutionContext}
-import scala.concurrent.duration._
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
-class Context(app: String) {
-  lazy val config = ConfigFactory.load().resolve().getConfig(app)
-  lazy val logger = LoggerFactory.getLogger(getClass)
-  implicit lazy val executionContext = ExecutionContext.global
-
+class ApiContext(app: String) extends Context(app) {
   private var actorSystemInitialized = false
 
   implicit lazy val actorSystem: ActorSystem = {
