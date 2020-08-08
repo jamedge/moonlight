@@ -46,7 +46,7 @@ class Api(
 }
 
 object Api {
-  val module = new Module("moonlight-core")
+  val module = new Module("moonlight-core-api")
 
   def main(args: Array[String]): Unit = {
     sys.addShutdownHook({

@@ -102,7 +102,7 @@ def dockerSettings(exposePort: Option[Int] = None) = Seq(
   }
 )
 
-lazy val `moonlight-data-model` = project.in(file("moonlight-data-model")).
+lazy val `moonlight-core` = project.in(file("moonlight-core")).
   enablePlugins(DockerPlugin).
   settings(commonSettings).
   settings(libraryDependencies ++= Seq(
@@ -113,7 +113,7 @@ lazy val `moonlight-data-model` = project.in(file("moonlight-data-model")).
   ))
 
 lazy val `moonlight-core-api` = project.in(file("moonlight-core-api")).
-  dependsOn(`moonlight-data-model` % "test->test;compile->compile").
+  dependsOn(`moonlight-core` % "test->test;compile->compile").
   enablePlugins(DockerPlugin).
   settings(commonSettings).
   settings(assemblySettings).

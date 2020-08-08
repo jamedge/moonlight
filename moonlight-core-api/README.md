@@ -1,4 +1,4 @@
-# moonlight-core
+# moonlight-core-api
 
 Core module containing data lineage REST API.
 
