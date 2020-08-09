@@ -112,7 +112,7 @@ lazy val `moonlight-core` = project.in(file("moonlight-core")).
     "org.scala-graph" %% "graph-json" % "1.13.0"
   ))
 
-lazy val `moonlight-core-api` = project.in(file("moonlight-core-api")).
+lazy val `moonlight-api` = project.in(file("moonlight-api")).
   dependsOn(`moonlight-core` % "test->test;compile->compile").
   enablePlugins(DockerPlugin).
   settings(commonSettings).
@@ -127,3 +127,7 @@ lazy val `moonlight-core-api` = project.in(file("moonlight-core-api")).
     "org.scala-graph" %% "graph-json" % "1.13.0",
     "com.vladsch.flexmark" % "flexmark-all" % "0.62.2"
   ))
+
+lazy val `moonlight-client` = project.in(file("moonlight-client")).
+  dependsOn(`moonlight-core` % "test->test;compile->compile").
+  settings(commonSettings)

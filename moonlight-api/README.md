@@ -1,6 +1,6 @@
 # moonlight-api
 
-Core module containing data lineage REST API.
+Module that contains data lineage REST API.
 
 ## Functionality
 
@@ -9,7 +9,7 @@ It provides endpoints for:
 - adding and retrieving ETL jobs metadata such as name, purpose, owner, inputs, outputs, etc. as well as open
 map for any additional details that might further describe the underlying job.
 - retrieving lineage graph data in form of json or html
-- TODO: generating html reports describing the jobs and lineage
+- generating html report describing the jobs and lineage
 
 ## Deployment
 
