@@ -23,4 +23,6 @@ class Module(app: String) extends Context(app) {
 
   lazy val lineageService: LineageService = wire[LineageService]
   lazy val lineagePersistenceLayer: LineagePersistenceLayer = wire[LineagePersistenceLayer]
+
+  lazy val lineClient: LineClient = wire[LineClient]
 }
