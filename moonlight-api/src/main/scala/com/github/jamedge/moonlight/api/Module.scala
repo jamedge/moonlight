@@ -5,6 +5,7 @@ import com.github.jamedge.moonlight.api.routes.{ApiLineRoutes, ApiLineageRoutes,
 import com.github.jamedge.moonlight.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.api.versioning.line.LineMDGenerator
 import com.github.jamedge.moonlight.api.versioning.lineage.{GraphFormatter, OutputConfig}
+import com.github.jamedge.moonlight.core.DbConfig
 import com.github.jamedge.moonlight.core.service.line.{LinePersistenceLayer, LineService}
 import com.softwaremill.macwire.wire
 import com.github.jamedge.moonlight.core.service.lineage.{LineagePersistenceLayer, LineageService}
