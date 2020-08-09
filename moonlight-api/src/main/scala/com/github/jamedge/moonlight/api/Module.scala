@@ -1,11 +1,10 @@
 package com.github.jamedge.moonlight.api
 
-import com.github.jamedge.moonlight.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiStatusRoutes}
 import com.github.jamedge.moonlight.api.versioning.lineage.OutputConfig.Output
-import com.github.jamedge.moonlight.core.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiReportRoutes, ApiStatusRoutes}
-import com.github.jamedge.moonlight.core.api.versioning.HTMLGenerator
-import com.github.jamedge.moonlight.core.api.versioning.line.LineMDGenerator
-import com.github.jamedge.moonlight.core.api.versioning.lineage.{GraphFormatter, OutputConfig}
+import com.github.jamedge.moonlight.api.routes.{ApiLineRoutes, ApiLineageRoutes, ApiReportRoutes, ApiStatusRoutes}
+import com.github.jamedge.moonlight.api.versioning.HTMLGenerator
+import com.github.jamedge.moonlight.api.versioning.line.LineMDGenerator
+import com.github.jamedge.moonlight.api.versioning.lineage.{GraphFormatter, OutputConfig}
 import com.github.jamedge.moonlight.core.service.line.{LinePersistenceLayer, LineService}
 import com.softwaremill.macwire.wire
 import com.github.jamedge.moonlight.core.service.lineage.{LineagePersistenceLayer, LineageService}
