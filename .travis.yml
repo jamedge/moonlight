@@ -1,0 +1,46 @@
+language: scala
+dist: xenial
+
+jdk: openjdk8
+
+scala:
+  - 2.13.1
+
+sbt_args: -J-Xms1024M -J-Xmx2200M -J-Xss8M
+
+before_cache:
+  - rm -fv $HOME/.ivy2/.sbt.ivy.lock
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
+  - find $HOME/.sbt        -name "*.lock"               -print -delete
+  - |
+    mkdir -p cache_ignore/assemblyOption
+    mkdir -p cache_ignore/assembly
+    if [ -f ./target/streams/\$global/assemblyOption ]; then
+      mv ./target/streams/\$global/assemblyOption cache_ignore/assemblyOption/$PROJECT
+    fi
+    if [ -f ./target/streams/\$global/assembly ]; then
+       mv ./target/streams/\$global/assembly cache_ignore/assembly/$PROJECT
+    fi
+
+cache:
+  directories:
+  - "$HOME/.cache/coursier"
+  - "$HOME/.sbt"
+  - "$HOME/.ivy2/cache"
+  - "$HOME/docker"
+  - "$HOME/.docker"
+  - "./target"
+
+branches:
+  only:
+  - master
+
+jobs:
+  include:
+  - stage: test
+    script: sbt ++$TRAVIS_SCALA_VERSION test
+    if: type = pull_request
+
+  - stage: test and push
+    script: make docker-login && sbt ++$TRAVIS_SCALA_VERSION dockerBuildAndPush
+    if: type != pull_request
