@@ -1,7 +1,7 @@
 package com.github.jamedge.moonlight.api.versioning
 
 import akka.http.scaladsl.marshalling.ToResponseMarshaller
-import com.github.jamedge.moonlight.core.api.versioning.line.LineMDGenerator
+import com.github.jamedge.moonlight.api.versioning.line.LineMDGenerator
 
 import scala.concurrent.ExecutionContext
 

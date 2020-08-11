@@ -1,6 +1,6 @@
 package com.github.jamedge.moonlight.api.versioning
 
-import com.github.jamedge.moonlight.core.api.Module
+import com.github.jamedge.moonlight.api.Module
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
