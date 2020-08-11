@@ -44,3 +44,4 @@ jobs:
   - stage: test and push
     script: make docker-login && sbt ++$TRAVIS_SCALA_VERSION dockerBuildAndPush
     if: type != pull_request
+
