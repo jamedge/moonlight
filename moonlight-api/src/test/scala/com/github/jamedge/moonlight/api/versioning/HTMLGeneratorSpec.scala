@@ -7,7 +7,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.util.Success
 
 class HTMLGeneratorSpec extends AnyFunSpec with Matchers {
-  val module = new Module("moonlight-core")
+  val module = new Module("moonlight-api")
   val subject = module.htmlGenerator
 
   val testMd: String =

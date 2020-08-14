@@ -19,7 +19,7 @@ import scala.concurrent.Future
 
 class Module(app: String) extends ApiContext(app) {
   lazy val dbConfig: DbConfig = ConfigSource.fromConfig(config).at("db").loadOrThrow[DbConfig]
-  val neo4jDriver: Id[Driver[Future]] = GraphDatabase.
+  lazy val neo4jDriver: Id[Driver[Future]] = GraphDatabase.
     driver[Future](dbConfig.neo4j.uri,
       AuthTokens.basic(dbConfig.neo4j.username, dbConfig.neo4j.password))
 

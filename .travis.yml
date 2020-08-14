@@ -1,0 +1,51 @@
+language: scala
+dist: xenial
+
+jdk: openjdk8
+
+scala:
+  - 2.13.1
+
+sbt_args: -J-Xms1024M -J-Xmx2200M -J-Xss8M
+
+before_cache:
+  - rm -fv $HOME/.ivy2/.sbt.ivy.lock
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
+  - find $HOME/.sbt        -name "*.lock"               -print -delete
+  - |
+    mkdir -p cache_ignore/assemblyOption
+    mkdir -p cache_ignore/assembly
+    if [ -f ./target/streams/\$global/assemblyOption ]; then
+      mv ./target/streams/\$global/assemblyOption cache_ignore/assemblyOption/$PROJECT
+    fi
+    if [ -f ./target/streams/\$global/assembly ]; then
+       mv ./target/streams/\$global/assembly cache_ignore/assembly/$PROJECT
+    fi
+
+cache:
+  directories:
+  - "$HOME/.cache/coursier"
+  - "$HOME/.sbt"
+  - "$HOME/.ivy2/cache"
+  - "$HOME/docker"
+  - "$HOME/.docker"
+  - "./target"
+
+branches:
+  only:
+  - master
+
+jobs:
+  include:
+  - stage: test
+    script: sbt ++$TRAVIS_SCALA_VERSION test
+    if: type = pull_request
+
+  - stage: test and push
+    script: make docker-login && sbt ++$TRAVIS_SCALA_VERSION dockerBuildAndPush
+    if: type != pull_request && branch = master
+    env:
+      # DOCKERHUB_USERNAME
+      - secure: "ZfLp5JP40GPnzkucWJswlsaeZFVa4Vm47LnjAufqYceKnv+X7FyT99wW2+3MXccF53u7hSiS6pAL8eLan5lqg2mzKUmsp6Xv0NefbOrJHD1vVl7iDpeh8cMLYX4QwHCMrDE5SFBQ7FWMBbtg+bxX+FBJhczjbMrD7MtwhViTokVPFDkAfqazvCGkUsrn+oQwcRfL+b803VzunUjAfhsraMWpAPAEb1k3Oog7YqDeXeg7dBxOheGrbNEHfKnO8B1/X9+GfeQFZT/vOHcKGQNqrexZb6jDEeHojVumC3x9Z/LZjdCwXw0Xb+jXWGVyrMi77oAisCOu8CvfkaHgs7nthd2LoB1GuT1GElGLMsd2UI/YKX0+tNqn3QnT981ENcI3zevuKSqpipM+RfT/Rf56eo2gXkXH+KYm8UtKUEI4Rhc83qwqftxizgoZZMEMlqCt1rdYjVhBoODAwCeILL7VWv3hmXgS8H8U1K2EqOKbfTXXXpEfDZV/jlcwulFXcXamHExqpJ7OqecphXXzzs2/2KDLpQ9KC6YI776xxpnRG6JM/YzxN7PKo9hchaXtk2DXBvEQzYahmER9QrNDWB96OJTAr4Wxgg1Pd/2W0tzChAo/C6l6BT+Ftk2s1EMBh+VECZ8+sTh0RUuFaEp/7o0kyHjx5IqzoopGw2Yqw3TjxTo="
+      # DOCKERHUB_PASSWORD
+      - secure: "Fcht/oFX25SXt8gWSB6JznOGRc8C1eKdYCDBrPVwdDx2X5gvOHyG7jCXQHnUmmLN1o6lXc7EvW4JwwGZPVQcdbTJ/qlmCD8OrnhAQU90dCnTk/kiymJnGQ/bHJwCToGRA+yWj6UY4F6/+xIY6S0lcHYoXcOYayA3xBttReOaHEnDGrzm4cpw55pLEi61R/EGaK9UNhf+4mF/2RSgdvv9XUWYIxGHcXdSfwuaXzxVlUzT4VeFOSNaiKgqwUELUq//h97iwZWz+HHfYDcarJRsYPhJ9/iIalPyXOhymEpTdQ5gSLBq4+0rnRr7A5EUOHmiGhTP1a2DHCoashjs6fmXWode8z6fT2YtafJ2QkO25SyNbDOfrVqPqbd/C9ODXcvuXq9mo0A5sM+XdmBxil762bdXye8lp+161L4AwkBSD4nSuX8nlw7cgzx1/4BiLkgJyP7brTCTc2Kcz9gZdqEtjRpY3ZDRhaIZTY9cKzqHaDqhOPGBnsLo66qvoeSsxrue2zFgyptABsZUj/nL2RtAX/QvyF4KMrdC+B+gJ3NpC4CLK1Hle95eYzc3g8+PWovQkdmnIljf11io4egs/vceD3n9oIj4//OwPiXiXzxOI5wbIUzRBG+T6vLFr/dw7oiiVEVq4/HgFfjmkPGVTs29X8IAoaw4XK7Ov7iZnBSM+JY="
