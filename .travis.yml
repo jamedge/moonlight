@@ -41,8 +41,8 @@ jobs:
     script: sbt ++$TRAVIS_SCALA_VERSION test
     if: type = pull_request
 
-  - stage: test and push
-    script: make docker-login && sbt ++$TRAVIS_SCALA_VERSION dockerBuildAndPush
+  - stage: build and push api docker image
+    script: make docker-login && sbt ++$TRAVIS_SCALA_VERSION moonlight-api/dockerBuildAndPush
     if: type != pull_request && branch = master
     env:
       # DOCKERHUB_USERNAME
