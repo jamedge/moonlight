@@ -2,7 +2,7 @@ package com.github.jamedge.moonlight.api.versioning.line
 
 import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
-import com.github.jamedge.moonlight.api.versioning.{HTMLGenerator, HTMLSupport, MediaVersionTypes}
+import com.github.jamedge.moonlight.api.versioning.{FormattedOutputType, HTMLGenerator, HTMLSupport, MediaVersionTypes}
 import com.github.jamedge.moonlight.core.model.Line
 
 import scala.concurrent.ExecutionContext
@@ -91,7 +91,7 @@ object LineHTMLSupport extends HTMLSupport[Line] {
       lineMDGenerator: LineMDGenerator,
       lineHTMLGenerator: HTMLGenerator): String = {
     val result = for {
-      lineMD <- lineMDGenerator.generateMd(line)
+      lineMD <- lineMDGenerator.generateMd(line, FormattedOutputType.HTML)
       lineHTML <- lineHTMLGenerator.generateHTML(lineMD)
     } yield lineHTML
     result.getOrElse(throw LineHTMLGenerationException("Error generating line HTML!"))

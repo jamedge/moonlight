@@ -1,8 +1,8 @@
 package com.github.jamedge.moonlight.api.versioning.lineage
 
 import com.github.jamedge.moonlight.api.ApiConfig
-import com.github.jamedge.moonlight.api.versioning.HTMLGenerator
-import com.github.jamedge.moonlight.api.versioning.lineage.LineageGraphFormattedOutputType.{HTML, Md}
+import com.github.jamedge.moonlight.api.versioning.FormattedOutputType.{HTML, Md}
+import com.github.jamedge.moonlight.api.versioning.{FormattedOutputType, HTMLGenerator}
 import com.github.jamedge.moonlight.core.model.IOElement
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
@@ -21,11 +21,11 @@ class GraphFormatter(
    * @param outputType Desired format of output representation.
    * @return Graph formatted as a tree of IO Elements.
    */
-  def formatLineageGraph(ioGraph: Graph[IOElement, LDiEdge], rootIOElementName: String, outputType: LineageGraphFormattedOutputType): String = {
+  def formatLineageGraph(ioGraph: Graph[IOElement, LDiEdge], rootIOElementName: String, outputType: FormattedOutputType): String = {
     implicit val c = outputConfig.downstream(if (outputType.name == "html") "md" else outputType.name)
     implicit val ot = outputType
 
-    val lineage = formatLineageGraph(ioGraph, rootIOElementName).getOrElse(c.emptyMessage)
+    val lineage = formatLineageGraph(ioGraph, rootIOElementName).getOrElse(c.emptyMessage) // TODO: add more details about empty output line
 
     if (outputType == HTML) {
       htmlGenerator.
@@ -37,7 +37,7 @@ class GraphFormatter(
   private def formatLineageGraph(
       ioGraph: Graph[IOElement, LDiEdge],
       rootIOElementName: String
-  )(implicit outputConfig: OutputConfig.Downstream, outputType: LineageGraphFormattedOutputType): Option[String] = {
+  )(implicit outputConfig: OutputConfig.Downstream, outputType: FormattedOutputType): Option[String] = {
     ioGraph.nodes.find(_.toOuter.name == rootIOElementName).map { root =>
 
       case class Accumulator(
@@ -131,7 +131,7 @@ class GraphFormatter(
       currentNode: ioGraph.NodeT,
       root: ioGraph.NodeT,
       headingPreviousNode: ioGraph.NodeT
-  )(implicit config: OutputConfig.Downstream, outputType: LineageGraphFormattedOutputType): String = {
+  )(implicit config: OutputConfig.Downstream, outputType: FormattedOutputType): String = {
     val openString = if (currentNode eq root) {
       config.nodes.root.lines.prepend + config.nodes.root.lines.enclosure.start
     } else {
@@ -140,10 +140,10 @@ class GraphFormatter(
     val linesString = currentNode.
       connectionsWith(headingPreviousNode).
       flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
-        if (outputType == LineageGraphFormattedOutputType.HTML)
+        if (outputType == FormattedOutputType.HTML) // TODO: see what's in the case of json and extract this into a function used in empty message as well
           s"[${lineName}](http://${apiConfig.server.host}:${apiConfig.server.port}/line/$lineName)"
-        else if (outputType == LineageGraphFormattedOutputType.Md)
-          s"[${lineName}](#line/$lineName)"
+        else if (outputType == FormattedOutputType.Md)
+          s"[${lineName}](#$lineName)"
       )).
       mkString(", ")
     val closeString = if (currentNode eq root) {

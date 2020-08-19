@@ -14,7 +14,7 @@ import scalax.collection.edge.LDiEdge
 
 import scala.concurrent.ExecutionContext
 
-case class LineageGraphResponse(rootNode: String, graph: Graph[IOElement, LDiEdge])
+case class LineageGraphResponse(rootNode: String, graph: Graph[IOElement, LDiEdge]) // TODO: update the response to use the whole lineageGraph object
 
 trait LineageRoutesSupport {
   implicit def lineageGraphResponseMarshaller(
@@ -45,7 +45,7 @@ class ApiLineageRoutes(
     path("lineage" / "graph" / Segment) { rootIOElementName =>
       get {
         complete(lineageService.getLineageGraph(rootIOElementName).map(graph =>
-          LineageGraphResponse(rootIOElementName, graph)))
+          LineageGraphResponse(rootIOElementName, graph.graph)))
       }
     } ~
       path("lineage" / "graph_source" / Segment) { rootIOElementName =>
@@ -55,7 +55,7 @@ class ApiLineageRoutes(
             lineageService.getLineageGraph(rootIOElementName).map { graph =>
               HttpResponse(entity = HttpEntity(
                 ContentType(MediaTypes.`application/json`),
-                graph.toJson(GraphBuilder.createLineageGraphJsonDescriptor())))
+                graph.graph.toJson(GraphBuilder.createLineageGraphJsonDescriptor())))
             }
           }
         }
