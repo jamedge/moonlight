@@ -77,7 +77,7 @@ class ApiReportRoutes(
             getOrElse(throw new LineMDGenerationException("Markdown generation failed!"))).mkString("<br>\n"))
       lineageGraphs <- lineageService.getLineageGraphs
       lineagesString <- Future("# Lineage\n" + lineageGraphs.map(graph => graphFormatter.
-        formatLineageGraph(graph.graph, graph.rootNode, FormattedOutputType.Md)).mkString("<br><br>\n"))
+        formatLineageGraph(graph, FormattedOutputType.Md)).mkString("<br><br>\n"))
       headerString <- Future(generateHeaderHtml)
       footerString <- Future(generateFooterHtml)
       htmlString <- Future(

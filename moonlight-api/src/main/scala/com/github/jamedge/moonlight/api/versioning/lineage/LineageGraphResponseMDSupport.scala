@@ -19,8 +19,7 @@ object LineageGraphResponseMDSupport {
           ContentType(MediaTypes.`text/markdown`, charset),
           graphFormatter. // TODO: update graph formatter to use the whole lineage graph object
             formatLineageGraph(
-              lineageGraphResponse.graph,
-              lineageGraphResponse.rootNode,
+              lineageGraphResponse.lineageGraph,
               FormattedOutputType.Md)))
     }
   }
@@ -35,8 +34,7 @@ object LineageGraphResponseMDSupport {
           MediaVersionTypes.`text/moonlight.v1+markdown`),
         graphFormatter.
           formatLineageGraph(
-            lineageGraphResponse.graph,
-            lineageGraphResponse.rootNode,
+            lineageGraphResponse.lineageGraph,
             FormattedOutputType.Md)))
     }
   }

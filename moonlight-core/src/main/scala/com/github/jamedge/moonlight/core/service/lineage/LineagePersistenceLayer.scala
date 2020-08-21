@@ -54,4 +54,4 @@ class LineagePersistenceLayer(
   }
 }
 
-case class LineageGraph(rootNode: String, graph: Graph[IOElement, LDiEdge])
+case class LineageGraph(rootNodeName: String, graph: Graph[IOElement, LDiEdge])

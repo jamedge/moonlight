@@ -18,8 +18,7 @@ object LineageGraphResponseJsonSupport extends JsonSupport[LineageGraphResponse]
           ContentType(MediaTypes.`application/json`),
           graphFormatter.
             formatLineageGraph(
-              lineageGraphResponse.graph,
-              lineageGraphResponse.rootNode,
+              lineageGraphResponse.lineageGraph,
               FormattedOutputType.Json)))
     }
   }
@@ -33,8 +32,7 @@ object LineageGraphResponseJsonSupport extends JsonSupport[LineageGraphResponse]
         ContentType(MediaVersionTypes.`application/moonlight.v1+json`),
         graphFormatter.
           formatLineageGraph(
-            lineageGraphResponse.graph,
-            lineageGraphResponse.rootNode,
+            lineageGraphResponse.lineageGraph,
             FormattedOutputType.Json)))
     }
   }

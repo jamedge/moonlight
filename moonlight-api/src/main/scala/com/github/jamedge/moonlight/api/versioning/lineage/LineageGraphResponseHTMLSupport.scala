@@ -19,8 +19,7 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
         ContentType(MediaTypes.`text/html`, charset),
         graphFormatter.
           formatLineageGraph(
-            lineageGraphResponse.graph,
-            lineageGraphResponse.rootNode,
+            lineageGraphResponse.lineageGraph,
             FormattedOutputType.HTML)))
     }
   }
@@ -35,8 +34,7 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
         MediaVersionTypes.`text/moonlight.v1+html`),
         graphFormatter.
           formatLineageGraph(
-            lineageGraphResponse.graph,
-            lineageGraphResponse.rootNode,
+            lineageGraphResponse.lineageGraph,
             FormattedOutputType.HTML)))
   }
 
