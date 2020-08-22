@@ -1,14 +1,14 @@
 package com.github.jamedge.moonlight.api.versioning.lineage
 
 import com.github.jamedge.moonlight.api.ApiConfig
-import com.github.jamedge.moonlight.api.versioning.FormattedOutputType.{HTML, Md}
+import com.github.jamedge.moonlight.api.versioning.FormattedOutputType.{HTML, Md, Json}
 import com.github.jamedge.moonlight.api.versioning.{FormattedOutputType, HTMLGenerator}
 import com.github.jamedge.moonlight.core.model.IOElement
 import com.github.jamedge.moonlight.core.service.lineage.LineageGraph
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
 
-class GraphFormatter(
+class GraphFormatter( // TODO: refactor this class to better split reponsibilities and see what needs to be private and what not
     outputConfig: OutputConfig.Output,
     apiConfig: ApiConfig,
     htmlGenerator: HTMLGenerator
@@ -25,13 +25,40 @@ class GraphFormatter(
     implicit val c = outputConfig.downstream(if (outputType.name == "html") "md" else outputType.name)
     implicit val ot = outputType
 
-    val lineage = formatLineageGraph(lineageGraph).getOrElse(c.emptyMessage) // TODO: add more details about empty output line
+    val lineage = formatLineageGraph(lineageGraph).
+      getOrElse(generateEmptyLineage(lineageGraph.rootNodeName, c.emptyMessage))
 
     if (outputType == HTML) {
       htmlGenerator.
         generateHTML(lineage).
         getOrElse(throw LineageHTMLGenerationException("Error generating lineage HTML!"))
     } else lineage
+  }
+
+  private def generateEmptyLineage(
+      rootNodeName: String,
+      emptyMessage: String
+  )(implicit outputType: FormattedOutputType, outputConfig: OutputConfig.Downstream): String = {
+    outputType match {
+      case Md =>
+        outputConfig.nodes.root.node.enclosure.start + rootNodeName + outputConfig.nodes.root.node.enclosure.end +
+        downstreamCaptionChildrenEnclosureOpen +
+        outputConfig.newline + outputConfig.space * outputConfig.indentSize * 2 +
+        emptyMessage +
+        downstreamCaptionChildrenEnclosureClose
+      case HTML | Json | _ => emptyMessage
+    }
+  }
+
+  private def generateElementLink(
+      elementName: String,
+      elementType: String
+  )(implicit outputType: FormattedOutputType): String = {
+    outputType match {
+      case HTML => s"[${elementName}](http://${apiConfig.server.host}:${apiConfig.server.port}/$elementType/$elementName)"
+      case Md => s"[${elementName}](#$elementName)" // TODO: update this when elementType prefixes to anchors are added
+      case Json | _ => elementName
+    }
   }
 
   private def formatLineageGraph(
@@ -141,10 +168,7 @@ class GraphFormatter(
     val linesString = currentNode.
       connectionsWith(headingPreviousNode).
       flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
-        if (outputType == FormattedOutputType.HTML) // TODO: see what's in the case of json and extract this into a function used in empty message as well
-          s"[${lineName}](http://${apiConfig.server.host}:${apiConfig.server.port}/line/$lineName)"
-        else if (outputType == FormattedOutputType.Md)
-          s"[${lineName}](#$lineName)"
+        generateElementLink(lineName, "line")
       )).
       mkString(", ")
     val closeString = if (currentNode eq root) {
