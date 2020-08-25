@@ -52,11 +52,12 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
 
   private def generateElementLink(
       elementName: String,
-      elementType: String
+      elementType: String,
+      linkPrefix: String
   )(implicit outputType: FormattedOutputType): String = {
     outputType match {
       case HTML => s"[${elementName}](http://${apiConfig.server.host}:${apiConfig.server.port}/$elementType/$elementName)"
-      case Md => s"[${elementName}](#$elementName)" // TODO: update this when elementType prefixes to anchors are added
+      case Md => s"[$linkPrefix:${elementName}](#$linkPrefix:$elementName)"
       case Json | _ => elementName
     }
   }
@@ -168,7 +169,7 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
     val linesString = currentNode.
       connectionsWith(headingPreviousNode).
       flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
-        generateElementLink(lineName, "line")
+        generateElementLink(lineName, "line", "l")
       )).
       mkString(", ")
     val closeString = if (currentNode eq root) {

@@ -12,7 +12,7 @@ class LineMDGenerator(
   def generateMd(line: Line, outputType: FormattedOutputType = FormattedOutputType.Md): Try[String] = {
     Try { // TODO: make other elements output type dependent
       val result =
-        s"""## ${line.name}
+        s"""## l:${line.name}
            |Property name|Property value
            |-------------|--------------
            |Name|**${line.name}**\n""" +
@@ -73,7 +73,7 @@ class LineMDGenerator(
   }
 
   private def generateLineageLinkMD(ioElement: IOElement): String = {
-    s"[->](#${ioElement.name})"
+    s"[->](#lng:${ioElement.name})"
   }
 
   private def generateProcessCaptions(processes: List[Process]): List[String] = {
