@@ -1,6 +1,7 @@
 package com.github.jamedge.moonlight.api.versioning.line
 
 import com.github.jamedge.moonlight.api.ApiConfig
+import com.github.jamedge.moonlight.api.versioning.FormattedOutputType
 import com.github.jamedge.moonlight.core.model.{Alert, Code, IOElement, Line, Metric, Process}
 
 import scala.util.Try
@@ -8,10 +9,10 @@ import scala.util.Try
 class LineMDGenerator(
     apiConfig: ApiConfig
 ) {
-  def generateMd(line: Line): Try[String] = {
-    Try {
+  def generateMd(line: Line, outputType: FormattedOutputType = FormattedOutputType.Md): Try[String] = {
+    Try { // TODO: make other elements output type dependent
       val result =
-        s"""## ${line.name}
+        s"""## l:${line.name}
            |Property name|Property value
            |-------------|--------------
            |Name|**${line.name}**\n""" +
@@ -19,8 +20,8 @@ class LineMDGenerator(
            line.purpose.map("|Purpose|" + _ + "\n").getOrElse("") +
            (line.notes.map(("|Notes|", _)).getOrElse(("", List())) match {
                 case (c, l) => c + l.map(n => s"_${n}_").mkString(", ") + "\n"}) +
-           s"|Inputs|${line.io.flatMap(io => generateIOCaptions(io.inputs)).mkString(", ")}\n" +
-           s"|Outputs|${line.io.flatMap(io => generateIOCaptions(io.outputs)).mkString(", ")}\n" +
+           s"|Inputs|${line.io.flatMap(io => generateIOCaptions(io.inputs, outputType)).mkString(", ")}\n" +
+           s"|Outputs|${line.io.flatMap(io => generateIOCaptions(io.outputs, outputType)).mkString(", ")}\n" +
            generateListCaption(generateProcessCaptions(line.processedBy), "Processed by") +
            generateListCaption(generateMetricsCaptions(line.metrics), "Metrics") +
            generateListCaption(generateAlertsCaptions(line.alerts), "Alerts") +
@@ -39,10 +40,11 @@ class LineMDGenerator(
     }
   }
 
-  private def generateIOCaptions(ioElements: List[IOElement]): List[String] = {
+  // TODO: fix all links and anchors based on output type
+  private def generateIOCaptions(ioElements: List[IOElement], outputType: FormattedOutputType): List[String] = {
     ioElements.map { i =>
       val inputLink = generateIOLink(i)
-      val lineageLink = generateLineageLink(i)
+      val lineageLink = generateLineageLink(i, outputType)
       s"$inputLink [$lineageLink]"
     }
   }
@@ -59,8 +61,19 @@ class LineMDGenerator(
     s"[${ioElement.name}](#${ioElement.locationRelativePath.getOrElse(ioElement.name)})"
   }
 
-  private def generateLineageLink(ioElement: IOElement): String = {
+  private def generateLineageLink(ioElement: IOElement, outputType: FormattedOutputType): String = {
+    outputType match {
+      case FormattedOutputType.HTML => generateLineageLinkHTML(ioElement)
+      case FormattedOutputType.Md => generateLineageLinkMD(ioElement)
+    }
+  }
+
+  private def generateLineageLinkHTML(ioElement: IOElement): String = {
     s"[->](http://${apiConfig.server.host}:${apiConfig.server.port}/lineage/graph/${ioElement.name})"
+  }
+
+  private def generateLineageLinkMD(ioElement: IOElement): String = {
+    s"[->](#lng:${ioElement.name})"
   }
 
   private def generateProcessCaptions(processes: List[Process]): List[String] = {

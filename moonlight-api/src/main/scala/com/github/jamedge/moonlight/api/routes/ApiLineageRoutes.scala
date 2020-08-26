@@ -6,15 +6,12 @@ import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTyp
 import akka.http.scaladsl.server.{Directives, Route}
 import com.github.jamedge.moonlight.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.api.versioning.lineage.{GraphFormatter, LineageGraphResponseHTMLSupport, LineageGraphResponseJsonSupport, LineageGraphResponseMDSupport}
-import com.github.jamedge.moonlight.core.model.IOElement
-import com.github.jamedge.moonlight.core.service.lineage.{GraphBuilder, LineageService}
+import com.github.jamedge.moonlight.core.service.lineage.{GraphBuilder, LineageGraph, LineageService}
 import org.json4s.DefaultFormats
-import scalax.collection.Graph
-import scalax.collection.edge.LDiEdge
 
 import scala.concurrent.ExecutionContext
 
-case class LineageGraphResponse(rootNode: String, graph: Graph[IOElement, LDiEdge])
+case class LineageGraphResponse(lineageGraph: LineageGraph)
 
 trait LineageRoutesSupport {
   implicit def lineageGraphResponseMarshaller(
@@ -44,8 +41,7 @@ class ApiLineageRoutes(
   def routes: Route = {
     path("lineage" / "graph" / Segment) { rootIOElementName =>
       get {
-        complete(lineageService.getLineageGraph(rootIOElementName).map(graph =>
-          LineageGraphResponse(rootIOElementName, graph)))
+        complete(lineageService.getLineageGraph(rootIOElementName).map(LineageGraphResponse))
       }
     } ~
       path("lineage" / "graph_source" / Segment) { rootIOElementName =>
@@ -55,7 +51,7 @@ class ApiLineageRoutes(
             lineageService.getLineageGraph(rootIOElementName).map { graph =>
               HttpResponse(entity = HttpEntity(
                 ContentType(MediaTypes.`application/json`),
-                graph.toJson(GraphBuilder.createLineageGraphJsonDescriptor())))
+                graph.graph.toJson(GraphBuilder.createLineageGraphJsonDescriptor())))
             }
           }
         }

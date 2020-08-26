@@ -3,7 +3,7 @@ package com.github.jamedge.moonlight.api.versioning.lineage
 import akka.http.scaladsl.marshalling.{Marshaller, ToResponseMarshaller}
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import com.github.jamedge.moonlight.api.routes.LineageGraphResponse
-import com.github.jamedge.moonlight.api.versioning.{HTMLGenerator, JsonSupport, MediaVersionTypes}
+import com.github.jamedge.moonlight.api.versioning.{FormattedOutputType, HTMLGenerator, JsonSupport, MediaVersionTypes}
 
 import scala.concurrent.ExecutionContext
 
@@ -19,9 +19,8 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
         ContentType(MediaTypes.`text/html`, charset),
         graphFormatter.
           formatLineageGraph(
-            lineageGraphResponse.graph,
-            lineageGraphResponse.rootNode,
-            LineageGraphFormattedOutputType.HTML)))
+            lineageGraphResponse.lineageGraph,
+            FormattedOutputType.HTML)))
     }
   }
 
@@ -35,9 +34,8 @@ object LineageGraphResponseHTMLSupport extends JsonSupport[LineageGraphResponse]
         MediaVersionTypes.`text/moonlight.v1+html`),
         graphFormatter.
           formatLineageGraph(
-            lineageGraphResponse.graph,
-            lineageGraphResponse.rootNode,
-            LineageGraphFormattedOutputType.HTML)))
+            lineageGraphResponse.lineageGraph,
+            FormattedOutputType.HTML)))
   }
 
   implicit def marshaller(

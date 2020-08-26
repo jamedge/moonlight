@@ -21,17 +21,37 @@ class LineagePersistenceLayer(
    * @param rootIOElementName Value of the `name` attribute of the root IO Element.
    * @return Graph containing all IO Elements downstream from the root IO Element.
    */
-  def getLineageGraph(rootIOElementName: String): Future[Graph[IOElement, LDiEdge]] = {
+  def getLineageGraph(rootIOElementName: String): Future[LineageGraph] = {
     neo4jDriver.readSession { implicit session =>
-      session.transact[Graph[IOElement, LDiEdge]] { implicit tx =>
+      session.transact[LineageGraph] { implicit tx =>
         for {
           rawEdges <- LineageQueriesConstructor.constructGetLineageRawEdgesQuery(rootIOElementName).query[GraphBuilder.RawEdge].list(tx)
           rawIODetails <- LineageQueriesConstructor.constructGetAllIODetailsQuery().query[(String, Value)].map(tx)
           storages <- LineageQueriesConstructor.constructGetAllIOStoragesQuery().query[(String, Storage)].map(tx)
           rawStorageDetails <- LineageQueriesConstructor.constructGetAllStorageDetailsQuery().query[(String, Value)].map(tx)
           graph <- Future(GraphBuilder.buildLineageGraph(rawEdges, rawIODetails, storages, rawStorageDetails))
-        } yield graph
+          lineageGraph <- Future(LineageGraph(rootIOElementName, graph))
+        } yield lineageGraph
+      }
+    }
+  }
+
+  /**
+   * Gets lineage graphs starting from each node in the persistence layer.
+   *
+   * @return List of Graphs containing all IO Elements downstream for each root IO Element
+   *         in the persistence layer.
+   */
+  def getLineageGraphs: Future[List[LineageGraph]] = {
+    neo4jDriver.readSession { implicit session =>
+      session.transact[List[LineageGraph]] { implicit tx =>
+        for {
+          ioNames <- LineageQueriesConstructor.constructGetAllIONamesQuery().query[String].list(tx)
+          graphs <- Future.sequence(ioNames.map(getLineageGraph))
+        } yield graphs
       }
     }
   }
 }
+
+case class LineageGraph(rootNodeName: String, graph: Graph[IOElement, LDiEdge])

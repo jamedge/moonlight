@@ -1,13 +1,14 @@
 package com.github.jamedge.moonlight.api.versioning.lineage
 
 import com.github.jamedge.moonlight.api.ApiConfig
-import com.github.jamedge.moonlight.api.versioning.HTMLGenerator
-import com.github.jamedge.moonlight.api.versioning.lineage.LineageGraphFormattedOutputType.{HTML, Md}
+import com.github.jamedge.moonlight.api.versioning.FormattedOutputType.{HTML, Md, Json}
+import com.github.jamedge.moonlight.api.versioning.{FormattedOutputType, HTMLGenerator}
 import com.github.jamedge.moonlight.core.model.IOElement
+import com.github.jamedge.moonlight.core.service.lineage.LineageGraph
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
 
-class GraphFormatter(
+class GraphFormatter( // TODO: refactor this class to better split reponsibilities and see what needs to be private and what not
     outputConfig: OutputConfig.Output,
     apiConfig: ApiConfig,
     htmlGenerator: HTMLGenerator
@@ -16,16 +17,16 @@ class GraphFormatter(
    * Transforms the lineage graph made from downstream IO Elements and the specified root element
    * into the desired representation.
    *
-   * @param ioGraph Lineage graph made from downstream IO Elements.
-   * @param rootIOElementName Value of the `name` attribute of the root IO Element.
+   * @param lineageGraph Lineage graph made from downstream IO Elements.
    * @param outputType Desired format of output representation.
    * @return Graph formatted as a tree of IO Elements.
    */
-  def formatLineageGraph(ioGraph: Graph[IOElement, LDiEdge], rootIOElementName: String, outputType: LineageGraphFormattedOutputType): String = {
+  def formatLineageGraph(lineageGraph: LineageGraph, outputType: FormattedOutputType): String = {
     implicit val c = outputConfig.downstream(if (outputType.name == "html") "md" else outputType.name)
     implicit val ot = outputType
 
-    val lineage = formatLineageGraph(ioGraph, rootIOElementName).getOrElse(c.emptyMessage)
+    val lineage = formatLineageGraph(lineageGraph).
+      getOrElse(generateEmptyLineage(lineageGraph.rootNodeName, c.emptyMessage))
 
     if (outputType == HTML) {
       htmlGenerator.
@@ -34,31 +35,59 @@ class GraphFormatter(
     } else lineage
   }
 
+  private def generateEmptyLineage(
+      rootNodeName: String,
+      emptyMessage: String
+  )(implicit outputType: FormattedOutputType, outputConfig: OutputConfig.Downstream): String = {
+    outputType match {
+      case Md =>
+        outputConfig.nodes.root.node.enclosure.start + rootNodeName + outputConfig.nodes.root.node.enclosure.end +
+        downstreamCaptionChildrenEnclosureOpen +
+        outputConfig.newline + outputConfig.space * outputConfig.indentSize * 2 +
+        emptyMessage +
+        downstreamCaptionChildrenEnclosureClose
+      case HTML | Json | _ => emptyMessage
+    }
+  }
+
+  private def generateElementLink(
+      elementName: String,
+      elementType: String,
+      linkPrefix: String
+  )(implicit outputType: FormattedOutputType): String = {
+    outputType match {
+      case HTML => s"[${elementName}](http://${apiConfig.server.host}:${apiConfig.server.port}/$elementType/$elementName)"
+      case Md => s"[$linkPrefix:${elementName}](#$linkPrefix:$elementName)"
+      case Json | _ => elementName
+    }
+  }
+
   private def formatLineageGraph(
-      ioGraph: Graph[IOElement, LDiEdge],
-      rootIOElementName: String
-  )(implicit outputConfig: OutputConfig.Downstream, outputType: LineageGraphFormattedOutputType): Option[String] = {
-    ioGraph.nodes.find(_.toOuter.name == rootIOElementName).map { root =>
+      lineageGraph: LineageGraph
+  )(implicit outputConfig: OutputConfig.Downstream, outputType: FormattedOutputType): Option[String] = {
+    lineageGraph.graph.nodes.find(_.toOuter.name == lineageGraph.rootNodeName).map { root =>
 
       case class Accumulator(
           resultString: String,
-          previousNodes: List[ioGraph.NodeT],
-          previousNode: ioGraph.NodeT,
+          previousNodes: List[lineageGraph.graph.NodeT],
+          previousNode: lineageGraph.graph.NodeT,
           level: Int)
 
       val emptyElement = IOElement("", None, None, None, None, None, None)
-      val emptyAccumulator = Accumulator("", List(ioGraph.Node(emptyElement)), ioGraph.Node(emptyElement), 0)
+      val emptyAccumulator = Accumulator(
+        "",
+        List(lineageGraph.graph.Node(emptyElement)), lineageGraph.graph.Node(emptyElement), 0)
 
       val result = root.innerNodeDownUpTraverser.foldLeft(emptyAccumulator) { case (acc, (firstDip, currentNode)) =>
         if (firstDip) {
           val currentLevel = acc.level + 1
           Accumulator(
             resultString = acc.resultString +
-              downstreamCaptionMainEnclosureOpen(ioGraph)(currentNode, root, acc.previousNode, currentLevel) +
-              downstreamCaptionNode(ioGraph)(currentNode, root) +
-              downstreamCaptionElementsSeparator(ioGraph)(currentNode, root) +
-              downstreamCaptionLines(ioGraph)(currentNode, root, acc.previousNodes.head) +
-              downstreamCaptionElementsSeparator(ioGraph)(currentNode, root) +
+              downstreamCaptionMainEnclosureOpen(lineageGraph.graph)(currentNode, root, acc.previousNode, currentLevel) +
+              downstreamCaptionNode(lineageGraph.graph)(currentNode, root) +
+              downstreamCaptionElementsSeparator(lineageGraph.graph)(currentNode, root) +
+              downstreamCaptionLines(lineageGraph.graph)(currentNode, root, acc.previousNodes.head) +
+              downstreamCaptionElementsSeparator(lineageGraph.graph)(currentNode, root) +
               downstreamCaptionChildrenEnclosureOpen,
             previousNodes = currentNode :: acc.previousNodes,
             previousNode = currentNode,
@@ -70,7 +99,7 @@ class GraphFormatter(
           Accumulator(
             resultString = acc.resultString +
               downstreamCaptionChildrenEnclosureClose +
-              downstreamCaptionMainEnclosureClose(ioGraph)(currentNode, root),
+              downstreamCaptionMainEnclosureClose(lineageGraph.graph)(currentNode, root),
             previousNodes = acc.previousNodes.tail,
             previousNode = currentNode,
             level = currentLevel
@@ -131,7 +160,7 @@ class GraphFormatter(
       currentNode: ioGraph.NodeT,
       root: ioGraph.NodeT,
       headingPreviousNode: ioGraph.NodeT
-  )(implicit config: OutputConfig.Downstream, outputType: LineageGraphFormattedOutputType): String = {
+  )(implicit config: OutputConfig.Downstream, outputType: FormattedOutputType): String = {
     val openString = if (currentNode eq root) {
       config.nodes.root.lines.prepend + config.nodes.root.lines.enclosure.start
     } else {
@@ -140,10 +169,7 @@ class GraphFormatter(
     val linesString = currentNode.
       connectionsWith(headingPreviousNode).
       flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
-        if (outputType == LineageGraphFormattedOutputType.HTML)
-          s"[${lineName}](http://${apiConfig.server.host}:${apiConfig.server.port}/line/$lineName)"
-        else if (outputType == LineageGraphFormattedOutputType.Md)
-          s"[${lineName}](#line/$lineName)"
+        generateElementLink(lineName, "line", "l")
       )).
       mkString(", ")
     val closeString = if (currentNode eq root) {
