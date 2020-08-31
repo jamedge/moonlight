@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTyp
 import akka.http.scaladsl.server.{Directives, Route}
 import com.github.jamedge.moonlight.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.api.versioning.lineage.{GraphFormatter, LineageGraphResponseHTMLSupport, LineageGraphResponseJsonSupport, LineageGraphResponseMDSupport}
-import com.github.jamedge.moonlight.core.service.lineage.{GraphBuilder, LineageGraph, LineageService}
+import com.github.jamedge.moonlight.core.service.fixture.{GraphBuilder, LineageGraph, LineageService}
 import org.json4s.DefaultFormats
 
 import scala.concurrent.ExecutionContext

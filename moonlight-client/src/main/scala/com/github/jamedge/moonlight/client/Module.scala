@@ -1,7 +1,7 @@
 package com.github.jamedge.moonlight.client
 
 import com.github.jamedge.moonlight.core.service.line.{LinePersistenceLayer, LineService}
-import com.github.jamedge.moonlight.core.service.lineage.{LineagePersistenceLayer, LineageService}
+import com.github.jamedge.moonlight.core.service.fixture.{LineagePersistenceLayer, LineageService}
 import com.github.jamedge.moonlight.core.{Context, DbConfig}
 import com.softwaremill.macwire.wire
 import neotypes.{Driver, GraphDatabase}

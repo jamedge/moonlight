@@ -1,4 +1,4 @@
-package com.github.jamedge.moonlight.core.service.lineage
+package com.github.jamedge.moonlight.core.service.fixture
 
 import com.github.jamedge.moonlight.core.model.neo4j.queries.LineageQueriesConstructor
 import com.github.jamedge.moonlight.core.model.{IOElement, Storage}
@@ -54,4 +54,9 @@ class LineagePersistenceLayer(
   }
 }
 
+/**
+ * Class used for storage of the lineage graph and its root node.
+ * @param rootNodeName Root node of the graph.
+ * @param graph Lineage graph itself.
+ */
 case class LineageGraph(rootNodeName: String, graph: Graph[IOElement, LDiEdge])

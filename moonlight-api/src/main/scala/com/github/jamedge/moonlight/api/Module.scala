@@ -8,7 +8,7 @@ import com.github.jamedge.moonlight.api.versioning.lineage.{GraphFormatter, Outp
 import com.github.jamedge.moonlight.core.DbConfig
 import com.github.jamedge.moonlight.core.service.line.{LinePersistenceLayer, LineService}
 import com.softwaremill.macwire.wire
-import com.github.jamedge.moonlight.core.service.lineage.{LineagePersistenceLayer, LineageService}
+import com.github.jamedge.moonlight.core.service.fixture.{LineagePersistenceLayer, LineageService}
 import neotypes.{Driver, GraphDatabase}
 import org.neo4j.driver.v1.AuthTokens
 import pureconfig.ConfigSource
