@@ -6,7 +6,6 @@ import com.github.jamedge.moonlight.core.model.IOElement
 import com.github.jamedge.moonlight.core.service.fixture.{GraphBuilder, IOElementFixture, LineageGraph}
 import com.github.jamedge.moonlight.core.service.fixture.GraphBuilder.RawEdge
 import org.json4s.DefaultFormats
-import org.json4s.JsonDSL._
 import org.json4s.jackson.Serialization.read
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -44,13 +43,31 @@ class GraphFormatterSpec extends AnyFunSpec with Matchers {
       val result = subject.formatLineageGraph(testLineageGraph, Json)
       val resultJsonLinesTree = read[JsonLinesTree](result)
 
-      // TODO: fix a bug in dependencies generation cusing missing connections
-//      print(resultJsonLinesTree)
+      resultJsonLinesTree.name shouldBe "test_io_element_1"
+      resultJsonLinesTree.lines shouldBe ""
+      resultJsonLinesTree.children should have size 5
 
-//      resultJsonLinesTree.name shouldBe "test_io_element_1"
-//      resultJsonLinesTree.lines shouldBe ""
-//      resultJsonLinesTree.children should have size 4
+      resultJsonLinesTree.children(0).name shouldBe "test_io_element_2"
+      resultJsonLinesTree.children(0).lines shouldBe "test_line1"
+      resultJsonLinesTree.children(0).children should have size 2
+      resultJsonLinesTree.children(0).children should contain (JsonLinesTree("test_io_element_5", "test_line2", List()))
+      resultJsonLinesTree.children(0).children should contain (JsonLinesTree("test_io_element_6", "test_line2", List()))
 
+      resultJsonLinesTree.children(1).name shouldBe "test_io_element_3"
+      resultJsonLinesTree.children(1).lines shouldBe "test_line1"
+      resultJsonLinesTree.children(1).children shouldBe empty
+
+      resultJsonLinesTree.children(2).name shouldBe "test_io_element_4"
+      resultJsonLinesTree.children(2).lines shouldBe "test_line1"
+      resultJsonLinesTree.children(1).children shouldBe empty
+
+      resultJsonLinesTree.children(3).name shouldBe "test_io_element_5"
+      resultJsonLinesTree.children(3).lines shouldBe "test_line1, test_line2"
+      resultJsonLinesTree.children(1).children shouldBe empty
+
+      resultJsonLinesTree.children(4).name shouldBe "test_io_element_6"
+      resultJsonLinesTree.children(4).lines shouldBe "test_line1, test_line2"
+      resultJsonLinesTree.children(1).children shouldBe empty
     }
   }
 }
