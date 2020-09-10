@@ -8,6 +8,8 @@ import com.github.jamedge.moonlight.core.service.fixture.LineageGraph
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
 
+import scala.util.Try
+
 class GraphFormatter( // TODO: refactor this class to better split reponsibilities and see what needs to be private and what not
     outputConfig: OutputConfig.Output,
     apiConfig: ApiConfig,
@@ -25,9 +27,7 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
     implicit val c = outputConfig.downstream(if (outputType.name == "html") "md" else outputType.name)
     implicit val ot = outputType
 
-    val lineage = formatLineageGraph(lineageGraph).
-      getOrElse(generateEmptyLineage(lineageGraph.rootNodeName, c.emptyMessage))
-
+    val lineage = formatLineageGraph(lineageGraph)
     if (outputType == HTML) {
       htmlGenerator.
         generateHTML(lineage).
@@ -64,14 +64,17 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
 
   private def formatLineageGraph(
       lineageGraph: LineageGraph
-  )(implicit outputConfig: OutputConfig.Downstream, outputType: FormattedOutputType): Option[String] = {
-    lineageGraph.graph.nodes.find(_.toOuter.name == lineageGraph.rootNodeName).map { root =>
-      if (lineageGraph.graph.isAcyclic) {
-        traverseGraph(lineageGraph.graph)(root, None, root, 0)
-      } else {
-        generateEmptyLineage(lineageGraph.rootNodeName, outputConfig.cyclicMessage)
-      }
-    }
+  )(implicit outputConfig: OutputConfig.Downstream, outputType: FormattedOutputType): String = {
+    val resultTry = for {
+      root <- Try(lineageGraph.graph.nodes.find(_.toOuter.name == lineageGraph.rootNodeName).
+        getOrElse(throw NonExistentRootException()))
+      lineageGraphString <- Try(traverseGraph(lineageGraph.graph)(root, None, root, 0))
+    } yield lineageGraphString
+    resultTry.recover {
+      case e: NonExistentRootException => generateEmptyLineage(lineageGraph.rootNodeName, outputConfig.emptyMessage)
+      case e: CyclicLineageGraphException => generateEmptyLineage(lineageGraph.rootNodeName, outputConfig.cyclicMessage)
+      case e: Exception => throw e
+    }.get
   }
 
   /**
@@ -94,6 +97,10 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
       masterRoot: ioGraph.NodeT,
       depth: Int
   )(implicit outputConfig: OutputConfig.Downstream, outputType: FormattedOutputType): String = {
+    if (ioGraph.isCyclic) {
+      throw CyclicLineageGraphException()
+    }
+
     val opening = downstreamCaptionMainEnclosureOpen(ioGraph)(root, masterRoot, previousNode, depth) +
       downstreamCaptionNode(ioGraph)(root, masterRoot) +
       downstreamCaptionElementsSeparator(ioGraph)(root, masterRoot) +
@@ -209,3 +216,5 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
 }
 
 case class LineageHTMLGenerationException(message: String) extends Exception(message)
+case class NonExistentRootException() extends Exception
+case class CyclicLineageGraphException() extends Exception

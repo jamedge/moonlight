@@ -87,6 +87,21 @@ class GraphFormatterSpec extends AnyFunSpec with Matchers {
 
     resultInfoMessage.info shouldBe "This IO has no outputs."
   }
+
+  it ("should return a cyclic message when the graph contains cycles") {
+    val cyclicGraph = GraphBuilder.buildLineageGraph(
+      RawEdge(testIOPool.get(6).get, List("test_line3"), testIOPool.get(1).get) :: testGraphEdges,
+      Map(),
+      testIOPool.storageFixture.pool,
+      Map()
+    )
+
+    val testLineageGraph = LineageGraph(testIOPool.get(1).get.name, cyclicGraph)
+    val result = subject.formatLineageGraph(testLineageGraph, Json)
+    val resultInfoMessage = read[InfoMessage](result)
+
+    resultInfoMessage.info shouldBe "Graph containing this element is not acyclic!"
+  }
 }
 
 case class JsonLinesTree(name: String, lines: String, children: List[JsonLinesTree])
