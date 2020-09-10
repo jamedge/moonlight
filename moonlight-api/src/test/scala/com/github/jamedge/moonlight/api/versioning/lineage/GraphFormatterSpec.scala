@@ -3,8 +3,9 @@ package com.github.jamedge.moonlight.api.versioning.lineage
 import com.github.jamedge.moonlight.api.Module
 import com.github.jamedge.moonlight.api.versioning.FormattedOutputType.Json
 import com.github.jamedge.moonlight.core.model.IOElement
-import com.github.jamedge.moonlight.core.service.fixture.{GraphBuilder, IOElementFixture, LineageGraph}
-import com.github.jamedge.moonlight.core.service.fixture.GraphBuilder.RawEdge
+import com.github.jamedge.moonlight.core.service.fixture.IOElementFixture
+import com.github.jamedge.moonlight.core.service.lineage.{GraphBuilder, LineageGraph}
+import com.github.jamedge.moonlight.core.service.lineage.GraphBuilder.RawEdge
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.read
 import org.scalatest.funspec.AnyFunSpec

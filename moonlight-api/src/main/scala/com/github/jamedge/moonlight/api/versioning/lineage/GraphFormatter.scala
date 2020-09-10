@@ -4,7 +4,7 @@ import com.github.jamedge.moonlight.api.ApiConfig
 import com.github.jamedge.moonlight.api.versioning.FormattedOutputType.{HTML, Json, Md}
 import com.github.jamedge.moonlight.api.versioning.{FormattedOutputType, HTMLGenerator}
 import com.github.jamedge.moonlight.core.model.IOElement
-import com.github.jamedge.moonlight.core.service.fixture.LineageGraph
+import com.github.jamedge.moonlight.core.service.lineage.LineageGraph
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
 

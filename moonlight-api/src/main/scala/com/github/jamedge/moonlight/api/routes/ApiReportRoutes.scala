@@ -12,7 +12,7 @@ import com.github.jamedge.moonlight.api.versioning.line.LineHTMLSupport.generate
 import com.github.jamedge.moonlight.api.versioning.line.{LineMDGenerator, LineRoutesSupport}
 import com.github.jamedge.moonlight.api.versioning.lineage.GraphFormatter
 import com.github.jamedge.moonlight.core.service.line.LineService
-import com.github.jamedge.moonlight.core.service.fixture.LineageService
+import com.github.jamedge.moonlight.core.service.lineage.LineageService
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}

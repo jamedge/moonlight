@@ -3,6 +3,7 @@ package com.github.jamedge.moonlight.core.service.fixture
 /**
  * Fixture abstract class intended for creation of pool of
  * test object.
+ *
  * @tparam T Type of the test object.
  */
 abstract class Fixture[T] {
