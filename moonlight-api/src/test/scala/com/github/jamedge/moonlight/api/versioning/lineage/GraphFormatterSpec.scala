@@ -34,12 +34,13 @@ class GraphFormatterSpec extends AnyFunSpec with Matchers {
     testIOPool.storageFixture.pool,
     Map()
   )
-  val testLineageGraph = LineageGraph(testIOPool.get(1).get.name, testGraph)
 
   implicit val formats = DefaultFormats
 
   describe("#formatLineageGraph") {
-    it ("should generate the Json correctly") {
+    it ("should return json containing the root node and all of its children when" +
+      "it belongs to graph and has decedents") {
+      val testLineageGraph = LineageGraph(testIOPool.get(1).get.name, testGraph)
       val result = subject.formatLineageGraph(testLineageGraph, Json)
       val resultJsonLinesTree = read[JsonLinesTree](result)
 
@@ -70,6 +71,23 @@ class GraphFormatterSpec extends AnyFunSpec with Matchers {
       resultJsonLinesTree.children(1).children shouldBe empty
     }
   }
+
+  it ("should return json containing just the root node when it belongs to graph but has no decedents") {
+    val testLineageGraph = LineageGraph(testIOPool.get(3).get.name, testGraph)
+    val result = subject.formatLineageGraph(testLineageGraph, Json)
+    val resultInfoMessage = read[JsonLinesTree](result)
+
+    resultInfoMessage shouldBe JsonLinesTree("test_io_element_3", "", List())
+  }
+
+  it ("should return an empty message when the root doesn't belongs to the graph") {
+    val testLineageGraph = LineageGraph("nonexistant_root", testGraph)
+    val result = subject.formatLineageGraph(testLineageGraph, Json)
+    val resultInfoMessage = read[InfoMessage](result)
+
+    resultInfoMessage.info shouldBe "This IO has no outputs." // TODO: fix this so that it says that root doesn't exist
+  }
 }
 
 case class JsonLinesTree(name: String, lines: String, children: List[JsonLinesTree])
+case class InfoMessage(info: String)
