@@ -85,7 +85,7 @@ class GraphFormatterSpec extends AnyFunSpec with Matchers {
     val result = subject.formatLineageGraph(testLineageGraph, Json)
     val resultInfoMessage = read[InfoMessage](result)
 
-    resultInfoMessage.info shouldBe "This IO has no outputs." // TODO: fix this so that it says that root doesn't exist
+    resultInfoMessage.info shouldBe "This IO has no outputs."
   }
 }
 
