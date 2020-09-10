@@ -7,9 +7,26 @@ import scalax.collection.edge.LDiEdge
 import scalax.collection.io.json.{Descriptor, NodeDescriptor}
 import scalax.collection.io.json.descriptor.predefined.LDi
 
+/**
+ * Object used for lineage graph building.
+ */
 object GraphBuilder {
+  /**
+   * RawEdge class used to represent an edge in the Lineage Graph.
+   * @param left Left element in the edge.
+   * @param properties Properties used to label the edge.
+   * @param right Right element of the edge.
+   */
   case class RawEdge(left: IOElement, properties: List[String], right: IOElement)
 
+  /**
+   * Builds the lineage graph out of raw edges.
+   * @param rawEdges List of RawEdge elements.
+   * @param rawIODetails Map of all IO Details used to populate the IOElement's details field.
+   * @param storages Map of all storages used to populate IOElement's storage field.
+   * @param rawStorageDetails Map of all Storage Details used to populate the Storage's details field.
+   * @return Left directional graph of IO Elements.
+   */
   def buildLineageGraph(
       rawEdges: List[RawEdge],
       rawIODetails: Map[String, Value],
@@ -41,6 +58,10 @@ object GraphBuilder {
     values.get(parentName).map(_.asMap[String](Values.ofString()).asScala.toMap)
   }
 
+  /**
+   * Creates the lineage graph Json descriptor used for conversion of the graph to Json output.
+   * @return
+   */
   def createLineageGraphJsonDescriptor(): Descriptor[IOElement] = {
     val ioDescriptor = new NodeDescriptor[IOElement](typeId = "IOs") {
       def id(node: Any): String = node match {

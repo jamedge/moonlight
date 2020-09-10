@@ -54,4 +54,9 @@ class LineagePersistenceLayer(
   }
 }
 
+/**
+ * Class used for storage of the lineage graph and its root node.
+ * @param rootNodeName Root node of the graph.
+ * @param graph Lineage graph itself.
+ */
 case class LineageGraph(rootNodeName: String, graph: Graph[IOElement, LDiEdge])

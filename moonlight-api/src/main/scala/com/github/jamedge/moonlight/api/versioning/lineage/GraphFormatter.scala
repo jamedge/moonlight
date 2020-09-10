@@ -1,12 +1,14 @@
 package com.github.jamedge.moonlight.api.versioning.lineage
 
 import com.github.jamedge.moonlight.api.ApiConfig
-import com.github.jamedge.moonlight.api.versioning.FormattedOutputType.{HTML, Md, Json}
+import com.github.jamedge.moonlight.api.versioning.FormattedOutputType.{HTML, Json, Md}
 import com.github.jamedge.moonlight.api.versioning.{FormattedOutputType, HTMLGenerator}
 import com.github.jamedge.moonlight.core.model.IOElement
 import com.github.jamedge.moonlight.core.service.lineage.LineageGraph
 import scalax.collection.Graph
 import scalax.collection.edge.LDiEdge
+
+import scala.util.Try
 
 class GraphFormatter( // TODO: refactor this class to better split reponsibilities and see what needs to be private and what not
     outputConfig: OutputConfig.Output,
@@ -25,9 +27,7 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
     implicit val c = outputConfig.downstream(if (outputType.name == "html") "md" else outputType.name)
     implicit val ot = outputType
 
-    val lineage = formatLineageGraph(lineageGraph).
-      getOrElse(generateEmptyLineage(lineageGraph.rootNodeName, c.emptyMessage))
-
+    val lineage = formatLineageGraph(lineageGraph)
     if (outputType == HTML) {
       htmlGenerator.
         generateHTML(lineage).
@@ -64,56 +64,69 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
 
   private def formatLineageGraph(
       lineageGraph: LineageGraph
-  )(implicit outputConfig: OutputConfig.Downstream, outputType: FormattedOutputType): Option[String] = {
-    lineageGraph.graph.nodes.find(_.toOuter.name == lineageGraph.rootNodeName).map { root =>
+  )(implicit outputConfig: OutputConfig.Downstream, outputType: FormattedOutputType): String = {
+    val resultTry = for {
+      root <- Try(lineageGraph.graph.nodes.find(_.toOuter.name == lineageGraph.rootNodeName).
+        getOrElse(throw NonExistentRootException()))
+      lineageGraphString <- Try(traverseGraph(lineageGraph.graph)(root, None, root, 0))
+    } yield lineageGraphString
+    resultTry.recover {
+      case e: NonExistentRootException => generateEmptyLineage(lineageGraph.rootNodeName, outputConfig.emptyMessage)
+      case e: CyclicLineageGraphException => generateEmptyLineage(lineageGraph.rootNodeName, outputConfig.cyclicMessage)
+      case e: Exception => throw e
+    }.get
+  }
 
-      case class Accumulator(
-          resultString: String,
-          previousNodes: List[lineageGraph.graph.NodeT],
-          previousNode: lineageGraph.graph.NodeT,
-          level: Int)
-
-      val emptyElement = IOElement("", None, None, None, None, None, None)
-      val emptyAccumulator = Accumulator(
-        "",
-        List(lineageGraph.graph.Node(emptyElement)), lineageGraph.graph.Node(emptyElement), 0)
-
-      val result = root.innerNodeDownUpTraverser.foldLeft(emptyAccumulator) { case (acc, (firstDip, currentNode)) =>
-        if (firstDip) {
-          val currentLevel = acc.level + 1
-          Accumulator(
-            resultString = acc.resultString +
-              downstreamCaptionMainEnclosureOpen(lineageGraph.graph)(currentNode, root, acc.previousNode, currentLevel) +
-              downstreamCaptionNode(lineageGraph.graph)(currentNode, root) +
-              downstreamCaptionElementsSeparator(lineageGraph.graph)(currentNode, root) +
-              downstreamCaptionLines(lineageGraph.graph)(currentNode, root, acc.previousNodes.head) +
-              downstreamCaptionElementsSeparator(lineageGraph.graph)(currentNode, root) +
-              downstreamCaptionChildrenEnclosureOpen,
-            previousNodes = currentNode :: acc.previousNodes,
-            previousNode = currentNode,
-            level = currentLevel
-          )
-        }
-        else {
-          val currentLevel = acc.level - 1
-          Accumulator(
-            resultString = acc.resultString +
-              downstreamCaptionChildrenEnclosureClose +
-              downstreamCaptionMainEnclosureClose(lineageGraph.graph)(currentNode, root),
-            previousNodes = acc.previousNodes.tail,
-            previousNode = currentNode,
-            level = currentLevel
-          )
-        }
-      }
-      result.resultString
+  /**
+   * Function that traverses the input graph in a recursive matter and returns the appropriate
+   * string representation of the whole traverse path.
+   * @param ioGraph Graph to be traversed.
+   * @param root Root node from which the traversal should start.
+   * @param previousNode The last node being traversed outside this function.
+   * @param masterRoot The node from which traversing was firstly initiated. It's used
+   *                   to distinguish the currently running root node from the originating
+   *                   traversal start in case when this function is recursively called.
+   * @param depth Current recursion depth level of the traversal.
+   * @param outputConfig Config containing the details needed to format output.
+   * @param outputType Type of the output.
+   * @return String representation of the traversal based on the output type.
+   */
+  private def traverseGraph(ioGraph: Graph[IOElement, LDiEdge])(
+      root: ioGraph.NodeT,
+      previousNode: Option[ioGraph.NodeT],
+      masterRoot: ioGraph.NodeT,
+      depth: Int
+  )(implicit outputConfig: OutputConfig.Downstream, outputType: FormattedOutputType): String = {
+    if (ioGraph.isCyclic) {
+      throw CyclicLineageGraphException()
     }
+
+    val opening = downstreamCaptionMainEnclosureOpen(ioGraph)(root, masterRoot, previousNode, depth) +
+      downstreamCaptionNode(ioGraph)(root, masterRoot) +
+      downstreamCaptionElementsSeparator(ioGraph)(root, masterRoot) +
+      downstreamCaptionLines(ioGraph)(root, masterRoot, previousNode) +
+      downstreamCaptionElementsSeparator(ioGraph)(root, masterRoot) +
+      downstreamCaptionChildrenEnclosureOpen
+
+    val children =
+      if (root.hasSuccessors) {
+        root.diSuccessors.toList.sortBy(_.name).map { successor =>
+          traverseGraph(ioGraph)(successor, Some(root), masterRoot, depth + 1)
+        }.mkString(downstreamCaptionElementsSeparator(ioGraph)(root, masterRoot))
+      } else {
+        ""
+      }
+
+    val closing = downstreamCaptionChildrenEnclosureClose +
+      downstreamCaptionMainEnclosureClose(ioGraph)(root, masterRoot)
+
+    opening + children + closing
   }
 
   private def downstreamCaptionMainEnclosureOpen(ioGraph: Graph[IOElement, LDiEdge])(
       currentNode: ioGraph.NodeT,
       root: ioGraph.NodeT,
-      previousNode: ioGraph.NodeT,
+      previousNode: Option[ioGraph.NodeT],
       currentLevel: Int
   )(implicit config: OutputConfig.Downstream): String = {
     if (currentNode eq root) {
@@ -121,7 +134,7 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
     } else {
       config.newline +
         config.space * config.indentSize * currentLevel +
-        (if (currentNode.connectionsWith(previousNode).isEmpty) config.nodes.children.separator else "") +
+        (if (previousNode.isEmpty) config.nodes.children.separator else "") +
         config.nodes.children.element.shell.prepend +
         config.nodes.children.element.shell.enclosure.start
     }
@@ -159,19 +172,21 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
   private def downstreamCaptionLines(ioGraph: Graph[IOElement, LDiEdge])(
       currentNode: ioGraph.NodeT,
       root: ioGraph.NodeT,
-      headingPreviousNode: ioGraph.NodeT
+      previousNode: Option[ioGraph.NodeT]
   )(implicit config: OutputConfig.Downstream, outputType: FormattedOutputType): String = {
     val openString = if (currentNode eq root) {
       config.nodes.root.lines.prepend + config.nodes.root.lines.enclosure.start
     } else {
       config.nodes.children.element.lines.prepend + config.nodes.children.element.lines.enclosure.start
     }
-    val linesString = currentNode.
-      connectionsWith(headingPreviousNode).
-      flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
-        generateElementLink(lineName, "line", "l")
-      )).
-      mkString(", ")
+    val linesString = previousNode.map { previous =>
+      currentNode.
+        connectionsWith(previous).
+        flatMap(_.toOuter.label.asInstanceOf[List[String]].map(lineName =>
+          generateElementLink(lineName, "line", "l")
+        )).
+        mkString(", ")
+    }.getOrElse("")
     val closeString = if (currentNode eq root) {
       config.nodes.root.lines.enclosure.end
     } else {
@@ -201,3 +216,5 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
 }
 
 case class LineageHTMLGenerationException(message: String) extends Exception(message)
+case class NonExistentRootException() extends Exception
+case class CyclicLineageGraphException() extends Exception
