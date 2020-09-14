@@ -18,11 +18,73 @@ This jar is packed and pushed as docker image to DockerHub by CI/CO tool Travis 
 This means that merging of a new PR results in generation of separate docker image.
 When pushed, image is tagged with commit id and `latest` tags.
 
-**NOTE** This is the first iteration of deployment process. The next one will also include tagging by version and proper versioning of the api.
+**NOTE** This is the first iteration of deployment process.
+The next one will also include tagging by version and proper versioning of the api.
+
+## API Versioning and usage example
+
+Api versioning is done using request headers.
+
+Headers used for specifying the version are:
+- `Content-Type` - Specifies the version of the request content submitted to API (used for unmarshalling)
+- `Accept` - Specifies the version for the response content expected from the API (used for marshalling)
+
+Value of the header is in the following format:
+```
+<content-main-type>/moonlight.v<version-number>+<content-subtype>
+```
+E.g. like this:
+```
+application/moonlight.v1+json
+```
+If no version is specified, the latest one is returned:
+```
+application/json
+```
+
+So, the whole request example for adding a line can look like this:
+```
+curl --request POST 'http://localhost:8080/line' \
+--header 'Content-Type: application/moonlight.v1+json' \
+--header 'Accept: application/moonlight.v2+json' \
+--data-raw '{
+	"name": "test_aggregation",
+	"io": [
+		{
+			"inputs": [
+				{
+					"name": "test_input_1",
+					"storage": { "name": "test_storage_1" },
+					"locationRelativePath": "test/ha/test_input_1"
+				},
+				{
+					"name": "test_input_2",
+					"storage": { "name": "test_storage_2" },
+					"locationRelativePath": "test/test_input_2"
+				}
+			],
+			"outputs": [
+				{
+					"name": "test_output_3",
+					"storage": { "name": "test_storage_1" },
+					"locationRelativePath": "test/test_input_1"
+				}
+			]
+		}
+	]
+}'
+```
+In this request, line `test_aggregation` is added using the first version of the API (v1).
+This means that the request data will be decoded using v1 unmarshaller. However, the results are
+being coded back using v2 responses. For this route (`/line`) it would be just a message saying
+that the line was added or updated.
+
+For the complete documentation, check swagger (still a TODO :)).
 
 ## Tests
 
-Currently, tests exist only for API exception and rejection handlers. More tests for other functionalities will be added upon having more stable version of the application.
+Currently, test coverage is quite poor due to high volatility of implementation choices in early versions.
+As the project is getting into more stable shape, more tests are being added.
 
 ## Running
 
