@@ -15,7 +15,7 @@ such as:
 These and similar questions are quite often hard to answer in architectures with lot of interlaced ETL jobs.
 The goal of this project is to make the process of getting the required answers as easy as possible by
 implementing a REST API for saving and extracting ETL metadata which is easy to use and deploy in the target system,
-as well as a set of libraries for its usage (still a TODO item though).
+as well as a set of libraries for its usage.
 
 Its intention is to help data engineers and everyone else working with data pipelines to better
 understand how data is moving through their pipelines and to find and remove problems in them faster.
@@ -29,9 +29,9 @@ understand how data is moving through their pipelines and to find and remove pro
 This is a multi module project, which consists out of several projects:
 1. `moonlight-core` - Contains data access layer, case classes for DTOs and core data services
 2. `moonlight-api` - Provides REST API for storage and retrieval of lineage metadata
-3. TODO: `moonlight-client` - Scala Library for easy usage of the API
+3. `moonlight-client` - Scala Library for easy usage of the API
 
-For more information of each of the modules check their `README.md` file.
+For more information of each of the modules check their `README.md` files.
 
 ## Contribution
 

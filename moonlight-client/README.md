@@ -1,23 +1,26 @@
-# moonlight-api
+# moonlight-client
 
 This is a Moonlight Scala client library. Its main intention is to provide easy functionality for adding lines directly
 from the target Scala project.
 
 ## Functionality
 
-<TBA>
+Current functionality of this module only includes a simple client class with a fuction to
+persist line to Neo4j graph db. 
 
 ## Deployment
 
-<TBA>
+This module is still not included into CI/CD pipeline. 
+The idea is to add building of the versioned library deployed to some public package registry. (TODO item) 
 
 ## Tests
 
-<TBA>
+At the moment, only a simple test for line client exists. 
+More of them will be added as this library is gaining shape.
 
 ## Running
 
-<TBA>
+This module is intended to be used as a library, so it won't contain any class with `main` method. 
 
 ## Configuration
 
