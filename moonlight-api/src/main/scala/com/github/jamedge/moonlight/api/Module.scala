@@ -5,6 +5,7 @@ import com.github.jamedge.moonlight.api.routes.{ApiLineRoutes, ApiLineageRoutes,
 import com.github.jamedge.moonlight.api.versioning.HTMLGenerator
 import com.github.jamedge.moonlight.api.versioning.line.LineMDGenerator
 import com.github.jamedge.moonlight.api.versioning.lineage.{GraphFormatter, OutputConfig}
+import com.github.jamedge.moonlight.api.versioning.report.ReportGenerator
 import com.github.jamedge.moonlight.core.DbConfig
 import com.github.jamedge.moonlight.core.service.line.{LinePersistenceLayer, LineService}
 import com.softwaremill.macwire.wire
@@ -37,6 +38,8 @@ class Module(app: String) extends ApiContext(app) {
   lazy val lineageService: LineageService = wire[LineageService]
   lazy val lineagePersistenceLayer: LineagePersistenceLayer = wire[LineagePersistenceLayer]
   lazy val lineageOutputConfig: Output = ConfigSource.fromConfig(config).at("output").loadOrThrow[OutputConfig.Output]
+
+  lazy val reportGenerator: ReportGenerator = wire[ReportGenerator]
 
   implicit lazy val lineMDGenerator: LineMDGenerator = wire[LineMDGenerator]
   implicit lazy val htmlGenerator: HTMLGenerator = wire[HTMLGenerator]

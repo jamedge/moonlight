@@ -15,68 +15,67 @@ class LineMDGenerator(
         s"""## l:${line.name}
            |Property name|Property value
            |-------------|--------------
-           |Name|**${line.name}**\n""" +
-           line.owner.map("|Owner|" + _ + "\n").getOrElse("") +
-           line.purpose.map("|Purpose|" + _ + "\n").getOrElse("") +
-           (line.notes.map(("|Notes|", _)).getOrElse(("", List())) match {
-                case (c, l) => c + l.map(n => s"_${n}_").mkString(", ") + "\n"}) +
-           s"|Inputs|${line.io.flatMap(io => generateIOCaptions(io.inputs, outputType)).mkString(", ")}\n" +
-           s"|Outputs|${line.io.flatMap(io => generateIOCaptions(io.outputs, outputType)).mkString(", ")}\n" +
-           generateListCaption(generateProcessCaptions(line.processedBy), "Processed by") +
-           generateListCaption(generateMetricsCaptions(line.metrics), "Metrics") +
-           generateListCaption(generateAlertsCaptions(line.alerts), "Alerts") +
-           generateListCaption(generateProcessCaptions(line.processedBy), "Processed by") +
-           line.code.map(c => s"|Code path|[${c.name}](${c.remotePath})\n").getOrElse("") +
-           line.code.map(c => s"|Execution command entry point|${generateExecutionCommand(c)}").getOrElse("")
+           |Name|**${line.name}**""" +
+           line.owner.map("\n|Owner|" + _).getOrElse("") +
+           line.purpose.map("\n|Purpose|" + _).getOrElse("") +
+           (line.notes.map(("\n|Notes|", _)).getOrElse(("", List())) match {
+                case (c, l) => c + l.map(n => s"_${n}_").mkString(", ")}) +
+           s"\n|Inputs|${line.io.flatMap(io => ioCaptions(io.inputs, outputType)).mkString(", ")}" +
+           s"\n|Outputs|${line.io.flatMap(io => ioCaptions(io.outputs, outputType)).mkString(", ")}" +
+           listCaption(processCaptions(line.processedBy), "Processed by") +
+           listCaption(metricsCaptions(line.metrics), "Metrics") +
+           listCaption(alertsCaptions(line.alerts), "Alerts") +
+           line.code.map(c => s"\n|Code path|[${c.name}](${c.remotePath})").getOrElse("") +
+           line.code.map(c => s"\n|Execution command entry point|${executionCommand(c)}").getOrElse("")
       result.stripMargin
     }
   }
 
-  private def generateListCaption(list: List[String], name: String): String = {
+  private def listCaption(list: List[String], name: String): String = {
     if (list.isEmpty) {
       ""
     } else {
-      s"|$name|${list.mkString(", ")}\n"
+      s"\n|$name|${list.mkString(", ")}"
     }
   }
 
   // TODO: fix all links and anchors based on output type
-  private def generateIOCaptions(ioElements: List[IOElement], outputType: FormattedOutputType): List[String] = {
+  private def ioCaptions(ioElements: List[IOElement], outputType: FormattedOutputType): List[String] = {
     ioElements.map { i =>
-      val inputLink = generateIOLink(i)
-      val lineageLink = generateLineageLink(i, outputType)
-      s"$inputLink [$lineageLink]"
+      val input = ioLink(i)
+      val link = lineageLink(i, outputType)
+      s"$input [$link]"
     }
   }
 
-  private def generateIOLink(ioElement: IOElement): String = {
+  private def ioLink(ioElement: IOElement): String = {
     ioElement.storage.map { s =>
       s"[**${s.name}**: ${ioElement.name}]" +
         s"${s.locationPath.map(lp => s"(#$lp${if (lp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
         s"${ioElement.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${ioElement.name})")}"
-    }.getOrElse(generateDefaultIOLink(ioElement))
+    }.getOrElse(defaultIOLink(ioElement))
   }
 
-  private def generateDefaultIOLink(ioElement: IOElement): String = {
+  private def defaultIOLink(ioElement: IOElement): String = {
     s"[${ioElement.name}](#${ioElement.locationRelativePath.getOrElse(ioElement.name)})"
   }
 
-  private def generateLineageLink(ioElement: IOElement, outputType: FormattedOutputType): String = {
+  private def lineageLink(ioElement: IOElement, outputType: FormattedOutputType): String = {
     outputType match {
-      case FormattedOutputType.HTML => generateLineageLinkHTML(ioElement)
-      case FormattedOutputType.Md => generateLineageLinkMD(ioElement)
+      case FormattedOutputType.HTML => lineageLinkHTML(ioElement)
+      case FormattedOutputType.Md => lineageLinkMD(ioElement)
     }
   }
 
-  private def generateLineageLinkHTML(ioElement: IOElement): String = {
+  private def lineageLinkHTML(ioElement: IOElement): String = {
     s"[->](http://${apiConfig.server.host}:${apiConfig.server.port}/lineage/graph/${ioElement.name})"
   }
 
-  private def generateLineageLinkMD(ioElement: IOElement): String = {
+  private def lineageLinkMD(ioElement: IOElement): String = {
     s"[->](#lng:${ioElement.name})"
   }
 
-  private def generateProcessCaptions(processes: List[Process]): List[String] = {
+  private def processCaptions(processes: List[Process]): List[String] = {
     processes.map { p =>
       p.processingFramework.map { pf =>
         s"[**${pf.name}**: ${p.name}]" +
@@ -86,7 +85,7 @@ class LineMDGenerator(
     }
   }
 
-  private def generateMetricsCaptions(metrics: List[Metric]): List[String] = {
+  private def metricsCaptions(metrics: List[Metric]): List[String] = {
     metrics.map { m =>
       m.metricFramework.map { mf =>
         s"[**${mf.name}**: ${m.name}]" +
@@ -96,7 +95,7 @@ class LineMDGenerator(
     }
   }
 
-  private def generateAlertsCaptions(alerts: List[Alert]): List[String] = {
+  private def alertsCaptions(alerts: List[Alert]): List[String] = {
     alerts.map { a =>
       a.alertsFramework.map { af =>
         s"[**${af.name}**: ${a.name}]" +
@@ -106,7 +105,7 @@ class LineMDGenerator(
     }
   }
 
-  private def generateExecutionCommand(code: Code): String = {
+  private def executionCommand(code: Code): String = {
     s"`${code.entryPointClass}${code.entryPointArguments.map(epa => s" ${epa.mkString(" ")}`").getOrElse("`")}"
   }
 }
