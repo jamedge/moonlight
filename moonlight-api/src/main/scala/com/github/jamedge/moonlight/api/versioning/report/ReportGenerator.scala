@@ -41,7 +41,7 @@ class ReportGenerator(
           generateMd(line).
           getOrElse(throw LineMDGenerationException("Markdown generation failed!"))).mkString("\n\n<br>\n\n"))
       lineageGraphs <- lineageService.getLineageGraphs
-      lineagesString <- Future("# Lineage\n" + lineageGraphs.map(graph => graphFormatter.
+      lineagesString <- Future("\n<br>\n\n# Lineage\n" + lineageGraphs.map(graph => graphFormatter.
         formatLineageGraph(graph, FormattedOutputType.Md)).mkString("\n\n<br>\n\n"))
       headerString <- Future(generateHeaderHtml)
       footerString <- Future(generateFooterHtml)

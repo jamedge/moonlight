@@ -19,13 +19,12 @@ class LineMDGenerator(
            line.owner.map("|Owner|" + _ + "\n").getOrElse("") +
            line.purpose.map("|Purpose|" + _ + "\n").getOrElse("") +
            (line.notes.map(("|Notes|", _)).getOrElse(("", List())) match {
-                case (c, l) => c + l.map(n => s"_${n}_").mkString(", ") + "\n"}) +
+                case (c, l) => c + l.map(n => s"_${n}_").mkString(", ") + (if (l.nonEmpty) "\n" else "")}) +
            s"|Inputs|${line.io.flatMap(io => ioCaptions(io.inputs, outputType)).mkString(", ")}\n" +
            s"|Outputs|${line.io.flatMap(io => ioCaptions(io.outputs, outputType)).mkString(", ")}\n" +
            listCaption(processCaptions(line.processedBy), "Processed by") +
            listCaption(metricsCaptions(line.metrics), "Metrics") +
            listCaption(alertsCaptions(line.alerts), "Alerts") +
-           listCaption(processCaptions(line.processedBy), "Processed by") +
            line.code.map(c => s"|Code path|[${c.name}](${c.remotePath})\n").getOrElse("") +
            line.code.map(c => s"|Execution command entry point|${executionCommand(c)}").getOrElse("")
       result.stripMargin
