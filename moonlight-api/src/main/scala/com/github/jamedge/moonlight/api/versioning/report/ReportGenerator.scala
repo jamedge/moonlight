@@ -39,16 +39,16 @@ class ReportGenerator(
       linesString <- Future(lines.map(line =>
         lineMDGenerator.
           generateMd(line).
-          getOrElse(throw LineMDGenerationException("Markdown generation failed!"))).mkString("<br>\n"))
+          getOrElse(throw LineMDGenerationException("Markdown generation failed!"))).mkString("\n\n<br>\n\n"))
       lineageGraphs <- lineageService.getLineageGraphs
       lineagesString <- Future("# Lineage\n" + lineageGraphs.map(graph => graphFormatter.
-        formatLineageGraph(graph, FormattedOutputType.Md)).mkString("<br><br>\n"))
+        formatLineageGraph(graph, FormattedOutputType.Md)).mkString("\n\n<br>\n\n"))
       headerString <- Future(generateHeaderHtml)
       footerString <- Future(generateFooterHtml)
       htmlString <- Future(
         headerString + "\n" +
           linesString + "\n" +
-          lineagesString + "\n" +
+          lineagesString + "\n<hr>\n" +
           footerString) // TODO: add table of contents
     } yield htmlString
   }
