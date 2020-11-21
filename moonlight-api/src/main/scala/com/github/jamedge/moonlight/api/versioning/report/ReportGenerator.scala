@@ -48,7 +48,7 @@ class ReportGenerator(
       htmlString <- Future(
         headerString + "\n" +
           linesString + "\n" +
-          lineagesString + "\n<hr>\n" +
+          lineagesString + "\n\n<br><hr>\n\n" +
           footerString) // TODO: add table of contents
     } yield htmlString
   }

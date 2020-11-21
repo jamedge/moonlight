@@ -39,7 +39,6 @@ class LineMDGenerator(
     }
   }
 
-  // TODO: fix all links and anchors based on output type
   private def ioCaptions(ioElements: List[IOElement], outputType: FormattedOutputType): List[String] = {
     ioElements.map { i =>
       val input = ioLink(i)
@@ -50,14 +49,12 @@ class LineMDGenerator(
 
   private def ioLink(ioElement: IOElement): String = {
     ioElement.storage.map { s =>
-      s"[**${s.name}**: ${ioElement.name}]" +
-        s"${s.locationPath.map(lp => s"(#$lp${if (lp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
-        s"${ioElement.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${ioElement.name})")}"
+      s"**${s.name}**: ${ioElement.name}"
     }.getOrElse(defaultIOLink(ioElement))
   }
 
   private def defaultIOLink(ioElement: IOElement): String = {
-    s"[${ioElement.name}](#${ioElement.locationRelativePath.getOrElse(ioElement.name)})"
+    ioElement.name
   }
 
   private def lineageLink(ioElement: IOElement, outputType: FormattedOutputType): String = {
@@ -78,30 +75,24 @@ class LineMDGenerator(
   private def processCaptions(processes: List[Process]): List[String] = {
     processes.map { p =>
       p.processingFramework.map { pf =>
-        s"[**${pf.name}**: ${p.name}]" +
-          s"${pf.locationPath.map(fp => s"(#$fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
-          s"${p.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${p.name})")}"
-      }.getOrElse(s"[${p.name}](#${p.locationRelativePath.getOrElse(p.name)})")
+        s"**${pf.name}**: ${p.name}"
+      }.getOrElse(p.name)
     }
   }
 
   private def metricsCaptions(metrics: List[Metric]): List[String] = {
     metrics.map { m =>
       m.metricFramework.map { mf =>
-        s"[**${mf.name}**: ${m.name}]" +
-          s"${mf.locationPath.map(fp => s"(#$fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
-          s"${m.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${m.name})")}"
-      }.getOrElse(s"[${m.name}](#${m.locationRelativePath.getOrElse(m.name)})")
+        s"**${mf.name}**: ${m.name}"
+      }.getOrElse(m.name)
     }
   }
 
   private def alertsCaptions(alerts: List[Alert]): List[String] = {
     alerts.map { a =>
       a.alertsFramework.map { af =>
-        s"[**${af.name}**: ${a.name}]" +
-          s"${af.locationPath.map(fp => s"(#$fp${if (fp.endsWith("/")) "" else "/"}").getOrElse("(#")}" +
-          s"${a.locationRelativePath.map(rp => s"$rp)").getOrElse(s"${a.name})")}"
-      }.getOrElse(s"[${a.name}](#${a.locationRelativePath.getOrElse(a.name)})")
+        s"**${af.name}**: ${a.name}"
+      }.getOrElse(a.name)
     }
   }
 
