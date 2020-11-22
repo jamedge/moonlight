@@ -120,7 +120,7 @@ lazy val `moonlight-api` = project.in(file("moonlight-api")).
   settings(dockerSettings(Some(8080))).
   settings(apiSettings).
   settings(
-    mainClass in assembly := Some("com.github.jamedge.moonlight.core.api.Api")
+    mainClass in assembly := Some("com.github.jamedge.moonlight.api.Api")
   ).
   settings(libraryDependencies ++= Seq(
     "org.scala-graph" %% "graph-core" % "1.13.2",
