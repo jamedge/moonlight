@@ -65,7 +65,7 @@ class LineMDGenerator(
   }
 
   private def lineageLinkHTML(ioElement: IOElement): String = {
-    s"[->](http://${apiConfig.server.host}:${apiConfig.server.port}/lineage/graph/${ioElement.name})"
+    s"[->](/lineage/graph/${ioElement.name})"
   }
 
   private def lineageLinkMD(ioElement: IOElement): String = {

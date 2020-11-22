@@ -56,7 +56,7 @@ class GraphFormatter( // TODO: refactor this class to better split reponsibiliti
       linkPrefix: String
   )(implicit outputType: FormattedOutputType): String = {
     outputType match {
-      case HTML => s"[${elementName}](http://${apiConfig.server.host}:${apiConfig.server.port}/$elementType/$elementName)"
+      case HTML => s"[${elementName}](/$elementType/$elementName)"
       case Md => s"[$linkPrefix:${elementName}](#$linkPrefix:$elementName)"
       case Json | _ => elementName
     }
