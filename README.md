@@ -12,7 +12,7 @@ such as:
 - Where is the source code for these operations?
 - When was the selected ETL ran last time and who did it?
 
-These and similar questions are quite often hard to answer in architectures with lot of interlaced ETL jobs.
+These and similar questions are quite often hard to answer in architectures with a lot of interlaced ETL jobs.
 The goal of this project is to make the process of getting the required answers as easy as possible by
 implementing a REST API for saving and extracting ETL metadata which is easy to use and deploy in the target system,
 as well as a set of libraries for its usage.
@@ -21,7 +21,7 @@ Its intention is to help data engineers and everyone else working with data pipe
 understand how data is moving through their pipelines and to find and remove problems in them faster.
 
 **NOTES**:
-- This project is still in early development phase, so not yet ready for production usage.
+- This project is still in beta phase, so use it with caution.
 - See the list of issues for the scheduled list of features, TODOs and bugs.
 
 ## Structure
