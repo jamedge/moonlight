@@ -47,6 +47,7 @@ lazy val assemblySettings = Seq(
 
   assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
+    case "application.conf" => MergeStrategy.concat
     case PathList("META-INF", "services", _*) => MergeStrategy.concat
     case PathList("META-INF", "log4j-provider.properties") => MergeStrategy.concat
     case x if x startsWith "META-INF" => MergeStrategy.discard
