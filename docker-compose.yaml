@@ -1,0 +1,33 @@
+version: '3.4'
+
+services:
+  neo4j:
+    container_name: moonlight-neo4j
+    image: neo4j:3.4.0
+    restart: always
+    ports:
+      - 7473:7473
+      - 7474:7474
+      - 7687:7687
+#    volumes:  # To not lose neo4j data on restart, set up the volumes as below
+#      - ${MOONLIGHT_NEO4J_HOME}/data:/data
+#      - ${MOONLIGHT_NEO4J_HOME}/neo4j.conf:/conf/neo4j.conf
+#      - ${MOONLIGHT_NEO4J_HOME}/logs:/logs
+  app:
+    container_name: moonlight-api
+    image: "markojamedzija/moonlight-api:latest"
+    restart: on-failure
+    environment:
+      MOONLIGHT_NEO4J_HOST: "moonlight-neo4j"
+      MOONLIGHT_NEO4J_URI: "bolt://moonlight-neo4j:7687"
+      MOONLIGHT_NEO4J_USERNAME: "neo4j"
+      MOONLIGHT_NEO4J_PASSWORD: "test"
+    ports:
+      - 10000:8080
+    depends_on:
+      - neo4j
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/status" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
