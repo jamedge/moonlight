@@ -16,11 +16,12 @@ services:
   app:
     container_name: moonlight-api
     image: "markojamedzija/moonlight-api:latest"
-    restart: on-failure # TODO: make it wait for 10 seconds or so before starting
+    restart: on-failure
     environment:
+      MOONLIGHT_NEO4J_HOST: "moonlight-neo4j"
       MOONLIGHT_NEO4J_URI: "bolt://moonlight-neo4j:7687"
       MOONLIGHT_NEO4J_USERNAME: "neo4j"
-      MOONLIGHT_NEO4J_PASSWORD: "neo4j"
+      MOONLIGHT_NEO4J_PASSWORD: "test"
     ports:
       - 10000:8080
     depends_on:

@@ -75,10 +75,15 @@ def dockerSettings(exposePort: Option[Int] = None) = Seq(
   dockerfile in docker := {
     val artifact: File = assembly.value
     val artifactTargetPath = s"/usr/local/lib/app.jar"
+    val startScriptLocalPath = new File("./bin/start.sh")
+    val startScriptTargetPath = "/usr/local/lib/start.sh"
+    val startScript = new File(startScriptTargetPath)
     new Dockerfile {
       from("java:openjdk-8")
+      env("ARTIFACT_PATH", artifactTargetPath)
       add(artifact, artifactTargetPath)
-      entryPoint("java", "-jar", artifactTargetPath)
+      add(startScriptLocalPath, startScript)
+      entryPoint(startScriptTargetPath)
       if (exposePort.isDefined) {
         expose(exposePort.get)
       }

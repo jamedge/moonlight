@@ -1,4 +1,4 @@
-# SHELL := /usr/bin/env bash
+SHELL := /usr/bin/env bash
 
 # login to docker hub
 .PHONY: docker-login
@@ -19,12 +19,6 @@ start-environment-daemon:
 .PHONY: stop-environment
 stop-environment:
 	docker-compose -f docker-compose.yaml down --remove-orphans
-
-# clean the environment leftovers
-.PHONY: clean
-clean:
-	docker rmi moonlight-api
-	docker rmi moonlight-neo4j
 
 # run tests
 .PHONY: test
