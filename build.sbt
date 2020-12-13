@@ -7,7 +7,12 @@ ThisBuild / organization := "com.github.jamedge"
 
 ThisBuild / scalacOptions ++= Seq("-feature", "-deprecation")
 
-name := "moonlight"
+val githubRepoOwner = "jamedge"
+val githubRepoName = "moonlight"
+val githubRepoUrl = url(s"https://github.com/$githubRepoOwner/$githubRepoName")
+val githubRepoPackageUrlString = s"https://maven.pkg.github.com/$githubRepoOwner/$githubRepoName"
+
+name := githubRepoName
 
 lazy val commonSettings = Seq(
   resolvers ++= Seq(
@@ -15,6 +20,12 @@ lazy val commonSettings = Seq(
     DefaultMavenRepository,
     Resolver.jcenterRepo
   ),
+
+  credentials += Credentials(
+    "GitHub Package Registry",
+    "maven.pkg.github.com",
+    githubRepoOwner,
+    sys.env.getOrElse("GITHUB_TOKEN", "N/A")),
 
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javaOptions ++= Seq("-Xms1024M", "-Xmx2200M", "-Xss8M"),
@@ -69,6 +80,15 @@ lazy val apiSettings = Seq(
     "org.scalaj" %% "scalaj-http" % "2.4.2",
     "org.json4s" %% "json4s-jackson" % "3.7.0-M1"
   )
+)
+
+lazy val publishSettings = Seq(
+  publishTo := Some("GitHub Package Registry" at githubRepoPackageUrlString),
+  resolvers ++= Seq(s"GitHub Package Registry ($githubRepoOwner/$githubRepoName)" at githubRepoPackageUrlString),
+  scmInfo := Some(ScmInfo(githubRepoUrl, s"scm:git@github.com:$githubRepoOwner/$githubRepoName.git")),
+  homepage := Some(githubRepoUrl),
+  pomIncludeRepository := (_ => false),
+  publishMavenStyle := true
 )
 
 def dockerSettings(exposePort: Option[Int] = None) = Seq(
@@ -136,4 +156,8 @@ lazy val `moonlight-api` = project.in(file("moonlight-api")).
 
 lazy val `moonlight-client` = project.in(file("moonlight-client")).
   dependsOn(`moonlight-core` % "test->test;compile->compile").
-  settings(commonSettings)
+  settings(commonSettings).
+  settings(publishSettings).
+  settings(
+    version := "0.0.4"
+  )
